@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en" style="background: transparent !important; background-color: transparent !important;">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRP Tablet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: transparent !important; background-color: transparent !important;">
+    <svg class="icon-sprite" aria-hidden="true">
+        <symbol id="icon-home" viewBox="0 0 24 24">
+            <path d="M12 3.2 3 10v10.2h6.5v-6.1h5v6.1H21V10L12 3.2zm0 2.5 7 5.2v7.8h-2.5v-6.1h-8v6.1H5v-7.8l7-5.2z"/>
+        </symbol>
+        <symbol id="icon-flag" viewBox="0 0 24 24">
+            <path d="M6 3h2v18H6V3zm3 1.2h8.6l-1.8 3.5 1.8 3.6H9V4.2z"/>
+        </symbol>
+        <symbol id="icon-briefcase" viewBox="0 0 24 24">
+            <path d="M9 4.2h6c1.4 0 2.5 1.1 2.5 2.5v1.1H21c1.1 0 2 .9 2 2v8.9c0 1.1-.9 2-2 2H3c-1.1 0-2-.9-2-2V9.8c0-1.1.9-2 2-2h3.5V6.7c0-1.4 1.1-2.5 2.5-2.5zm0 2v1.6h6V6.2H9z"/>
+        </symbol>
+        <symbol id="icon-chip" viewBox="0 0 24 24">
+            <path d="M9 3h6v2.1h2.9V8H20v6h-2.1v2.9H15V19H9v-2.1H6.1V14H4V8h2.1V5.1H9V3zm-1 4.1V16h8V7.1H8z"/>
+        </symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24">
+            <path d="M10.2 3.2a7 7 0 0 1 5.5 11.3l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10.2 3.2zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+        </symbol>
+        <symbol id="icon-map" viewBox="0 0 24 24">
+            <path d="m15.7 4 5.3 2v14l-6-2.2-6 2.2-6-2.2V4l6 2.2L15.7 4zm-5.7 4.5-4-1.4v9l4 1.4v-9zm2 0v9l4-1.4v-9l-4 1.4zm6-1.4v9l2 0.8v-9l-2-0.8z"/>
+        </symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24">
+            <path d="M12 4.2a4.4 4.4 0 1 1 0 8.8 4.4 4.4 0 0 1 0-8.8zm0 10.8c4.3 0 7.8 2.3 7.8 5.1v1.3H4.2v-1.3c0-2.8 3.5-5.1 7.8-5.1z"/>
+        </symbol>
+        <symbol id="icon-users" viewBox="0 0 24 24">
+            <path d="M8.2 6a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4zm7.6.8A2.6 2.6 0 1 1 15.8 12a2.6 2.6 0 0 1 0-5.2zM8.2 14c3.5 0 6.3 1.8 6.3 4.1V20H2v-1.9C2 15.8 4.7 14 8.2 14zm7.6.8c2.8 0 5.2 1.4 5.2 3.3V20h-4.5v-1.9c0-1-.3-1.9-.9-2.6.1-.5.1-.7.2-.7z"/>
+        </symbol>
+        <symbol id="icon-lock" viewBox="0 0 24 24">
+            <path d="M12 2.8a4.8 4.8 0 0 1 4.8 4.8v2.1h1.7c1.1 0 2 .9 2 2v7.5c0 1.1-.9 2-2 2H5.5c-1.1 0-2-.9-2-2v-7.5c0-1.1.9-2 2-2h1.7V7.6A4.8 4.8 0 0 1 12 2.8zm0 2a2.8 2.8 0 0 0-2.8 2.8v2.1h5.6V7.6A2.8 2.8 0 0 0 12 4.8z"/>
+        </symbol>
+        <symbol id="icon-play" viewBox="0 0 24 24">
+            <path d="m7 4.5 12 7.5L7 19.5V4.5z"/>
+        </symbol>
+        <symbol id="icon-x" viewBox="0 0 24 24">
+            <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6 10.6 12 5 6.4 6.4 5z"/>
+        </symbol>
+        <symbol id="icon-refresh" viewBox="0 0 24 24">
+            <path d="M18.6 7.4A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.1-3.5L14 11h7V4l-2.4 3.4z"/>
+        </symbol>
+        <symbol id="icon-bolt" viewBox="0 0 24 24">
+            <path d="M13.2 2 5 13h5.3L9.6 22 19 10.8h-5L13.2 2z"/>
+        </symbol>
+        <symbol id="icon-cash" viewBox="0 0 24 24">
+            <path d="M3 6h18v12H3V6zm3 2.2A2.8 2.8 0 0 1 8.8 11H15a2.8 2.8 0 0 1 2.8-2.8V8H6v.2zm6 1.4a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM6 15.8v.2h11.8v-.2A2.8 2.8 0 0 1 15 13h-6.2A2.8 2.8 0 0 1 6 15.8z"/>
+        </symbol>
+        <symbol id="icon-clock" viewBox="0 0 24 24">
+            <path d="M12 3.2a8.8 8.8 0 1 1 0 17.6 8.8 8.8 0 0 1 0-17.6zm0 2a6.8 6.8 0 1 0 0 13.6 6.8 6.8 0 0 0 0-13.6zm-1 2.4h2v4.2l3.4 2-.9 1.7L11 13V7.6z"/>
+        </symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24">
+            <path d="M10.7 2h2.6l.5 2.3c.6.2 1.1.4 1.6.7l2.1-1.1 1.9 1.9-1.1 2.1c.3.5.5 1 .7 1.6L22 10.7v2.6l-2.3.5c-.2.6-.4 1.1-.7 1.6l1.1 2.1-1.9 1.9-2.1-1.1c-.5.3-1 .5-1.6.7L13.3 22h-2.6l-.5-2.3c-.6-.2-1.1-.4-1.6-.7l-2.1 1.1-1.9-1.9 1.1-2.1c-.3-.5-.5-1-.7-1.6L2 13.3v-2.6l2.3-.5c.2-.6.4-1.1.7-1.6L3.9 6.5l1.9-1.9 2.1 1.1c.5-.3 1-.5 1.6-.7L10.7 2zm1.3 6.2A3.8 3.8 0 1 0 12 15.8a3.8 3.8 0 0 0 0-7.6z"/>
+        </symbol>
+        <symbol id="icon-bullhorn" viewBox="0 0 24 24">
+            <path d="M3 10.1v3.8h4.2l6.8 4.2V5.9L7.2 10.1H3zm13.4-2.9v9.6a4.8 4.8 0 0 0 3.8-4.8 4.8 4.8 0 0 0-3.8-4.8zM6.7 15.1l1.4 5h2.2l-1.1-5H6.7z"/>
+        </symbol>
+        <symbol id="icon-shield" viewBox="0 0 24 24">
+            <path d="M12 2.5 4.3 5.4v5.4c0 5.1 3.2 9.8 7.7 10.7 4.5-.9 7.7-5.6 7.7-10.7V5.4L12 2.5zm0 2.1 5.7 2.1v4.1c0 4-2.4 7.8-5.7 8.6-3.3-.8-5.7-4.6-5.7-8.6V6.7L12 4.6z"/>
+        </symbol>
+        <symbol id="icon-trophy" viewBox="0 0 24 24">
+            <path d="M7 3h10v2h2.2A1.8 1.8 0 0 1 21 6.8v1.4a4.8 4.8 0 0 1-4.8 4.8h-.4A6 6 0 0 1 13 16.7V19h3v2H8v-2h3v-2.3A6 6 0 0 1 8.2 13h-.4A4.8 4.8 0 0 1 3 8.2V6.8A1.8 1.8 0 0 1 4.8 5H7V3zm10 4v3.2h.2A2.8 2.8 0 0 0 20 8.2V7h-3zM7 7H4v1.2A2.8 2.8 0 0 0 6.8 11H7V7z"/>
+        </symbol>
+        <symbol id="icon-chat" viewBox="0 0 24 24">
+            <path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5v2h10V9H7zm0 4v2h7v-2H7z"/>
+        </symbol>
+        <symbol id="icon-note" viewBox="0 0 24 24">
+            <path d="M6 3h9l5 5v13H6V3zm8 1.8V9h4.2L14 4.8zM8 11v2h8v-2H8zm0 4v2h8v-2H8zm0-8v2h4V7H8z"/>
+        </symbol>
+    </svg>
+
+    <main id="tablet-root" class="tablet-root" style="display: none; visibility: hidden;">
+        <div id="tablet-overlay" class="tablet-overlay"></div>
+        <section class="tablet-frame">
+            <header class="system-bar">
+                <div class="system-left">
+                    <span id="system-time" class="system-time">4:31 PM</span>
+                    <button class="system-home nav-link" data-open-app="home" aria-label="Home">
+                        <svg><use href="#icon-home"></use></svg>
+                    </button>
+                </div>
+                <span id="page-status" class="page-status">Online</span>
+            </header>
+
+            <div class="tablet-body">
+                <aside class="sidebar">
+                    <div class="sidebar-shell">
+                        <div class="sidebar-meta">
+                            <span id="sidebar-app-label" class="sidebar-app-label">Home</span>
+                            <span id="sidebar-panel-label" class="sidebar-panel-label">Device apps</span>
+                        </div>
+                        <div id="sidebar-stack" class="sidebar-stack"></div>
+                    </div>
+
+                    <button id="close-tablet" class="sidebar-link close-link" aria-label="Close">
+                        <svg><use href="#icon-x"></use></svg>
+                    </button>
+                </aside>
+
+                <section class="content">
+                    <section class="page active" data-page="home">
+                        <div class="home-hero">
+                            <div class="welcome-block home-status-store" aria-hidden="true">
+                                <p class="eyebrow">Welcome,</p>
+                                <h1 id="welcome-name" class="welcome-name">Driver</h1>
+                                <div class="quick-stats">
+                                    <article class="quick-stat">
+                                        <span>Business</span>
+                                        <strong id="home-business">Offline</strong>
+                                    </article>
+                                    <article class="quick-stat">
+                                        <span>Live Races</span>
+                                        <strong id="home-open-races">0</strong>
+                                    </article>
+                                    <article class="quick-stat">
+                                        <span>Rating</span>
+                                        <strong id="home-rating">0</strong>
+                                    </article>
+                                </div>
+                            </div>
+
+                            <article id="home-ad-card" class="city-card ad-hero-card">
+                                <div class="ad-hero-copy">
+                                    <p id="home-ad-badge" class="eyebrow">Latest Advertisement</p>
+                                    <h2 id="home-ad-title">City board is warming up</h2>
+                                    <p id="home-ad-copy" class="city-copy">Drop an ad with a background image and it will rotate here on the home screen.</p>
+                                    <span id="home-ad-author" class="meta-copy">Open Advertisements to post your first promo.</span>
+                                </div>
+                                <div class="city-actions">
+                                    <button class="ghost-action" data-open-app="ads">Open Ads</button>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div id="app-grid" class="app-grid"></div>
+                        <div id="home-message" class="inline-message"></div>
+                    </section>
+
+                    <section class="page" data-page="racing">
+                        <div class="page-head">
+                            <div>
+                                <p class="eyebrow">RacePro</p>
+                                <h1 class="page-title">Racing Network</h1>
+                            </div>
+                        </div>
+
+                        <section class="app-panel active" data-app="racing" data-panel="feed">
+                            <div class="race-stats">
+                                <article class="race-stat"><span>Public Hosts</span><strong id="racing-public-count">0</strong></article>
+                                <article class="race-stat"><span>Saved Tracks</span><strong id="racing-track-count">0</strong></article>
+                                <article class="race-stat"><span>Your Rating</span><strong id="racing-rating-count">0</strong></article>
+                            </div>
+
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Happening Now</p>
+                                        <h2 class="section-title">Live races</h2>
+                                    </div>
+                                    <div id="public-race-list" class="race-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="racing" data-panel="host">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Hosted Grid</p>
+                                        <h2 id="my-race-title" class="section-title">No hosted race</h2>
+                                    </div>
+                                    <div id="my-race-card" class="focus-card empty-card"></div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">People In Race</p>
+                                        <h2 class="section-title">Roster</h2>
+                                    </div>
+                                    <div id="race-roster-list" class="race-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="racing" data-panel="tracks">
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Your Tracks</p>
+                                        <h2 class="section-title">Personal race zones</h2>
+                                    </div>
+                                    <div id="personal-track-list" class="track-list"></div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Track Boards</p>
+                                        <h2 class="section-title">Hot, popular, and new</h2>
+                                    </div>
+                                    <div class="collection-grid">
+                                        <article class="collection-card">
+                                            <p class="eyebrow">Hot Tracks</p>
+                                            <div id="hot-track-list" class="compact-list"></div>
+                                        </article>
+                                        <article class="collection-card">
+                                            <p class="eyebrow">Popular Tracks</p>
+                                            <div id="popular-track-list" class="compact-list"></div>
+                                        </article>
+                                        <article class="collection-card">
+                                            <p class="eyebrow">New Tracks</p>
+                                            <div id="new-track-list" class="compact-list"></div>
+                                        </article>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="racing" data-panel="rewards">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Daily Reward</p>
+                                        <h2 class="section-title">Race cache progress</h2>
+                                    </div>
+                                    <div id="daily-reward-card" class="reward-board"></div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Profile</p>
+                                        <h2 class="section-title">Racer identity</h2>
+                                    </div>
+                                    <div id="race-profile-card" class="tool-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="racing" data-panel="settings">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Race Tools</p>
+                                        <h2 class="section-title">Quick actions</h2>
+                                    </div>
+                                    <div class="tool-actions">
+                                        <button id="create-zone-open" class="action-button primary"><svg><use href="#icon-map"></use></svg>Make Race Zone</button>
+                                        <button id="join-private-open" class="action-button"><svg><use href="#icon-lock"></use></svg>Join Private Race</button>
+                                        <button id="refresh-racing" class="action-button"><svg><use href="#icon-refresh"></use></svg>Refresh</button>
+                                    </div>
+                                    <label class="field-label">Race nickname
+                                        <input id="race-nickname-input" class="field-input" maxlength="24" placeholder="Set race nickname">
+                                    </label>
+                                    <div class="modal-actions">
+                                        <button id="save-race-profile" class="action-button primary">Save Nickname</button>
+                                    </div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Host Access</p>
+                                        <h2 class="section-title">Grid control</h2>
+                                    </div>
+                                    <div class="tool-list">
+                                        <article class="tool-row"><span>Track creation</span><strong id="racing-tool-create-access">Locked</strong></article>
+                                        <article class="tool-row"><span>Host rights</span><strong id="racing-tool-host-access">Locked</strong></article>
+                                        <article class="tool-row"><span>Your tracks</span><strong id="racing-tool-track-total">0</strong></article>
+                                        <article class="tool-row"><span>Active hosts</span><strong id="racing-tool-host-total">0</strong></article>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <div id="race-message" class="inline-message"></div>
+                    </section>
+
+                    <section class="page" data-page="business">
+                        <div class="page-head">
+                            <div>
+                                <p class="eyebrow">HOA</p>
+                                <h1 class="page-title">Business Control</h1>
+                            </div>
+                        </div>
+
+                        <section class="app-panel active" data-app="business" data-panel="overview">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Role</p>
+                                        <h2 id="business-label" class="section-title">Business</h2>
+                                    </div>
+                                    <div id="business-overview-card" class="tool-list"></div>
+                                    <div class="tool-actions">
+                                        <button id="toggle-duty" class="action-button primary">Clock on</button>
+                                        <button id="set-business-waypoint" class="action-button">Set Waypoint</button>
+                                        <button id="refresh-business" class="action-button">Refresh</button>
+                                    </div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Finance</p>
+                                        <h2 id="business-income" class="section-title">$0 today</h2>
+                                    </div>
+                                    <span id="business-balance" class="meta-copy">$0 account balance</span>
+                                    <div id="business-metrics-card" class="tool-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="business" data-panel="staff">
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Staff</p>
+                                        <h2 class="section-title">Employees</h2>
+                                    </div>
+                                    <div class="inline-form">
+                                        <input id="hire-citizenid-input" class="field-input" maxlength="50" placeholder="Hire by citizen ID">
+                                        <button id="hire-by-citizenid" class="action-button primary">Hire</button>
+                                        <button id="hire-closest" class="action-button">Hire Closest</button>
+                                    </div>
+                                    <div id="employee-list" class="employee-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="business" data-panel="chat">
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Employee Chat</p>
+                                        <h2 class="section-title">Office comms</h2>
+                                    </div>
+                                    <div id="business-chat-list" class="message-list"></div>
+                                    <div id="business-chat-context" class="message-card compact-card business-chat-context hidden"></div>
+                                    <div class="inline-form">
+                                        <input id="business-chat-input" class="field-input" maxlength="220" placeholder="Send message to your business">
+                                        <button id="send-business-message" class="action-button primary">Send</button>
+                                        <button id="cancel-business-chat" class="action-button">Clear</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="business" data-panel="finance">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Money</p>
+                                        <h2 class="section-title">Business account</h2>
+                                    </div>
+                                    <div class="inline-form">
+                                        <input id="business-money-input" class="field-input" type="number" min="1" placeholder="Amount">
+                                        <button id="business-deposit" class="action-button primary">Deposit</button>
+                                        <button id="business-withdraw" class="action-button">Withdraw</button>
+                                    </div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Advertise</p>
+                                        <h2 class="section-title">Push city ad</h2>
+                                    </div>
+                                    <label class="field-label">Ad title
+                                        <input id="business-ad-title" class="field-input" maxlength="60" placeholder="Grand opening">
+                                    </label>
+                                    <label class="field-label">Ad copy
+                                        <textarea id="business-ad-body" class="field-input textarea-input" maxlength="300" placeholder="Tell the city what is live."></textarea>
+                                    </label>
+                                    <label class="field-label">Background image URL
+                                        <input id="business-ad-background" class="field-input" maxlength="255" placeholder="https://image.url/promo.jpg">
+                                    </label>
+                                    <span class="field-note">Recommended image size: 1200x480 or any 5:2 wide banner.</span>
+                                    <div class="modal-actions">
+                                        <button id="post-business-ad" class="action-button primary">Post Advertisement</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <div id="business-message" class="inline-message"></div>
+                    </section>
+
+                    <section class="page" data-page="ads">
+                        <div class="page-head">
+                            <div>
+                                <p class="eyebrow">Advertisements</p>
+                                <h1 class="page-title">City Board</h1>
+                            </div>
+                        </div>
+
+                        <section class="app-panel active" data-app="ads" data-panel="feed">
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Live Board</p>
+                                        <h2 class="section-title">Current advertisements</h2>
+                                    </div>
+                                    <div id="ads-feed-list" class="message-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="ads" data-panel="create">
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Create Ad</p>
+                                        <h2 class="section-title">Broadcast to the city</h2>
+                                    </div>
+                                    <label class="field-label">Title
+                                        <input id="ads-title-input" class="field-input" maxlength="60" placeholder="Tonight at RacePro">
+                                    </label>
+                                    <label class="field-label">Body
+                                        <textarea id="ads-body-input" class="field-input textarea-input" maxlength="300" placeholder="Write your advertisement."></textarea>
+                                    </label>
+                                    <label class="field-label">Background image URL
+                                        <input id="ads-background-input" class="field-input" maxlength="255" placeholder="https://image.url/promo.jpg">
+                                    </label>
+                                    <span class="field-note">Recommended image size: 1200x480 or any 5:2 wide banner.</span>
+                                    <div class="modal-actions">
+                                        <button id="post-advertisement" class="action-button primary">Post Ad</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <div id="ads-message" class="inline-message"></div>
+                    </section>
+
+                    <section class="page" data-page="admin">
+                        <div class="page-head">
+                            <div>
+                                <p class="eyebrow">City Admin</p>
+                                <h1 class="page-title">Control Surface</h1>
+                            </div>
+                        </div>
+
+                        <section class="app-panel active" data-app="admin" data-panel="overview">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Overview</p>
+                                        <h2 class="section-title">Server pulse</h2>
+                                    </div>
+                                    <div id="admin-summary-card" class="tool-list"></div>
+                                </section>
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Shortcuts</p>
+                                        <h2 class="section-title">Quick moderation</h2>
+                                    </div>
+                                    <div class="tool-actions">
+                                        <button id="refresh-admin" class="action-button primary">Refresh Admin</button>
+                                        <button class="action-button" data-open-app="mdt">Open MDT</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="admin" data-panel="races">
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Track Control</p>
+                                        <h2 class="section-title">All saved tracks</h2>
+                                    </div>
+                                    <div id="admin-track-list" class="track-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="admin" data-panel="moderation">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Advertisements</p>
+                                        <h2 class="section-title">Ad cleanup</h2>
+                                    </div>
+                                    <div id="admin-ads-list" class="message-list"></div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">MDT Reports</p>
+                                        <h2 class="section-title">Report cleanup</h2>
+                                    </div>
+                                    <div id="admin-report-list" class="message-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <div id="admin-message" class="inline-message"></div>
+                    </section>
+
+                    <section class="page" data-page="mdt">
+                        <div class="page-head">
+                            <div>
+                                <p class="eyebrow">MDT</p>
+                                <h1 class="page-title">CAD System</h1>
+                            </div>
+                            <div class="page-actions">
+                                <button id="mdt-new-report" class="action-button primary">New Report</button>
+                            </div>
+                        </div>
+
+                        <div id="mdt-report-tabs" class="mdt-tab-strip"></div>
+                        <section id="mdt-report-search-panel" class="section-card mdt-search-panel hidden">
+                            <div class="section-head">
+                                <p class="eyebrow">Search Reports</p>
+                                <h2 class="section-title">Open a case tab</h2>
+                            </div>
+                            <div class="inline-form">
+                                <input id="mdt-report-search-input" class="field-input" maxlength="80" placeholder="Search report title, suspect, charges, or ID">
+                                <button id="mdt-report-search-button" class="action-button primary">Search</button>
+                            </div>
+                            <div id="mdt-report-search-results" class="message-list"></div>
+                        </section>
+
+                        <section class="app-panel active" data-app="mdt" data-panel="overview">
+                            <div class="panel-stack two-column">
+                                <section class="section-card mdt-overview-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Status</p>
+                                        <h2 class="section-title">Assigned to you</h2>
+                                    </div>
+                                    <div id="mdt-summary-card" class="tool-list"></div>
+                                    <div id="mdt-assigned-reports" class="message-list"></div>
+                                </section>
+
+                                <section class="section-card mdt-overview-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Recent Reports</p>
+                                        <h2 class="section-title">Latest activity</h2>
+                                    </div>
+                                    <div id="mdt-overview-reports" class="message-list"></div>
+                                </section>
+                            </div>
+
+                            <div class="panel-stack two-column">
+                                <section class="section-card mdt-overview-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Personnel Updates</p>
+                                        <h2 class="section-title">Recent warnings</h2>
+                                    </div>
+                                    <div id="mdt-warning-feed" class="message-list"></div>
+                                </section>
+
+                                <section class="section-card mdt-overview-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Police Roster</p>
+                                        <h2 class="section-title">Department activity</h2>
+                                    </div>
+                                    <div id="mdt-personnel-feed" class="message-list"></div>
+                                </section>
+                            </div>
+
+                            <div class="panel-stack">
+                                <section class="section-card mdt-overview-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Active Warrants</p>
+                                        <h2 class="section-title">Wanted board</h2>
+                                    </div>
+                                    <div id="mdt-warrant-list" class="message-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="mdt" data-panel="suspects">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Search</p>
+                                        <h2 class="section-title">Find suspect</h2>
+                                    </div>
+                                    <div class="inline-form">
+                                        <input id="mdt-search-input" class="field-input" maxlength="80" placeholder="Citizen ID or name">
+                                        <button id="mdt-search-button" class="action-button primary">Search</button>
+                                    </div>
+                                    <div id="mdt-suspect-results" class="message-list"></div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Profile</p>
+                                        <h2 id="mdt-suspect-name" class="section-title">No suspect selected</h2>
+                                    </div>
+                                    <div id="mdt-suspect-mugshot" class="mdt-mugshot-card">
+                                        <span class="meta-copy">No mugshot on file.</span>
+                                    </div>
+                                    <div id="mdt-suspect-meta" class="tool-list"></div>
+                                    <label class="field-label">Mugshot URL
+                                        <input id="mdt-mugshot-input" class="field-input" maxlength="255" placeholder="https://image.url/mugshot.jpg">
+                                    </label>
+                                    <label class="field-label">Warrant note
+                                        <input id="mdt-warrant-input" class="field-input" maxlength="180" placeholder="Active warrant summary">
+                                    </label>
+                                    <label class="field-label">Officer notes
+                                        <textarea id="mdt-note-input" class="field-input textarea-input" maxlength="400" placeholder="Write case notes."></textarea>
+                                    </label>
+                                    <div class="inline-form inline-form-start">
+                                        <label class="toggle-row"><input id="mdt-warrant-toggle" type="checkbox">Active warrant</label>
+                                        <button id="mdt-save-suspect" class="action-button primary">Save Profile</button>
+                                        <button id="mdt-show-deleted-records" class="action-button" data-toggle-deleted-records>Show Deleted Records</button>
+                                    </div>
+                                    <div class="panel-stack two-column">
+                                        <section class="collection-card">
+                                            <p class="eyebrow">Profile Write-Up</p>
+                                            <label class="field-label">Entry title
+                                                <input id="mdt-profile-entry-title" class="field-input" maxlength="120" placeholder="Field interview">
+                                            </label>
+                                            <label class="field-label">Entry body
+                                                <textarea id="mdt-profile-entry-body" class="field-input textarea-input" maxlength="800" placeholder="Write a profile note, incident summary, or behaviour flag."></textarea>
+                                            </label>
+                                            <div class="modal-actions">
+                                                <button id="mdt-save-profile-entry" class="action-button primary">Add Write-Up</button>
+                                            </div>
+                                        </section>
+
+                                        <section class="collection-card">
+                                            <p class="eyebrow">Vehicles</p>
+                                            <div id="mdt-suspect-vehicles" class="message-list"></div>
+                                        </section>
+                                    </div>
+                                    <section class="collection-card">
+                                        <p class="eyebrow">Deleted Records</p>
+                                        <div id="mdt-deleted-records-list" class="message-list"></div>
+                                    </section>
+                                    <section class="collection-card">
+                                        <p class="eyebrow">Profile History</p>
+                                        <div id="mdt-profile-entry-list" class="message-list"></div>
+                                    </section>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="mdt" data-panel="reports">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Reports</p>
+                                        <h2 class="section-title">Case list</h2>
+                                    </div>
+                                    <div id="mdt-report-list" class="message-list"></div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Editor</p>
+                                        <h2 id="mdt-editor-title" class="section-title">New or edit report</h2>
+                                    </div>
+                                    <input id="mdt-report-id" type="hidden">
+                                    <div class="inline-form">
+                                        <label class="field-label">Report type
+                                            <select id="mdt-report-type" class="field-input">
+                                                <option>Incident</option>
+                                                <option>Arrest</option>
+                                                <option>Investigative</option>
+                                                <option>Warrant</option>
+                                            </select>
+                                        </label>
+                                        <label class="field-label">Status
+                                            <select id="mdt-report-status" class="field-input">
+                                                <option>Open</option>
+                                                <option>Pending</option>
+                                                <option>Closed</option>
+                                                <option>Archived</option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                    <label class="field-label">Report title
+                                        <input id="mdt-report-title" class="field-input" maxlength="80" placeholder="Street race stop">
+                                    </label>
+                                    <label class="field-label">Suspect citizen ID
+                                        <input id="mdt-report-cid" class="field-input" maxlength="50" placeholder="Citizen ID">
+                                    </label>
+                                    <label class="field-label">Suspect name
+                                        <input id="mdt-report-name" class="field-input" maxlength="80" placeholder="Suspect name">
+                                    </label>
+                                    <div id="mdt-report-suspect-card" class="mdt-suspect-inline-card">
+                                        <span class="meta-copy">Select or enter a suspect to load mugshot and fingerprint.</span>
+                                    </div>
+                                    <div class="inline-form">
+                                        <label class="field-label">Incident date
+                                            <input id="mdt-report-incident-date" class="field-input" type="datetime-local">
+                                        </label>
+                                        <label class="field-label">Due date
+                                            <input id="mdt-report-due-date" class="field-input" type="datetime-local">
+                                        </label>
+                                    </div>
+                                    <label class="field-label">Assigned officers
+                                        <input id="mdt-report-officers" class="field-input" maxlength="240" placeholder="Comma separated officer names">
+                                    </label>
+                                    <label class="field-label">Warrants
+                                        <input id="mdt-report-warrants" class="field-input" maxlength="180" placeholder="Warrant details">
+                                    </label>
+                                    <section class="collection-card">
+                                        <div class="section-head">
+                                            <p class="eyebrow">Charges</p>
+                                            <h2 class="section-title">Search and add charges</h2>
+                                        </div>
+                                        <input id="mdt-charge-search" class="field-input" maxlength="80" placeholder="Search charge list">
+                                        <div id="mdt-charge-catalog" class="charge-catalog"></div>
+                                        <div class="mdt-charge-cart-shell">
+                                            <div class="section-head">
+                                                <p class="eyebrow">Selected Charges</p>
+                                                <h2 class="section-title">Current case totals</h2>
+                                            </div>
+                                            <div id="mdt-charge-cart" class="message-list"></div>
+                                            <div id="mdt-charge-summary" class="tool-list"></div>
+                                        </div>
+                                    </section>
+                                    <label class="field-label">Charge summary
+                                        <input id="mdt-report-charges" class="field-input" maxlength="240" placeholder="Built from selected charges or enter custom summary">
+                                    </label>
+                                    <div class="inline-form">
+                                        <input id="mdt-report-fine" class="field-input" type="number" min="0" placeholder="Fine amount">
+                                        <input id="mdt-report-jail" class="field-input" type="number" min="0" placeholder="Jail time">
+                                    </div>
+                                    <label class="field-label">Details
+                                        <textarea id="mdt-report-details" class="field-input textarea-input" maxlength="1200" placeholder="Write report details."></textarea>
+                                    </label>
+                                    <section class="collection-card">
+                                        <div class="section-head">
+                                            <p class="eyebrow">Evidence</p>
+                                            <h2 class="section-title">Photo URLs and linked proof</h2>
+                                        </div>
+                                        <div id="mdt-evidence-list" class="message-list"></div>
+                                        <div class="modal-actions">
+                                            <button id="mdt-add-evidence" class="action-button">Add Evidence Link</button>
+                                        </div>
+                                    </section>
+                                    <div class="modal-actions">
+                                        <button id="mdt-save-report" class="action-button primary">Save Report</button>
+                                        <button id="mdt-delete-current-report" class="action-button">Delete Report</button>
+                                        <button id="mdt-clear-report" class="action-button">Clear</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="mdt" data-panel="personnel">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Officer Search</p>
+                                        <h2 class="section-title">Find department staff</h2>
+                                    </div>
+                                    <div class="inline-form">
+                                        <input id="mdt-officer-search-input" class="field-input" maxlength="80" placeholder="Search officer name or citizen ID">
+                                        <button id="mdt-officer-search-button" class="action-button primary">Search</button>
+                                    </div>
+                                    <div id="mdt-officer-results" class="message-list"></div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Warnings</p>
+                                        <h2 id="mdt-officer-name" class="section-title">No officer selected</h2>
+                                    </div>
+                                    <div id="mdt-officer-meta" class="tool-list"></div>
+                                    <label class="field-label">Warning title
+                                        <input id="mdt-warning-title" class="field-input" maxlength="120" placeholder="Formal warning">
+                                    </label>
+                                    <label class="field-label">Severity
+                                        <select id="mdt-warning-severity" class="field-input">
+                                            <option>Warning</option>
+                                            <option>Final Warning</option>
+                                            <option>Commendation</option>
+                                        </select>
+                                    </label>
+                                    <label class="field-label">Details
+                                        <textarea id="mdt-warning-body" class="field-input textarea-input" maxlength="800" placeholder="Write the officer warning or commendation."></textarea>
+                                    </label>
+                                    <div class="modal-actions">
+                                        <button id="mdt-save-warning" class="action-button primary">Save Warning</button>
+                                    </div>
+                                    <div id="mdt-officer-warning-list" class="message-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <div id="mdt-message" class="inline-message"></div>
+                    </section>
+
+                    <section class="page" data-page="crypto">
+                        <div class="page-head">
+                            <div>
+                                <p class="eyebrow">Crypto Rig</p>
+                                <h1 class="page-title">Active USBs</h1>
+                            </div>
+                        </div>
+
+                        <section class="app-panel active" data-app="crypto" data-panel="overview">
+                            <div class="panel-stack">
+                                <section class="summary-panel">
+                                    <p class="eyebrow">Inserted drive</p>
+                                    <h2 id="crypto-drive" class="section-title">No drive installed</h2>
+                                    <span id="crypto-balance" class="meta-copy">0.000000 Qbit</span>
+                                    <button id="start-mining" class="action-button primary">Start rig</button>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="crypto" data-panel="jobs">
+                            <div class="panel-stack">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Rig Queue</p>
+                                        <h2 class="section-title">Live jobs</h2>
+                                    </div>
+                                    <div id="mining-list" class="mining-list"></div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <section class="app-panel" data-app="crypto" data-panel="settings">
+                            <div class="panel-stack two-column">
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Rig Tools</p>
+                                        <h2 class="section-title">Quick actions</h2>
+                                    </div>
+                                    <div class="tool-actions">
+                                        <button class="action-button primary" data-start-mining-shortcut><svg><use href="#icon-bolt"></use></svg>Start rig</button>
+                                    </div>
+                                </section>
+
+                                <section class="section-card">
+                                    <div class="section-head">
+                                        <p class="eyebrow">Rig Status</p>
+                                        <h2 class="section-title">Device state</h2>
+                                    </div>
+                                    <div class="tool-list">
+                                        <article class="tool-row"><span>Inserted drive</span><strong id="crypto-tool-drive">None</strong></article>
+                                        <article class="tool-row"><span>Active rigs</span><strong id="crypto-tool-active-count">0</strong></article>
+                                        <article class="tool-row"><span>Wallet</span><strong id="crypto-tool-balance">0.000000 Qbit</strong></article>
+                                    </div>
+                                </section>
+                            </div>
+                        </section>
+
+                        <div id="crypto-message" class="inline-message"></div>
+                    </section>
+                </section>
+            </div>
+        </section>
+
+        <div id="modal-layer" class="modal-layer hidden">
+            <div class="modal-shell">
+                <article class="modal-card" data-modal="create-track">
+                    <p class="eyebrow">Race Zone</p>
+                    <h2 class="modal-title">Make Race Zone</h2>
+                    <label class="field-label">Track name
+                        <input id="track-name-input" class="field-input" maxlength="24" placeholder="Southside Sprint">
+                    </label>
+                    <p class="modal-copy">Drive the route. Save it when the line is clean.</p>
+                    <div class="modal-actions">
+                        <button class="action-button" data-close-modal>Cancel</button>
+                        <button id="launch-track-creator" class="action-button primary">Launch Creator</button>
+                    </div>
+                </article>
+
+                <article class="modal-card" data-modal="host-race">
+                    <p class="eyebrow">Host</p>
+                    <h2 id="host-track-title" class="modal-title">Open Race</h2>
+                    <input id="host-track-id" type="hidden">
+                    <label class="field-label">Laps
+                        <input id="host-race-laps" class="field-input" type="number" min="1" max="20" value="3">
+                    </label>
+                    <label class="field-label">Buy-in
+                        <input id="host-race-buyin" class="field-input" type="number" min="0" value="0">
+                    </label>
+                    <label class="field-label">Jackpot contribution
+                        <input id="host-race-jackpot" class="field-input" type="number" min="0" value="0">
+                    </label>
+                    <label class="field-label">Countdown seconds
+                        <input id="host-race-countdown" class="field-input" type="number" min="5" max="120" value="10">
+                    </label>
+                    <label class="field-label">Max racers
+                        <input id="host-race-maxplayers" class="field-input" type="number" min="2" max="64" value="10">
+                    </label>
+                    <label class="field-label">Private code
+                        <input id="host-race-password" class="field-input" maxlength="24" placeholder="Leave blank for public">
+                    </label>
+                    <label class="toggle-row modal-toggle"><input id="host-race-ghostcars" type="checkbox">Ghost cars</label>
+                    <div class="modal-actions">
+                        <button class="action-button" data-close-modal>Cancel</button>
+                        <button id="host-race-submit" class="action-button primary">Host Race</button>
+                    </div>
+                </article>
+
+                <article class="modal-card" data-modal="private-race">
+                    <p class="eyebrow">Join</p>
+                    <h2 class="modal-title">Join Private Race</h2>
+                    <label class="field-label">Race code
+                        <input id="private-race-password" class="field-input" maxlength="24" placeholder="Enter race code">
+                    </label>
+                    <div class="modal-actions">
+                        <button class="action-button" data-close-modal>Cancel</button>
+                        <button id="private-race-submit" class="action-button primary">Find Race</button>
+                    </div>
+                </article>
+
+                <article class="modal-card" data-modal="rename-track">
+                    <p class="eyebrow">Track</p>
+                    <h2 class="modal-title">Rename Track</h2>
+                    <input id="rename-track-id" type="hidden">
+                    <label class="field-label">Track name
+                        <input id="rename-track-input" class="field-input" maxlength="40" placeholder="Track name">
+                    </label>
+                    <div class="modal-actions">
+                        <button class="action-button" data-close-modal>Cancel</button>
+                        <button id="rename-track-submit" class="action-button primary">Save Name</button>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <div id="toast" class="toast hidden"></div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRP Band Hero</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app" class="hidden">
+        <div id="menu" class="panel">
+            <div class="brand">PRP BAND HERO</div>
+            <div id="modeTitle" class="subtitle">Select Song</div>
+
+            <div class="grid">
+                <div>
+                    <label>Song</label>
+                    <select id="songSelect"></select>
+                </div>
+
+                <div>
+                    <label>Difficulty</label>
+                    <select id="difficultySelect">
+                        <option value="easy">Easy - A S D F</option>
+                        <option value="hard">Hard - A S D F G H</option>
+                        <option value="expert">Expert - A S D F G H</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button id="startButton">Start</button>
+                <button id="closeButton" class="secondary">Close</button>
+            </div>
+
+            <div id="help" class="help"></div>
+        </div>
+
+        <div id="game" class="hidden">
+            <div class="topbar">
+                <div>
+                    <div id="songName" class="songName">Song</div>
+                    <div id="status" class="status">Ready</div>
+                </div>
+                <div class="stats">
+                    <span>Score: <b id="score">0</b></span>
+                    <span>Combo: <b id="combo">0</b></span>
+                    <span>Miss: <b id="misses">0</b></span>
+                </div>
+            </div>
+
+            <div id="lanes" class="lanes"></div>
+
+            <div class="bottomHelp">
+                <span id="keysHelp">A S D F</span>
+                <span>ESC = Save/Exit in editor, Exit in play</span>
+                <span>ENTER = Save in editor</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRP Crates</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <div v-if="visible" class="crate-root">
+            <div class="crate-overlay"></div>
+
+            <div class="crate-stage">
+                <div class="crate-pointer"></div>
+
+                <div class="crate-strip-shell">
+                    <div class="crate-strip" ref="strip" :style="stripStyle">
+                        <div
+                            v-for="(item, index) in items"
+                            :key="index + '-' + item.item + '-' + item.rarity"
+                            class="crate-card"
+                            :class="'rarity-' + item.rarity"
+                        >
+                            <div class="crate-card-image-wrap">
+                                <img class="crate-card-image" :src="'nui://qb-inventory/html/images/' + item.image" :alt="item.label">
+                            </div>
+                            <div class="crate-card-footer">
+                                <div class="crate-card-percent">{{ formatPercent(item.percent) }}%</div>
+                                <div class="crate-card-name">{{ item.label }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

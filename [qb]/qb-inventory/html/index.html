@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QB Inventory</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="https://unpkg.com/floating-vue@5.2.2/dist/style.css" />
+    <script src="https://kit.fontawesome.com/d37231be1f.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@floating-ui/core@1.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.1"></script>
+    <script src="https://unpkg.com/floating-vue@5.2.2/dist/floating-vue.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <script src="app.js" defer></script>
+</head>
+
+<body>
+    <div id="app">
+        <div class="prp-overlay" v-if="isInventoryOpen"></div>
+
+        <div class="inventory-container" v-if="isInventoryOpen" @mousemove="drag" @mouseup="endDrag"
+            @mousedown="containerMouseDownAction">
+
+            <section class="prp-panel inventory-panel">
+                <div class="panel-head">
+                    <div>
+                        <div class="panel-kicker">Progression RP</div>
+                        <div class="panel-title">Inventory</div>
+                    </div>
+                    <div class="panel-meta">{{ usedPlayerSlots }} / {{ totalSlots }} slots</div>
+                </div>
+
+                <div class="panel-weight-row">
+                    <span>{{ (playerWeight / 1000).toFixed(1) }} / {{ (maxWeight / 1000).toFixed(1) }} KG</span>
+                    <span>{{ Math.min(Math.floor((playerWeight / maxWeight) * 100) || 0, 100) }}%</span>
+                </div>
+
+                <div class="weight-bar prp">
+                    <div class="weight-bar-fill"
+                        :style="{ width: Math.min((playerWeight / maxWeight) * 100, 100) + '%' }"
+                        :class="weightBarClass"></div>
+                </div>
+
+                <div class="inventory-grid prp-grid">
+                    <div class="item-grid">
+                        <div v-for="slot in visibleInventorySlots" :key="slot" class="item-slot prp-slot"
+                            :data-slot="slot" :class="[
+                            'rarity-' + getRarity(getItemInSlot(slot, 'player')),
+                            { 'invalid-slot-highlight': errorSlot === slot }
+                            ]"
+                            @dblclick="getItemInSlot(slot, 'player') && getItemInSlot(slot, 'player').type !== 'weapon' && useItem(getItemInSlot(slot, 'player'))"
+                            @mousedown="event => handleMouseDown(event, slot, 'player')">
+
+                            <div class="slot-number">{{ slot }}</div>
+
+                            <div class="item-slot-img" v-if="getItemInSlot(slot, 'player')"
+                                v-tooltip.right-end="{content: generateTooltipContent(getItemInSlot(slot, 'player')), html: true}">
+                                <img :src="'images/' + getItemInSlot(slot, 'player').image" alt="" />
+                            </div>
+
+                            <div class="item-slot-amount" v-if="getItemInSlot(slot, 'player')">
+                                <p>x{{ getItemInSlot(slot, 'player').amount }}</p>
+                            </div>
+
+                            <div class="item-slot-durability" v-if="getItemInSlot(slot, 'player')">
+                                <div class="item-slot-durability-fill"
+                                    v-if="getItemInSlot(slot, 'player').info && 'quality' in getItemInSlot(slot, 'player').info"
+                                    :style="{ width: getItemInSlot(slot, 'player').info.quality + '%' }" :class="{
+                                    'high': getItemInSlot(slot, 'player').info.quality > 75,
+                                    'medium': getItemInSlot(slot, 'player').info.quality <= 75 && getItemInSlot(slot, 'player').info.quality > 25,
+                                    'low': getItemInSlot(slot, 'player').info.quality <= 25
+                                }"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="mid-controls" v-if="!isOtherInventoryEmpty && !isShopInventory">
+                <div class="input-wrapper">
+                    <input type="number" v-model="transferAmount" min="1" placeholder="amount" />
+                    <button @click="clearTransferAmount" class="clear-button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <aside class="prp-panel right-panel"
+                :class="{ 'storage-panel': !isOtherInventoryEmpty, 'shop-panel': isShopInventory }">
+                <template v-if="isOtherInventoryEmpty && showDeviceAttachments && selectedDevice">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">Device</div>
+                            <div class="panel-title">Attachments</div>
+                        </div>
+                        <button class="close-button" @click="closeDeviceAttachments">BACK</button>
+                    </div>
+
+                    <div class="weapon-mod-panel">
+                        <div class="weapon-mod-hero">
+                            <img :src="'images/' + selectedDevice.image" alt="" />
+                            <div>
+                                <div class="weapon-mod-name">{{ selectedDevice.label || selectedDevice.name }}</div>
+                                <div class="weapon-mod-note">{{ selectedDeviceModMessage || 'Choose a compatible insert from your inventory.' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Available Inserts</div>
+                            <div class="weapon-mod-grid">
+                                <div v-for="attachment in selectedDeviceAvailableAttachments"
+                                    :key="attachment.attachment + '-' + attachment.slot"
+                                    class="item-slot prp-slot weapon-mod-slot" @click="applyDeviceAttachment(attachment)">
+                                    <div class="slot-number">{{ attachment.slot }}</div>
+                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
+                                    <div class="item-slot-amount">
+                                        <p>x{{ attachment.amount }}</p>
+                                    </div>
+                                    <div class="item-slot-label">
+                                        <p>{{ attachment.label }}</p>
+                                    </div>
+                                </div>
+                                <div class="weapon-mod-empty" v-if="selectedDeviceAvailableAttachments.length === 0">
+                                    No compatible inserts in your inventory.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Installed</div>
+                            <div class="weapon-mod-grid">
+                                <div v-for="attachment in selectedDeviceAttachments" :key="attachment.attachment"
+                                    class="item-slot prp-slot weapon-mod-slot installed device-installed"
+                                    @click="removeDeviceAttachment(attachment)">
+                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
+                                    <div class="item-slot-label">
+                                        <p>{{ attachment.label }}</p>
+                                        <p class="device-mod-detail" v-if="attachment.detail">{{ attachment.detail }}</p>
+                                    </div>
+                                    <button class="device-remove-action" type="button"
+                                        @click.stop="removeDeviceAttachment(attachment)">Remove</button>
+                                </div>
+                                <div class="weapon-mod-empty" v-if="selectedDeviceAttachments.length === 0">
+                                Nothing installed.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else-if="isOtherInventoryEmpty && showWeaponAttachments && selectedWeapon">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">Weapon</div>
+                            <div class="panel-title">Mods</div>
+                        </div>
+                        <button class="close-button" @click="closeWeaponAttachments">BACK</button>
+                    </div>
+
+                    <div class="weapon-mod-panel">
+                        <div class="weapon-mod-hero">
+                            <img :src="'images/' + selectedWeapon.image" alt="" />
+                            <div>
+                                <div class="weapon-mod-name">{{ selectedWeapon.label || selectedWeapon.name }}</div>
+                                <div class="weapon-mod-note">{{ selectedWeaponModMessage || 'Choose a compatible mod from your inventory.' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Available Mods</div>
+                            <div class="weapon-mod-grid">
+                                <div v-for="attachment in selectedWeaponAvailableAttachments"
+                                    :key="attachment.attachment + '-' + attachment.slot"
+                                    class="item-slot prp-slot weapon-mod-slot" @click="applyAttachment(attachment)">
+                                    <div class="slot-number">{{ attachment.slot }}</div>
+                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
+                                    <div class="item-slot-amount">
+                                        <p>x{{ attachment.amount }}</p>
+                                    </div>
+                                    <div class="item-slot-label">
+                                        <p>{{ attachment.label }}</p>
+                                    </div>
+                                </div>
+                                <div class="weapon-mod-empty" v-if="selectedWeaponAvailableAttachments.length === 0">
+                                    No compatible mods in your inventory.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Installed Mods</div>
+                            <div class="weapon-mod-grid">
+                                <div v-for="attachment in selectedWeaponAttachments" :key="attachment.attachment"
+                                    class="item-slot prp-slot weapon-mod-slot installed"
+                                    @click="removeAttachment(attachment)">
+                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
+                                    <div class="item-slot-label">
+                                        <p>{{ attachment.label }}</p>
+                                    </div>
+                                </div>
+                                <div class="weapon-mod-empty" v-if="selectedWeaponAttachments.length === 0">
+                                    No mods installed.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else-if="isOtherInventoryEmpty">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">Character</div>
+                            <div class="panel-title">Equipment</div>
+                        </div>
+                        <button class="close-button" @click="closeInventory">ESC</button>
+                    </div>
+
+                    <div class="equipment-stage">
+                        <div class="equipment-slot hat" data-label="Hat">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot jacket" data-label="Jacket">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot shirt" data-label="Shirt">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot armour" data-label="Armour" data-equipment-slot="armour"
+                            :class="{ equipped: getEquipmentPreview('armour') }"
+                            @dblclick="unequipEquipmentItem('armour')">
+                            <template v-if="getEquipmentPreview('armour')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('armour')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('armour').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('armour').amount || 1 }}</p>
+                                </div>
+                                <div class="equipment-armor-readout">
+                                    {{ getEquipmentArmorPercent(getEquipmentPreview('armour')) }}%
+                                </div>
+                                <div class="equipment-armor-bar">
+                                    <div :style="{ width: getEquipmentArmorPercent(getEquipmentPreview('armour')) + '%' }"></div>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot backpack" data-label="Back">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot pants" data-label="Pants">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot shoes" data-label="Shoes">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="character-outline">
+                            <img src="images/stockman_placeholder.png" class="character-img">
+                        </div>
+                    </div>
+
+                    <div class="inline-hotbar right-hotbar">
+                        <div class="inline-hotbar-title">Quick Slots</div>
+                        <div class="hotbar prp-hotbar vertical">
+                            <div v-for="slot in 4" :key="slot" class="item-slot prp-slot hotbar-slot" :data-slot="slot"
+                                :class="'rarity-' + getRarity(getHotbarItemInSlot(slot))"
+                                @dblclick="getHotbarItemInSlot(slot) && useItem(getHotbarItemInSlot(slot))"
+                                @mousedown="event => handleQuickSlotMouseDown(event, slot)">
+
+                                <div class="item-slot-key">
+                                    <p>{{ slot }}</p>
+                                </div>
+
+                                <div class="item-slot-img" v-if="getHotbarItemInSlot(slot)">
+                                    <img :src="'images/' + getHotbarItemInSlot(slot).image" alt="" />
+                                </div>
+
+                                <div class="item-slot-amount" v-if="getHotbarItemInSlot(slot)">
+                                    <p>x{{ getHotbarItemInSlot(slot).amount }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else>
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">{{ isShopInventory ? 'Shop' : 'Storage' }}</div>
+                            <div class="panel-title">{{ otherInventoryLabel }}</div>
+                        </div>
+                        <button class="close-button" @click="closeInventory">ESC</button>
+                    </div>
+
+                    <div class="panel-weight-row">
+                        <span>{{ (otherInventoryWeight / 1000).toFixed(1) }} / {{ (otherInventoryMaxWeight /
+                            1000).toFixed(1) }} KG</span>
+                        <span>{{ Math.min(Math.floor((otherInventoryWeight / otherInventoryMaxWeight) * 100) || 0, 100)
+                            }}%</span>
+                    </div>
+
+                    <div class="weight-bar prp">
+                        <div class="weight-bar-fill"
+                            :style="{ width: Math.min((otherInventoryWeight / otherInventoryMaxWeight) * 100, 100) + '%' }"
+                            :class="otherWeightBarClass"></div>
+                    </div>
+
+                    <div class="shop-action-panel" v-if="isShopInventory">
+                        <div>
+                            <div class="shop-action-label">Buy amount</div>
+                            <div class="shop-action-rate">Sell back {{ Math.round(shopSellBackRate * 100) }}%</div>
+                        </div>
+                        <div class="shop-amount-control">
+                            <input type="number" v-model="shopAmount" min="1" />
+                            <button @click="shopAmount = 1" class="clear-button">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="inventory-grid prp-grid right-grid">
+                        <div class="item-grid">
+                            <div v-for="slot in otherInventorySlots" :key="slot" class="item-slot prp-slot"
+                                :data-slot="slot" :class="[
+                                'rarity-' + getRarity(getItemInSlot(slot, 'other')),
+                                { 'invalid-slot-highlight': errorSlot === slot }
+                                ]" @mousedown="event => handleMouseDown(event, slot, 'other')">
+
+                                <div class="slot-number">{{ slot }}</div>
+
+                                <div class="item-slot-img" v-if="getItemInSlot(slot, 'other')"
+                                    v-tooltip.left-end="{content: generateTooltipContent(getItemInSlot(slot, 'other')), html: true}">
+                                    <img :src="'images/' + getItemInSlot(slot, 'other').image" alt="" />
+                                </div>
+
+                                <div class="item-slot-amount" v-if="getItemInSlot(slot, 'other')">
+                                    <p>x{{ getItemInSlot(slot, 'other').amount }}</p>
+                                </div>
+
+                                <div class="item-price"
+                                    v-if="isShopInventory && getItemInSlot(slot, 'other') && getItemInSlot(slot, 'other').price !== undefined">
+                                    <p>${{ getItemInSlot(slot, 'other').price }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </aside>
+
+            <div class="notification-container" v-if="showNotification">
+                <div class="notification-slot">
+                    <div class="notification-title">
+                        <p>{{ notificationType }}</p>
+                    </div>
+                    <div class="item-slot-img"><img :src="notificationImage" alt="" /></div>
+                    <div class="item-slot-amount">
+                        <p>x{{ notificationAmount }}</p>
+                    </div>
+                    <div class="item-slot-label">
+                        <p>{{ notificationText }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="required-item-container" v-if="showRequiredItems">
+                <div class="required-item">
+                    <div v-for="(item, index) in requiredItems" :key="index" class="item-slot prp-slot">
+                        <div class="item-slot-img"><img :src="'images/' + item.image" alt="" /></div>
+                        <div class="item-slot-label">
+                            <p>{{ item.label }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ul v-if="showContextMenu" class="context-menu"
+                :style="{ top: contextMenuPosition.top, left: contextMenuPosition.left }" @mousedown.stop @mouseup.stop
+                @click.stop>
+                <template v-if="isShopInventory && contextMenuInventory === 'other'">
+                    <li v-if="contextMenuItem && getShopAmount(contextMenuItem) > 0"
+                        @click="buyContextItem(contextMenuItem)">Buy x{{ getShopAmount(contextMenuItem) }}</li>
+                    <li v-else class="disabled">Out of stock</li>
+                </template>
+
+                <template v-else>
+                    <li v-if="contextMenuItem && normalizeItemAmount(contextMenuItem) > 1"
+                        @click="splitAndPlaceItem(contextMenuItem, contextMenuInventory)">Split</li>
+                    <li v-if="isShopInventory && canSellShopItem(contextMenuItem)" @click="sellItem(contextMenuItem)">
+                        Sell x{{ getShopAmount(contextMenuItem) }} (${{ getShopSellTotal(contextMenuItem) }})
+                    </li>
+                    <li v-else-if="isShopInventory" class="disabled">Shop won't buy this</li>
+                    <li @mouseover="activeSubmenu = 'give'" @mouseleave="activeSubmenu = null">
+                        Give
+                        <ul v-if="activeSubmenu === 'give'" class="submenu">
+                            <li @click="giveItem(contextMenuItem, 1)">Single</li>
+                            <li @click="giveItem(contextMenuItem, 'half')">Half</li>
+                            <li @click="giveItem(contextMenuItem, 'all')">All</li>
+                        </ul>
+                    </li>
+                    <li @mouseover="activeSubmenu = 'drop'" @mouseleave="activeSubmenu = null">
+                        Drop
+                        <ul v-if="activeSubmenu === 'drop'" class="submenu">
+                            <li @click="dropItem(contextMenuItem, 1)">Single</li>
+                            <li @click="dropItem(contextMenuItem, 'half')">Half</li>
+                            <li @click="dropItem(contextMenuItem, 'all')">All</li>
+                        </ul>
+                    </li>
+                    <li v-if="isOtherInventoryEmpty && contextMenuItem && isDeviceAttachmentItem(contextMenuItem)"
+                        @click="openDeviceAttachments(contextMenuItem)">Attachments</li>
+                    <li v-if="isOtherInventoryEmpty && contextMenuItem && contextMenuItem.type === 'weapon'"
+                        @click="openWeaponAttachments(contextMenuItem)">Attachments</li>
+                    <li v-if="contextMenuItem && contextMenuItem.info && contextMenuItem.info.serie"
+                        @click="copySerial(contextMenuItem)">Copy Serial</li>
+                </template>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>

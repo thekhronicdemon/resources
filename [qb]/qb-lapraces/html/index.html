@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QB Lapraces</title>
+    <style>
+        html, body, .container {
+            margin: 0;
+            padding: 0;
+            background: transparent !important;
+            display: none;
+            visibility: hidden;
+            opacity: 0;
+            overflow: hidden;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="editor">
+            <span id="editor-racename">Race: Test Race</span>
+            <span id="editor-checkpoints">Checkpoints: 1 / ?</span>
+            <span id="editor-keys-add"><span class="key good">7</span> Add Checkpoint</span>
+            <span id="editor-keys-tiredistance"></span>
+            <span id="editor-keys-delete"></span>
+            <span id="editor-keys-cancel"><span class="key bad">9</span> Cancel Editor</span>
+            <span id="editor-keys-save"><span class="key good">K</span> Save Race</span>
+        </div>
+
+        <div class="race">
+            <div class="race-top-left">
+                <div class="race-chip"><span>LAP</span><strong id="race-lap">1/1</strong></div>
+                <div class="race-chip"><span>TOTAL</span><strong id="race-totaltime">00.00.000</strong></div>
+                <div class="race-chip"><span>CURRENT</span><strong id="race-time">00.00.000</strong></div>
+                <div class="race-chip"><span>CHECKPOINT</span><strong id="race-checkpoints">1/1</strong></div>
+            </div>
+
+            <div class="race-center">
+                <span id="race-distance" class="race-distance">0M</span>
+                <span class="race-distance-label">CHECKPOINT</span>
+            </div>
+
+            <div class="race-right">
+                <div class="race-right-head">
+                    <div>
+                        <span id="race-position" class="position-pill">P1</span>
+                        <strong id="race-racename">Race</strong>
+                    </div>
+                    <div class="race-foot-metrics">
+                        <span id="race-gap-leader">+00.00.000</span>
+                        <span id="race-gap-lastlap">+00.00.000</span>
+                    </div>
+                </div>
+                <div id="race-leaderboard" class="leaderboard-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+
+</html>

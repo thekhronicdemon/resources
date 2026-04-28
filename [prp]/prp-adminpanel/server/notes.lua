@@ -1,0 +1,1 @@
+-- Notes are handled in server/main.lua in this version.

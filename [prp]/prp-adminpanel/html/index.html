@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRP Admin Panel</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" class="hidden">
+    <aside>
+      <div class="brand"><span>PRP</span><small>Admin Panel</small></div>
+      <button data-tab="home" class="active">Home</button>
+      <button data-tab="search">Players</button>
+      <button data-tab="logs">Logs</button>
+      <button data-tab="audit">Audit</button>
+      <button data-tab="dev">Developer</button>
+      <button id="closeBtn" class="ghost">Close</button>
+    </aside>
+
+    <main>
+      <section id="home" class="tab active">
+        <div class="topline"><h1>Server Overview</h1><button id="refreshBtn">Refresh</button></div>
+        <div class="cards">
+          <div class="card"><span>Player Count</span><strong id="playerCount">0</strong></div>
+          <div class="card"><span>Admins Online</span><strong id="adminCount">0</strong></div>
+          <div class="card"><span>Peak This Hour</span><strong id="hourPeak">0</strong></div>
+        </div>
+        <div id="jobButtons" class="toolbar"></div>
+        <div class="grid2">
+          <div class="panel"><h2>Current Players</h2><div class="toolbar"><button id="allOnlineBtn">Online Players</button><button id="allPlayersBtn">All Players / Offline Search</button></div><div id="playersList" class="list"></div></div>
+          <div class="panel"><h2>Admins Online</h2><div id="adminsList" class="list small"></div></div>
+        </div>
+        <div class="panel"><h2>Live Player Activity Wave</h2><p class="hint">1 player tiny • 20 mid peak • 40-60 high peak • 100 massive peak. Updates live while the panel is open.</p><canvas id="activityCanvas" width="1000" height="240"></canvas></div>
+      </section>
+
+      <section id="search" class="tab">
+        <div class="topline"><h1>Player Management</h1></div>
+        <div class="panel">
+          <h2>Search Player ID / Name / CitizenID / License</h2>
+          <div class="searchbar"><input id="searchInput" placeholder="Example: 12, John, ABC123, license:" /><button id="searchBtn">Search</button></div>
+          <div id="searchResults" class="list searchResults"></div>
+        </div>
+        <div id="profilePanel" class="panel hidden"></div>
+      </section>
+
+      <section id="logs" class="tab">
+        <div class="topline"><h1>Player Logs</h1><button onclick="loadLogs()">Reload Logs</button></div>
+        <div class="panel"><div class="toolbar"><button onclick="loadLogs('join')">Joins</button><button onclick="loadLogs('drop')">Drops</button><button onclick="loadLogs('death')">Deaths</button><button onclick="loadLogs('')">All Logs</button></div><div id="logsList" class="list tall"></div></div>
+      </section>
+
+      <section id="audit" class="tab">
+        <div class="topline"><h1>Admin Audit Log</h1><button onclick="loadAudit()">Reload Audit</button></div>
+        <div class="panel"><div id="auditList" class="list tall"></div></div>
+      </section>
+
+      <section id="dev" class="tab">
+        <div id="devLocked" class="panel hidden"><h2>Developer Options Locked</h2><p>You need developer admin access.</p></div>
+        <div id="devTools" class="devgrid">
+          <div class="panel"><h2>Objects</h2><input id="objectModel" placeholder="prop_barrier_work05" /><label><input id="objectFreeze" type="checkbox" checked /> Freeze Object</label><button data-dev="spawnObject">Spawn / Place Object</button><button data-dev="closestObject">Get Closest Object</button><button data-dev="deleteClosestObject" class="danger">Delete Closest Object</button><p class="hint">Move with camera. Enter places. Backspace cancels.</p></div>
+          <div class="panel"><h2>Cars</h2><input id="vehicleModel" placeholder="sultan" /><label><input id="vehicleLimit" type="checkbox" checked /> Max Vehicle Limit On</label><button data-dev="spawnVehicle">Spawn Car</button></div>
+          <div class="panel"><h2>Ped</h2><input id="pedModel" placeholder="s_m_y_cop_01" /><input id="pedAnim" placeholder="Animation search/name placeholder" /><label><input id="pedFreeze" type="checkbox" checked /> Freeze Ped</label><button data-dev="spawnPed">Spawn Ped</button><button data-dev="closestPed">Get Closest Ped</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

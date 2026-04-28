@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRP Scratch</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <div id="app" class="hidden">
+        <div class="backdrop"></div>
+        <div class="ticket-wrap">
+            <div class="ticket-header">
+                <div>
+                    <h1 id="ticket-title">PRP Scratch Ticket</h1>
+                    <p id="ticket-subtitle">Scratch 4 boxes. Match 3 logos to win.</p>
+                </div>
+                <div class="esc-pill" id="esc-label">Press ESC to close</div>
+            </div>
+
+            <div id="legend" class="legend">
+                <div class="legend-item"><span class="legend-icon">⭐</span> STAR = normal payout</div>
+                <div class="legend-item"><span class="legend-icon">✖2</span> X2 = double payout</div>
+            </div>
+
+            <div id="scratch-grid" class="scratch-grid"></div>
+
+            <div class="footer">
+                <div id="status-text">Click each box to scratch.</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

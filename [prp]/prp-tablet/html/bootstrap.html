@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" style="background: transparent !important; background-color: transparent !important;">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRP Tablet Bootstrap</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+
+        #bootstrap-root {
+            display: none;
+            visibility: hidden;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #bootstrap-root.is-open {
+            display: block;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        #tablet-app-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="bootstrap-root" aria-hidden="true"></div>
+    <script src="bootstrap.js"></script>
+</body>
+</html>

@@ -1,0 +1,608 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0;
+    user-select: none;
+}
+
+.svg-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.hud {
+    position: fixed;
+    inset: 0;
+    color: #f5f8fb;
+    pointer-events: none;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.player-status {
+    position: fixed;
+    left: 1.35vw;
+    bottom: 2.2vh;
+    display: grid;
+    grid-template-columns: 410px auto;
+    align-items: center;
+    width: min(560px, 52vw);
+    column-gap: 14px;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+}
+
+.major-stack {
+    display: grid;
+    grid-auto-rows: 18px;
+    gap: 1px;
+}
+
+.major-row {
+    display: grid;
+    grid-template-columns: 18px 30px minmax(90px, 1fr);
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.major-row svg {
+    width: 15px;
+    height: 15px;
+    fill: #f6f7f9;
+}
+
+.major-row span {
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
+    line-height: 1;
+}
+
+#health-value {
+    color: #36dd4c;
+}
+
+#armor-value {
+    color: #67b7ff;
+}
+
+#stamina-value {
+    color: #f5c542;
+}
+
+.major-track {
+    height: 5px;
+    min-width: 0;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.13);
+    border-radius: 4px;
+}
+
+.major-fill {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    transition: width 120ms linear, background-color 120ms linear;
+}
+
+.health-fill {
+    background: #35dc4c;
+    box-shadow: 0 0 8px rgba(53, 220, 76, 0.65);
+}
+
+.armor-fill {
+    background: #5aaeff;
+    box-shadow: 0 0 8px rgba(90, 174, 255, 0.65);
+}
+
+.stamina-fill {
+    background: #f5c542;
+    box-shadow: 0 0 8px rgba(245, 197, 66, 0.65);
+}
+
+.minor-row {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.minor-chip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 19px;
+    height: 22px;
+    margin-right: 10px;
+    overflow: visible;
+    opacity: 0.72;
+    transition: width 160ms ease, margin-right 160ms ease, opacity 140ms linear, transform 160ms ease;
+}
+
+.minor-chip svg {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    fill: #d9dde4;
+}
+
+.minor-chip.is-collapsed {
+    width: 0;
+    margin-right: 0;
+    opacity: 0;
+    transform: translateY(1px) scale(0.8);
+}
+
+.minor-chip.is-collapsed .minor-accent,
+.minor-chip.is-collapsed svg {
+    opacity: 0;
+}
+
+.minor-chip.is-active,
+.minor-chip.is-warning {
+    opacity: 1;
+}
+
+.minor-chip.is-active {
+    transform: translateY(-1px);
+}
+
+.minor-accent {
+    position: absolute;
+    left: -5px;
+    bottom: 3px;
+    width: 3px;
+    height: 17px;
+    border-radius: 3px;
+    background: #8f99a8;
+    transform: scaleY(1);
+    transform-origin: bottom;
+    transition: transform 120ms linear, background-color 120ms linear;
+}
+
+.food-chip .minor-accent {
+    background: #f5a623;
+}
+
+.water-chip .minor-accent {
+    background: #749fd7;
+}
+
+.stress-chip .minor-accent {
+    background: #ff5a76;
+}
+
+.voice-chip .minor-accent {
+    background: #31c46b;
+}
+
+.radio-chip .minor-accent {
+    background: #7f57ff;
+}
+
+.oxygen-chip .minor-accent {
+    background: #62c7ff;
+}
+
+.minor-chip.is-warning svg {
+    fill: #fff;
+}
+
+.compass {
+    position: fixed;
+    top: 1.8vh;
+    left: 50%;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75));
+}
+
+.compass-pill {
+    max-width: 220px;
+    overflow: hidden;
+    padding: 4px 10px;
+    color: #eef2f4;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: rgba(8, 12, 12, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+}
+
+.direction-pill {
+    min-width: 34px;
+    color: #b8f06a;
+    text-align: center;
+}
+
+.money {
+    position: fixed;
+    top: 6.5vh;
+    right: 2vw;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 10px;
+    background: rgba(8, 12, 12, 0.74);
+    border-radius: 6px;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7));
+}
+
+.money span {
+    color: #9faab5;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.money strong {
+    color: #f5f8fb;
+    font-size: 14px;
+}
+
+.vehicle-hud {
+    position: fixed;
+    right: 1.8vw;
+    bottom: 2.1vh;
+    width: clamp(205px, 22vw, 280px);
+    aspect-ratio: 230 / 160;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
+}
+
+.ammo-hud {
+    position: fixed;
+    right: calc(1.8vw + clamp(16px, 1.9vw, 22px));
+    bottom: calc(2.1vh + clamp(52px, 5vw, 68px));
+    min-width: clamp(74px, 6.2vw, 94px);
+    text-align: right;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
+    transition: bottom 160ms ease, opacity 120ms linear;
+}
+
+.hud.in-vehicle .ammo-hud {
+    bottom: calc(2.1vh + clamp(142px, 12vw, 174px));
+}
+
+.ammo-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    line-height: 0.88;
+}
+
+.ammo-stack strong,
+.ammo-stack span {
+    display: block;
+    text-shadow:
+        0 0 8px rgba(0, 0, 0, 0.85),
+        0 0 2px rgba(0, 0, 0, 0.95);
+}
+
+.ammo-stack strong {
+    color: #adff2f;
+    font-size: clamp(31px, 2.75vw, 40px);
+    font-weight: 900;
+}
+
+.ammo-stack span {
+    color: rgba(245, 248, 251, 0.95);
+    font-size: clamp(18px, 1.35vw, 22px);
+    font-weight: 800;
+}
+
+.speedometer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.speed-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.speed-bg,
+.speed-arc,
+.redline-arc {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 8;
+}
+
+.speed-bg {
+    stroke: rgba(255, 255, 255, 0.26);
+}
+
+.speed-arc {
+    stroke: #0dff00;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    transition: stroke-dashoffset 100ms linear;
+}
+
+.redline-arc {
+    stroke: #ff3f3f;
+    stroke-dasharray: 15 100;
+    stroke-dashoffset: -85;
+    opacity: 0.9;
+}
+
+.speedometer.is-limiter .speed-arc {
+    stroke: #ff3f3f;
+    animation: limiter-pulse 280ms ease-in-out infinite alternate;
+}
+
+.ticks line {
+    stroke: rgba(255, 255, 255, 0.88);
+    stroke-linecap: round;
+    stroke-width: 2;
+}
+
+.tick-labels text {
+    fill: #e7ebee;
+    font-size: 10px;
+    font-weight: 900;
+    text-anchor: middle;
+}
+
+.speed-readout {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translate(-50%, -50%);
+}
+
+.speed-readout strong {
+    color: #f7f7f8;
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 0.9;
+}
+
+.speed-readout span {
+    margin-top: 6px;
+    color: #dce3e8;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.vehicle-meta {
+    position: absolute;
+    right: 49px;
+    bottom: 13px;
+    display: flex;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 8px;
+    font-weight: 900;
+}
+
+.vehicle-bars {
+    position: absolute;
+    right: 48px;
+    bottom: 7px;
+    display: flex;
+    gap: 6px;
+}
+
+.vehicle-bars i {
+    display: block;
+    width: 22px;
+    height: 3px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
+}
+
+.vehicle-bars i::before {
+    display: block;
+    width: var(--value, 100%);
+    height: 100%;
+    content: "";
+    background: var(--color, #1aff00);
+    border-radius: 3px;
+    transition: width 120ms linear, background-color 120ms linear;
+}
+
+#engine-bar {
+    --color: #ff0000;
+}
+
+#belt-bar {
+    --color: #ff0000;
+}
+
+#belt-bar.is-on {
+    --color: #48dc5b;
+}
+
+.fuel-icon {
+    position: absolute;
+    right: 2px;
+    bottom: 22px;
+    width: 18px;
+    height: 18px;
+}
+
+.fuel-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: #f2cf15;
+}
+
+.nitro-widget {
+    position: absolute;
+    left: 25px;
+    bottom: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 92px;
+    padding: 5px 8px;
+    background: rgba(8, 11, 15, 0.72);
+    border: 1px solid rgba(126, 201, 255, 0.22);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.nitro-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    color: #ffef6c;
+    flex: 0 0 14px;
+}
+
+.nitro-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.nitro-track {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+}
+
+.nitro-track i {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    --value: 0%;
+    --color: #f6ff00;
+}
+
+.nitro-track i::before {
+    display: block;
+    width: var(--value, 0%);
+    height: 100%;
+    content: "";
+    background: linear-gradient(90deg, #f6ff00 0%, #ffb800 55%, #ff7e2f 100%);
+    border-radius: inherit;
+    box-shadow: 0 0 10px rgba(246, 255, 0, 0.35);
+    transition: width 120ms linear, opacity 120ms linear, filter 120ms linear;
+}
+
+.nitro-widget.is-active {
+    border-color: rgba(120, 225, 255, 0.58);
+}
+
+.nitro-widget.is-active .nitro-icon {
+    color: #7ae1ff;
+}
+
+.nitro-widget.is-active .nitro-track i::before {
+    background: linear-gradient(90deg, #7ae1ff 0%, #3ac8ff 48%, #0aa0ff 100%);
+    box-shadow: 0 0 14px rgba(58, 200, 255, 0.6);
+    filter: saturate(1.15);
+}
+
+.speedometer.is-nitro-active .nitro-widget {
+    animation: nitro-pulse 220ms ease-in-out infinite alternate;
+}
+
+.gear {
+    position: absolute;
+    top: 48px;
+    right: 17px;
+    min-width: 22px;
+    color: #f5f8fb;
+    font-size: 14px;
+    font-weight: 900;
+    text-align: center;
+}
+
+@keyframes limiter-pulse {
+    from {
+        opacity: 0.82;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes nitro-pulse {
+    from {
+        transform: scale(0.99);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    }
+
+    to {
+        transform: scale(1.01);
+        box-shadow: 0 8px 20px rgba(23, 170, 255, 0.28);
+    }
+}
+
+@media (max-width: 900px) {
+    .player-status {
+        width: min(430px, 58vw);
+        grid-template-columns: 300px auto;
+        column-gap: 10px;
+    }
+
+    .minor-row {
+        gap: 0;
+    }
+
+    .minor-chip {
+        margin-right: 7px;
+    }
+
+    .compass-pill {
+        max-width: 150px;
+        font-size: 10px;
+    }
+
+    .speed-readout strong {
+        font-size: 42px;
+    }
+
+    .speed-readout span {
+        font-size: 12px;
+    }
+
+    .ammo-hud {
+        right: calc(1.8vw + 14px);
+        bottom: calc(2.1vh + 48px);
+    }
+
+    .hud.in-vehicle .ammo-hud {
+        bottom: calc(2.1vh + 118px);
+    }
+}

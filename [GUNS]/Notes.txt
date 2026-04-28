@@ -1,0 +1,3 @@
+Orange
+Pink
+need editing. in everything - items.lua and weapons.lua

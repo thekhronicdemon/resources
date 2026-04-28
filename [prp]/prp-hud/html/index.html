@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="style.css">
+        <script src="app.js" defer></script>
+    </head>
+    <body>
+        <svg class="svg-sprite" aria-hidden="true">
+            <symbol id="icon-heart" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </symbol>
+            <symbol id="icon-shield" viewBox="0 0 24 24">
+                <path d="M12 2l8 3v6c0 5.05-3.41 9.76-8 11-4.59-1.24-8-5.95-8-11V5l8-3zm0 3.15L7 7.03V11c0 3.46 2.09 6.76 5 7.86 2.91-1.1 5-4.4 5-7.86V7.03l-5-1.88z"/>
+            </symbol>
+            <symbol id="icon-food" viewBox="0 0 24 24">
+                <path d="M7 2h1.5v8H10V2h1.5v8c0 2.14-1.22 3.65-3 3.95V22H6v-8.05c-1.78-.3-3-1.81-3-3.95V2h1.5v8H6V2h1zm9.5 0C19 2 21 4.45 21 8c0 2.84-1.21 5.05-3 5.79V22h-2.5V2h1z"/>
+            </symbol>
+            <symbol id="icon-water" viewBox="0 0 24 24">
+                <path d="M12 2C8 6.54 5 10.31 5 14a7 7 0 0 0 14 0c0-3.69-3-7.46-7-12zm0 18a5.01 5.01 0 0 1-5-5c0-2.28 1.76-5.03 5-8.96 3.24 3.93 5 6.68 5 8.96a5.01 5.01 0 0 1-5 5z"/>
+            </symbol>
+            <symbol id="icon-stress" viewBox="0 0 24 24">
+                <path d="M9.2 3.2A4.2 4.2 0 0 0 5 7.4v.3A4.2 4.2 0 0 0 3 15.2 4.4 4.4 0 0 0 7.4 20H10V3.3a4.4 4.4 0 0 0-.8-.1zm5.6 0a4.4 4.4 0 0 0-.8.1V20h2.6a4.4 4.4 0 0 0 4.4-4.8A4.2 4.2 0 0 0 19 7.7v-.3a4.2 4.2 0 0 0-4.2-4.2zM8.5 6.1v2.2H7.4A1.9 1.9 0 0 0 5.5 10.2H3.7a3.7 3.7 0 0 1 3.7-3.7h1.1zm7 0h1.1a3.7 3.7 0 0 1 3.7 3.7h-1.8a1.9 1.9 0 0 0-1.9-1.9h-1.1V6.1zm-7 5.1v1.8H6.7a1.7 1.7 0 0 0 0 3.4h1.8v1.8H6.7a3.5 3.5 0 0 1 0-7h1.8zm7 0h1.8a3.5 3.5 0 0 1 0 7h-1.8v-1.8h1.8a1.7 1.7 0 0 0 0-3.4h-1.8v-1.8z"/>
+            </symbol>
+            <symbol id="icon-mic" viewBox="0 0 24 24">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
+            </symbol>
+            <symbol id="icon-radio" viewBox="0 0 24 24">
+                <path d="M4 9h13a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3zm1 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm8 1v2h5v-2h-5zm0 4v2h3v-2h-3zM9.2 2.3l.8 1.8L4.8 6.4 4 4.6l5.2-2.3z"/>
+            </symbol>
+            <symbol id="icon-lungs" viewBox="0 0 24 24">
+                <path d="M11 3h2v7.1c.68-1.1 1.88-2.1 3.65-2.1C19.68 8 22 10.74 22 15.15V20h-2v-4.85C20 11.92 18.62 10 16.65 10 14.62 10 13 12.12 13 15.15V21h-2v-5.85C11 12.12 9.38 10 7.35 10 5.38 10 4 11.92 4 15.15V20H2v-4.85C2 10.74 4.32 8 7.35 8c1.77 0 2.97 1 3.65 2.1V3z"/>
+            </symbol>
+            <symbol id="icon-fuel" viewBox="0 0 24 24">
+                <path d="M5 3h9a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 1-2zm1 2v6h8V5H6zm13.8 2.2l-2.6-2.6 1.4-1.4 4.4 4.4V18a2 2 0 0 1-2 2h-2v-2h1V9.8l-1.6-1.6 1.4-1z"/>
+            </symbol>
+            <symbol id="icon-bolt" viewBox="0 0 24 24">
+                <path d="M13 2 5 13h5l-1 9 8-11h-5l1-9z"/>
+            </symbol>
+        </svg>
+
+        <main id="hud" class="hud is-hidden">
+            <section id="player-status" class="player-status" aria-hidden="true">
+                <div class="major-stack">
+                    <div id="health-row" class="major-row">
+                        <svg><use href="#icon-heart"></use></svg>
+                        <span id="health-value">100</span>
+                        <div class="major-track"><div id="health-bar" class="major-fill health-fill"></div></div>
+                    </div>
+                    <div id="armor-row" class="major-row is-hidden">
+                        <svg><use href="#icon-shield"></use></svg>
+                        <span id="armor-value">0</span>
+                        <div class="major-track"><div id="armor-bar" class="major-fill armor-fill"></div></div>
+                    </div>
+                    <div id="stamina-row" class="major-row is-hidden">
+                        <svg><use href="#icon-lungs"></use></svg>
+                        <span id="stamina-value">100</span>
+                        <div class="major-track"><div id="stamina-bar" class="major-fill stamina-fill"></div></div>
+                    </div>
+                </div>
+                <div class="minor-row">
+                    <div class="minor-chip food-chip" data-stat="hunger">
+                        <span id="hunger-accent" class="minor-accent"></span>
+                        <svg><use href="#icon-food"></use></svg>
+                    </div>
+                    <div class="minor-chip water-chip" data-stat="thirst">
+                        <span id="thirst-accent" class="minor-accent"></span>
+                        <svg><use href="#icon-water"></use></svg>
+                    </div>
+                    <div class="minor-chip stress-chip" data-stat="stress">
+                        <span id="stress-accent" class="minor-accent"></span>
+                        <svg><use href="#icon-stress"></use></svg>
+                    </div>
+                    <div class="minor-chip voice-chip" id="voice-chip">
+                        <span id="voice-accent" class="minor-accent"></span>
+                        <svg><use href="#icon-mic"></use></svg>
+                    </div>
+                    <div class="minor-chip radio-chip" id="radio-chip">
+                        <span id="radio-accent" class="minor-accent"></span>
+                        <svg><use href="#icon-radio"></use></svg>
+                    </div>
+                    <div class="minor-chip oxygen-chip is-hidden" id="oxygen-chip">
+                        <span id="oxygen-accent" class="minor-accent"></span>
+                        <svg><use href="#icon-lungs"></use></svg>
+                    </div>
+                </div>
+            </section>
+
+            <section id="compass" class="compass is-hidden" aria-hidden="true">
+                <div id="direction-pill" class="compass-pill direction-pill">N</div>
+                <div id="street-pill" class="compass-pill">Great Ocean Hwy</div>
+                <div id="area-pill" class="compass-pill">Lago Zancudo</div>
+            </section>
+
+            <section id="money" class="money is-hidden" aria-hidden="true">
+                <span id="money-label">cash</span>
+                <strong id="money-amount">$0</strong>
+            </section>
+
+            <section id="vehicle-hud" class="vehicle-hud is-hidden" aria-hidden="true">
+                <div class="speedometer">
+                    <svg class="speed-svg" viewBox="0 0 230 160" aria-hidden="true">
+                        <path class="speed-bg" d="M32 124 A83 83 0 1 1 198 124" pathLength="100"/>
+                        <path class="redline-arc" d="M32 124 A83 83 0 1 1 198 124" pathLength="100"/>
+                        <path id="speed-arc" class="speed-arc" d="M32 124 A83 83 0 1 1 198 124" pathLength="100"/>
+                        <g class="ticks">
+                            <line x1="36" y1="124" x2="48" y2="122"/>
+                            <line x1="45" y1="92" x2="56" y2="96"/>
+                            <line x1="68" y1="61" x2="77" y2="70"/>
+                            <line x1="99" y1="42" x2="103" y2="54"/>
+                            <line x1="131" y1="42" x2="127" y2="54"/>
+                            <line x1="162" y1="61" x2="153" y2="70"/>
+                            <line x1="185" y1="92" x2="174" y2="96"/>
+                            <line x1="194" y1="124" x2="182" y2="122"/>
+                        </g>
+                        <g class="tick-labels">
+                            <text x="47" y="119">0</text>
+                            <text x="55" y="91">1</text>
+                            <text x="74" y="65">2</text>
+                            <text x="101" y="49">3</text>
+                            <text x="129" y="49">4</text>
+                            <text x="156" y="65">5</text>
+                            <text x="175" y="91">6</text>
+                            <text x="183" y="119">7</text>
+                        </g>
+                    </svg>
+                    <div class="speed-readout">
+                        <strong id="speed-value">0</strong>
+                        <span id="speed-unit">MPH</span>
+                    </div>
+                    <div class="vehicle-meta">
+                        <span>FUEL</span>
+                        <span>ENG</span>
+                        <span>BELT</span>
+                    </div>
+                    <div class="vehicle-bars">
+                        <i id="fuel-bar"></i>
+                        <i id="engine-bar"></i>
+                        <i id="belt-bar"></i>
+                    </div>
+                    <div class="fuel-icon">
+                        <svg><use href="#icon-fuel"></use></svg>
+                    </div>
+                    <div id="nitro-widget" class="nitro-widget is-hidden" aria-hidden="true">
+                        <span class="nitro-icon">
+                            <svg><use href="#icon-bolt"></use></svg>
+                        </span>
+                        <div class="nitro-track">
+                            <i id="nitro-bar"></i>
+                        </div>
+                    </div>
+                    <div id="gear" class="gear">N</div>
+                </div>
+            </section>
+
+            <section id="ammo-hud" class="ammo-hud is-hidden" aria-hidden="true">
+                <div class="ammo-stack">
+                    <strong id="ammo-clip">0</strong>
+                    <span id="ammo-reserve">0</span>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>
