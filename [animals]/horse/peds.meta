@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CPedModelInfo__InitDataList>
+  <InitDatas>
+    <Item>
+      <Name>a_c_horse</Name>
+      <ClipDictionaryName>move_animals@deer</ClipDictionaryName>
+      <ExpressionSetName />
+      <Pedtype>ANIMAL</Pedtype>
+      <MovementClipSet>move_animals@deer</MovementClipSet>
+      <StrafeClipSet />
+      <MovementToStrafeClipSet />
+      <InjuredStrafeClipSet />
+      <FullBodyDamageClipSet />
+      <AdditiveDamageClipSet />
+      <DefaultGestureClipSet />
+      <FacialClipsetGroupName />
+      <DefaultVisemeClipSet />
+      <PoseMatcherName />
+      <PoseMatcherProneName />
+      <GetupSetHash />
+      <CreatureMetadataName>a_c_horse</CreatureMetadataName>
+      <DecisionMakerName>DEFAULT</DecisionMakerName>
+      <MotionTaskDataSetName>ANIMAL</MotionTaskDataSetName>
+      <DefaultTaskDataSetName>ANIMAL</DefaultTaskDataSetName>
+      <PedCapsuleName>ANIMAL</PedCapsuleName>
+      <RelationshipGroup>DEER</RelationshipGroup>
+      <NavCapabilitiesName>ANIMAL</NavCapabilitiesName>
+      <PerceptionInfo>DEFAULT_PERCEPTION</PerceptionInfo>
+      <DefaultBrawlingStyle />
+      <DefaultUnarmedWeapon>WEAPON_UNARMED</DefaultUnarmedWeapon>
+      <Personality>Animal</Personality>
+      <CombatInfo>DEFAULT</CombatInfo>
+      <VfxInfoName>VFXPEDINFO_ANIMAL</VfxInfoName>
+      <AmbientClipsForFlee>FLEE</AmbientClipsForFlee>
+      <AbilityType>SAT_NONE</AbilityType>
+      <ThermalBehaviour>TB_WARM</ThermalBehaviour>
+      <SuperlodType>SLOD_NULL</SuperlodType>
+      <ScenarioPopStreamingSlot>SCENARIO_POP_STREAMING_NORMAL</ScenarioPopStreamingSlot>
+      <DefaultSpawningPreference>DSP_NORMAL</DefaultSpawningPreference>
+      <IsStreamedGfx value="false" />
+    </Item>
+  </InitDatas>
+</CPedModelInfo__InitDataList>
