@@ -20,7 +20,7 @@ Config.DoorDebug = false -- Enable DRAWTEXT in the world at the coords where the
 Config.RemoteTriggerDistance = 15.0 -- This is how far from your camera the raycast will go to try to hit something solid
 Config.RemoteTriggerMinDistance = 5.0 -- This is the minimum distance required for the raycast hit to count near a door. It will take the larger two between this and 'distance' option
 
-Config.Consumables = { ['ticket'] = 1, ['paperclip'] = 1 } -- The items will get removed once used on a door that has the item on it
+Config.Consumables = { ['screwdriverset'] = 1, ['paperclip'] = 1 } -- The items will get removed once used on a door that has the item on it
 
 --[[ -- Configuration Options
 Config.DoorList['configname-identifier'] = {
@@ -57,7 +57,7 @@ Config.DoorList = {
 		authorizedJobs = { 'police' },
 		objYaw = -110.0,
 		locked = true,
-		pickable = false,
+		pickable = true,
 		distance = 1.5,
 	},
 	--door2 for pacific opened with thermite right near the vault door

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>PRP Crafting</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app" class="hidden">
+        <div class="overlay"></div>
+        <main class="panel">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">Progression Roleplay</p>
+                    <h1 id="title">PRP Crafting</h1>
+                    <p id="subtitle" class="subtitle">Skill tree only. Craft at benches.</p>
+                </div>
+                <div class="actions">
+                    <button id="backBtn" class="ghost hidden">Skill Tree</button>
+                    <button id="closeBtn" class="close">ESC</button>
+                </div>
+            </header>
+
+            <section id="dashboard" class="dashboard"></section>
+
+            <section id="bench" class="bench hidden">
+                <div class="benchStats">
+                    <div class="stat"><span>Level</span><strong id="benchLevel">1</strong></div>
+                    <div class="stat"><span>XP</span><strong id="benchXP">0</strong></div>
+                    <div class="stat"><span>Points</span><strong id="benchPoints">0</strong></div>
+                    <div class="stat"><span>Unlocked</span><strong id="benchRecipes">0/0</strong></div>
+                    <div class="stat wide"><span>Next Unlock</span><strong id="benchNext">All recipes unlocked</strong></div>
+                </div>
+                <div class="searchRow">
+                    <input id="searchInput" placeholder="Search recipes..." />
+                    <select id="filterSelect">
+                        <option value="all">All Recipes</option>
+                        <option value="craftable">Craftable</option>
+                        <option value="locked">Locked</option>
+                    </select>
+                </div>
+                <div id="recipeList" class="recipes"></div>
+            </section>
+
+            <div id="busy" class="busy hidden">Crafting...</div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
