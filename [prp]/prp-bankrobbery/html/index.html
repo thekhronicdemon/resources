@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRP Bank Robbery Minigames</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" class="hidden">
+    <div class="panel">
+      <div class="topline">
+        <div>
+          <h1 id="title">Minigame</h1>
+          <p id="subtitle">Complete the action.</p>
+        </div>
+        <button id="closeBtn">ESC</button>
+      </div>
+
+      <div id="keypadGame" class="game hidden">
+        <div class="screen">
+          <div id="sequenceText">READY</div>
+          <div id="keypadStatus">Watch the code.</div>
+        </div>
+        <div id="keypadGrid" class="keypad-grid"></div>
+      </div>
+
+      <div id="lockpickGame" class="game hidden">
+        <div class="lock-track">
+          <div id="lockZone" class="lock-zone"></div>
+          <div id="lockPin" class="lock-pin"></div>
+        </div>
+        <div class="hint">Press <b>SPACE</b> when the pin is inside the green zone.</div>
+        <div id="lockpickStatus" class="status">Round 1</div>
+      </div>
+
+      <div id="drillGame" class="game hidden">
+        <div class="drill-wrap">
+          <div class="meter"><span id="drillProgress"></span></div>
+          <small>DRILL PROGRESS</small>
+          <div class="meter heat"><span id="drillHeat"></span></div>
+          <small>HEAT</small>
+        </div>
+        <div class="hint">Hold <b>SPACE</b> to drill. Release to cool down.</div>
+        <div id="drillStatus" class="status">Keep it steady.</div>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
