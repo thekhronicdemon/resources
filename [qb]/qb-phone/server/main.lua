@@ -12,6 +12,23 @@ local bannedCharacters = { '%', '$', ';' }
 local TWData = {}
 local TabletMining = {}
 
+local function SafeSchemaQuery(query)
+    local ok, err = pcall(function()
+        MySQL.query.await(query)
+    end)
+
+    if not ok then
+        print(('^3[qb-phone] Schema update skipped: %s^7'):format(tostring(err)))
+    end
+end
+
+MySQL.ready(function()
+    SafeSchemaQuery('ALTER TABLE phone_gallery MODIFY image LONGTEXT NOT NULL')
+    SafeSchemaQuery('ALTER TABLE phone_messages MODIFY messages LONGTEXT DEFAULT NULL')
+    SafeSchemaQuery('ALTER TABLE phone_tweets MODIFY url LONGTEXT DEFAULT NULL')
+    SafeSchemaQuery('ALTER TABLE phone_tweets MODIFY picture LONGTEXT DEFAULT \'./img/default.png\'')
+end)
+
 -- Functions
 
 local function Notify(source, message, notifyType)
@@ -1406,7 +1423,6 @@ QBCore.Functions.CreateCallback('qb-phone:server:GetWebhook', function(_, cb)
     if WebHook ~= '' then
         cb(WebHook)
     else
-        print('Set your webhook to ensure that your camera will work!!!!!! Set this on line 9 of the server sided script!!!!!')
         cb(nil)
     end
 end)

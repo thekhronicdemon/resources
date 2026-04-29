@@ -105,6 +105,55 @@ local function OpenTablet()
     end)
 end
 
+local function PushTerminalResult(payload)
+    SendNUIMessage({
+        action = 'tabletTerminalResult',
+        payload = payload or {},
+    })
+end
+
+local function LaunchTabletHack(command, prepared)
+    if GetResourceState('prp-hacks') ~= 'started' then
+        PushTerminalResult({
+            success = false,
+            command = command,
+            message = 'prp-hacks is offline.',
+        })
+        return
+    end
+
+    local ok, started = pcall(function()
+        return exports['prp-hacks']:StartHack(prepared.hack.game, prepared.hack.options or {}, function(success)
+            if not success then
+                PushTerminalResult({
+                    success = false,
+                    command = command,
+                    message = 'Hack failed. USB remains locked.',
+                })
+                return
+            end
+
+            QBCore.Functions.TriggerCallback('prp-tablet:server:CompleteTerminalHack', function(resp)
+                PushTerminalResult({
+                    success = resp and resp.success ~= false,
+                    command = command,
+                    message = resp and resp.message or 'USB unlocked.',
+                    lines = resp and resp.lines or nil,
+                    status = resp and resp.status or nil,
+                })
+            end, prepared.drive and prepared.drive.serial)
+        end)
+    end)
+
+    if not ok or started == false then
+        PushTerminalResult({
+            success = false,
+            command = command,
+            message = 'Hack terminal is busy right now.',
+        })
+    end
+end
+
 local function GetClosestServerPlayer(radius)
     local player, distance = QBCore.Functions.GetClosestPlayer()
     if player == -1 or distance > (radius or 3.0) then return nil end
@@ -157,11 +206,11 @@ RegisterNetEvent('prp-tablet:client:UseTablet', function()
     OpenTablet()
 end)
 
-RegisterNetEvent('prp-tablet:client:MiningComplete', function(_, message, activeMining)
+RegisterNetEvent('prp-tablet:client:MiningComplete', function(_, message, status)
     SendNUIMessage({
         action = 'tabletMiningComplete',
         message = message or 'Crypto reward received.',
-        activeMining = activeMining or {},
+        status = status or { activeMining = {} },
     })
     QBCore.Functions.Notify(message or 'Crypto reward received.', 'success')
 end)
@@ -185,6 +234,34 @@ RegisterNUICallback('TabletStartCryptoMine', function(_, cb)
     QBCore.Functions.TriggerCallback('prp-tablet:server:StartCryptoMine', function(resp)
         cb(resp or { success = false, message = 'Crypto rig failed to start.' })
     end)
+end)
+
+RegisterNUICallback('TabletStartUsbDepletion', function(data, cb)
+    QBCore.Functions.TriggerCallback('prp-tablet:server:StartUsbDepletion', function(resp)
+        cb(resp or { success = false, message = 'USB depletion failed to start.' })
+    end, data and data.serial)
+end)
+
+RegisterNUICallback('TabletRunTerminalCommand', function(data, cb)
+    local command = Trim(data and data.command)
+    if command == '' then
+        cb({ success = false, message = 'No terminal command entered.' })
+        return
+    end
+
+    QBCore.Functions.TriggerCallback('prp-tablet:server:PrepareTerminalHack', function(resp)
+        if not resp or resp.success == false then
+            cb(resp or { success = false, message = 'Terminal command failed.' })
+            return
+        end
+
+        cb({
+            success = true,
+            pending = true,
+            message = resp.message or 'Launching terminal hack...',
+        })
+        LaunchTabletHack(command, resp)
+    end, command:gsub('^run%s+', ''))
 end)
 
 RegisterNUICallback('TabletGetRacingData', function(_, cb)
@@ -482,78 +559,6 @@ RegisterNUICallback('TabletGetAdminData', function(_, cb)
     QBCore.Functions.TriggerCallback('prp-tablet:server:GetAdminData', function(resp)
         cb(resp or { success = false, message = 'Admin data unavailable.' })
     end)
-end)
-
-RegisterNUICallback('TabletGetMdtData', function(_, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:GetMdtData', function(resp)
-        cb(resp or { success = false, message = 'MDT data unavailable.' })
-    end)
-end)
-
-RegisterNUICallback('TabletSearchMdtSuspects', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:SearchMdtSuspects', function(resp)
-        cb(resp or { success = false, message = 'Search failed.', suspects = {} })
-    end, data and data.query)
-end)
-
-RegisterNUICallback('TabletGetMdtSuspect', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:GetMdtSuspect', function(resp)
-        cb(resp or { success = false, message = 'Could not load suspect.' })
-    end, data and data.citizenid)
-end)
-
-RegisterNUICallback('TabletSaveMdtSuspect', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:SaveMdtSuspect', function(resp)
-        cb(resp or { success = false, message = 'Could not save suspect.' })
-    end, data)
-end)
-
-RegisterNUICallback('TabletSaveMdtReport', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:SaveMdtReport', function(resp)
-        cb(resp or { success = false, message = 'Could not save report.' })
-    end, data)
-end)
-
-RegisterNUICallback('TabletDeleteMdtReport', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:DeleteMdtReport', function(resp)
-        cb(resp or { success = false, message = 'Could not delete report.' })
-    end, data and data.id)
-end)
-
-RegisterNUICallback('TabletSearchMdtReports', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:SearchMdtReports', function(resp)
-        cb(resp or { success = false, message = 'Could not search reports.', reports = {} })
-    end, data and data.query)
-end)
-
-RegisterNUICallback('TabletClearMdtWarrant', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:ClearMdtWarrant', function(resp)
-        cb(resp or { success = false, message = 'Could not clear warrant.' })
-    end, data and data.citizenid)
-end)
-
-RegisterNUICallback('TabletAddMdtProfileEntry', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:AddMdtProfileEntry', function(resp)
-        cb(resp or { success = false, message = 'Could not save profile write-up.' })
-    end, data)
-end)
-
-RegisterNUICallback('TabletSearchPolicePersonnel', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:SearchPolicePersonnel', function(resp)
-        cb(resp or { success = false, message = 'Could not load police personnel.', personnel = {} })
-    end, data and data.query)
-end)
-
-RegisterNUICallback('TabletGetPoliceOfficer', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:GetPoliceOfficer', function(resp)
-        cb(resp or { success = false, message = 'Could not load officer.' })
-    end, data and data.citizenid)
-end)
-
-RegisterNUICallback('TabletSavePoliceWarning', function(data, cb)
-    QBCore.Functions.TriggerCallback('prp-tablet:server:SavePoliceWarning', function(resp)
-        cb(resp or { success = false, message = 'Could not save police warning.' })
-    end, data)
 end)
 
 CreateThread(function()

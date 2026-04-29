@@ -650,6 +650,44 @@ body {
     cursor: pointer;
 }
 
+.device-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.device-module-slot {
+    min-height: 118px;
+}
+
+.device-module-slot.installed {
+    cursor: grab;
+}
+
+.device-slot-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 18px 10px 10px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.device-slot-empty strong {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.device-slot-empty span {
+    font-size: 11px;
+    line-height: 1.3;
+}
+
 .device-remove-action {
     position: absolute;
     right: 8px;

@@ -179,7 +179,8 @@ local DeviceAttachmentItems = {
     },
     tablet = {
         crypto_usb = true,
-        cryptostick = true
+        cryptostick = true,
+        command_usb = true
     }
 }
 
@@ -199,21 +200,47 @@ local function FormatDeviceAttachments(itemdata)
                 label = itemInfo and itemInfo.label or 'SIM Card',
                 image = itemInfo and itemInfo.image or 'simcard.png',
                 detail = info.simNumber,
-                removable = true
+                removable = true,
+                deviceSlot = tonumber(info.simSlot) or 1
             }
         }
     end
 
-    if itemdata.name == 'tablet' and info.cryptoDrive then
-        return {
-            {
-                attachment = info.cryptoDrive.item or 'cryptostick',
-                label = info.cryptoDrive.label or 'Crypto Drive',
-                image = info.cryptoDrive.image or 'cryptostick.png',
-                detail = 'Inserted',
-                removable = true
+    if itemdata.name == 'tablet' then
+        local attachments = {}
+
+        if type(info.commandUsb) == 'table' then
+            attachments[#attachments + 1] = {
+                attachment = ('command_usb|%s'):format(tostring(info.commandUsb.serial or 'module')),
+                label = info.commandUsb.label or 'Command USB',
+                image = info.commandUsb.image or 'usb_device.png',
+                detail = 'Installed',
+                removable = true,
+                deviceSlot = tonumber(info.commandUsb.deviceSlot) or 1
             }
-        }
+        end
+
+        local drives = {}
+        if type(info.cryptoDrives) == 'table' then
+            drives = info.cryptoDrives
+        elseif type(info.cryptoDrive) == 'table' then
+            drives = { info.cryptoDrive }
+        end
+
+        for _, drive in pairs(drives) do
+            if type(drive) == 'table' then
+                attachments[#attachments + 1] = {
+                    attachment = ('%s|%s'):format(drive.item or 'cryptostick', tostring(drive.serial or drive.code or 'drive')),
+                    label = drive.label or 'Crypto Drive',
+                    image = drive.image or 'cryptostick.png',
+                    detail = drive.commandName or drive.code or 'Inserted',
+                    removable = true,
+                    deviceSlot = tonumber(drive.deviceSlot)
+                }
+            end
+        end
+
+        return attachments
     end
 
     return {}
@@ -225,11 +252,14 @@ local function FormatAvailableDeviceAttachments(itemdata)
 
     local info = type(itemdata.info) == 'table' and itemdata.info or {}
     if itemdata.name == 'phone' and info.simNumber then return available end
-    if itemdata.name == 'tablet' and info.cryptoDrive then return available end
 
     local allowed = DeviceAttachmentItems[itemdata.name] or {}
+    local commandInstalled = itemdata.name == 'tablet' and type(info.commandUsb) == 'table'
     for _, invItem in pairs(PlayerData.items) do
         if invItem and invItem.name and allowed[invItem.name] then
+            if commandInstalled and invItem.name == 'command_usb' then
+                goto continue
+            end
             local itemInfo = QBCore.Shared.Items[invItem.name]
             available[#available + 1] = {
                 attachment = invItem.name,
@@ -239,6 +269,7 @@ local function FormatAvailableDeviceAttachments(itemdata)
                 slot = invItem.slot
             }
         end
+        ::continue::
     end
 
     return available
@@ -253,7 +284,7 @@ local function BuildDeviceAttachmentData(itemdata, message)
         if itemdata and itemdata.name == 'phone' then
             note = 'Install a SIM card to activate this phone number.'
         elseif itemdata and itemdata.name == 'tablet' then
-            note = 'Insert a crypto drive before running the tablet rig.'
+            note = 'Install a Command USB for terminal access and load crypto USBs into the tablet.'
         end
     end
 
@@ -270,10 +301,10 @@ local function AddAvailableDeviceAttachment(payload, deviceData, invItem)
 
     local info = type(deviceData.info) == 'table' and deviceData.info or {}
     if deviceData.name == 'phone' and info.simNumber then return end
-    if deviceData.name == 'tablet' and info.cryptoDrive then return end
 
     local allowed = DeviceAttachmentItems[deviceData.name] or {}
     if not allowed[invItem.name] then return end
+    if deviceData.name == 'tablet' and type(info.commandUsb) == 'table' and invItem.name == 'command_usb' then return end
 
     payload.AvailableAttachments = payload.AvailableAttachments or {}
     for _, existing in pairs(payload.AvailableAttachments) do

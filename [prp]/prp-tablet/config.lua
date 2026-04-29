@@ -25,12 +25,6 @@ Config.Apps = {
         description = 'Launch installed crypto drives.',
     },
     {
-        id = 'mdt',
-        label = 'MDT',
-        description = 'Suspects, reports, and warrants.',
-        leoOnly = true,
-    },
-    {
         id = 'admin',
         label = 'City Admin',
         description = 'Delete, moderate, and override live app data.',
@@ -63,6 +57,22 @@ Config.CryptoMining = {
     MaxSeconds = 900,
     MinReward = 0.12,
     MaxReward = 0.85,
+}
+
+Config.Terminal = {
+    Item = 'command_usb',
+    RootPath = '~/main/',
+    HackGames = { 'typing', 'memory', 'tetris', 'crossy', 'flappy' },
+    KnownCommands = {
+        'run cmd',
+    },
+    HackOptions = {
+        typing = { timeLimit = 35, targetCount = 18, title = 'USB KERNEL CHECK' },
+        memory = { duration = 25, targetPairs = 6, title = 'USB MEMORY TRACE' },
+        tetris = { linesTarget = 8, speed = 1, title = 'USB STACK BREAK' },
+        crossy = { distanceTarget = 12, title = 'USB PATH TRACE' },
+        flappy = { pipesTarget = 10, title = 'USB SIGNAL BYPASS' },
+    }
 }
 
 Config.Racing = {

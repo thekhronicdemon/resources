@@ -686,9 +686,139 @@ local DeviceAttachmentItems = {
     },
     tablet = {
         crypto_usb = true,
-        cryptostick = true
+        cryptostick = true,
+        command_usb = true
     }
 }
+
+local CopyTable
+
+local function GenerateTabletUsbCode()
+    return string.char(math.random(65, 90)) .. string.format('%02d', math.random(0, 99))
+end
+
+local function GetNextTabletModuleSlot(info)
+    info = type(info) == 'table' and info or {}
+
+    local used = {}
+    if type(info.commandUsb) == 'table' then
+        local slot = tonumber(info.commandUsb.deviceSlot)
+        if slot and slot > 0 then
+            used[slot] = true
+        end
+    end
+
+    if type(info.cryptoDrives) == 'table' then
+        for _, drive in ipairs(info.cryptoDrives) do
+            if type(drive) == 'table' then
+                local slot = tonumber(drive.deviceSlot)
+                if slot and slot > 0 then
+                    used[slot] = true
+                end
+            end
+        end
+    end
+
+    for index = 1, 24 do
+        if not used[index] then
+            return index
+        end
+    end
+
+    return 1
+end
+
+local function IsTabletModuleSlotOccupied(info, targetSlot, ignoreAttachment, ignoreIdentifier)
+    targetSlot = tonumber(targetSlot)
+    if not targetSlot then return false end
+
+    info = type(info) == 'table' and info or {}
+
+    if type(info.commandUsb) == 'table' then
+        local commandSlot = tonumber(info.commandUsb.deviceSlot)
+        local commandIdentifier = tostring(info.commandUsb.serial or '')
+        if commandSlot == targetSlot and not (ignoreAttachment == 'command_usb' and ignoreIdentifier == commandIdentifier) then
+            return true
+        end
+    end
+
+    if type(info.cryptoDrives) == 'table' then
+        for _, drive in ipairs(info.cryptoDrives) do
+            if type(drive) == 'table' then
+                local driveSlot = tonumber(drive.deviceSlot)
+                local driveIdentifier = tostring(drive.serial or drive.code or '')
+                if driveSlot == targetSlot and not (ignoreAttachment == tostring(drive.item or 'crypto_usb'):lower() and ignoreIdentifier == driveIdentifier) then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+local function NormalizeTabletDeviceInfo(info)
+    info = type(info) == 'table' and CopyTable(info) or {}
+
+    local drives = {}
+    if type(info.cryptoDrives) == 'table' then
+        for _, drive in pairs(info.cryptoDrives) do
+            if type(drive) == 'table' then
+                local copy = CopyTable(drive)
+                copy.item = copy.item or 'crypto_usb'
+                copy.code = tostring(copy.code or GenerateTabletUsbCode()):upper()
+                if not copy.code:match('^[A-Z]%d%d$') then
+                    copy.code = GenerateTabletUsbCode()
+                end
+                copy.commandName = copy.commandName or ('crypto_usb_' .. copy.code)
+                copy.deviceSlot = tonumber(copy.deviceSlot) or #drives + 1
+                drives[#drives + 1] = copy
+            end
+        end
+    elseif type(info.cryptoDrive) == 'table' then
+        local copy = CopyTable(info.cryptoDrive)
+        copy.item = copy.item or 'crypto_usb'
+        copy.code = tostring(copy.code or GenerateTabletUsbCode()):upper()
+        if not copy.code:match('^[A-Z]%d%d$') then
+            copy.code = GenerateTabletUsbCode()
+        end
+        copy.commandName = copy.commandName or ('crypto_usb_' .. copy.code)
+        copy.deviceSlot = tonumber(copy.deviceSlot) or 1
+        drives[#drives + 1] = copy
+    end
+
+    info.cryptoDrives = #drives > 0 and drives or nil
+    info.cryptoDrive = drives[1] and CopyTable(drives[1]) or nil
+
+    if type(info.commandUsb) ~= 'table' then
+        info.commandUsb = nil
+    else
+        info.commandUsb = CopyTable(info.commandUsb)
+        info.commandUsb.item = info.commandUsb.item or 'command_usb'
+        info.commandUsb.label = info.commandUsb.label or 'Command USB'
+        info.commandUsb.deviceSlot = tonumber(info.commandUsb.deviceSlot) or GetNextTabletModuleSlot({ cryptoDrives = info.cryptoDrives })
+    end
+
+    local parts = {}
+    if info.commandUsb then
+        parts[#parts + 1] = 'Command USB installed'
+    end
+    if info.cryptoDrives and #info.cryptoDrives > 0 then
+        parts[#parts + 1] = ('Crypto USBs: %s'):format(#info.cryptoDrives)
+    end
+    info.description = (#parts > 0) and table.concat(parts, ' | ') or 'No tablet modules installed'
+
+    return info
+end
+
+local function ParseTabletAttachmentToken(value)
+    local token = tostring(value or '')
+    local itemName, identifier = token:match('^([^|]+)|(.+)$')
+    if not itemName then
+        itemName = token
+    end
+    return tostring(itemName or ''):lower(), identifier
+end
 
 local function GenerateSimNumber()
     local number = '04'
@@ -771,7 +901,7 @@ local function EnsurePhoneDeviceInfo(Player, phoneInfo)
     return phoneInfo
 end
 
-local function CopyTable(value)
+CopyTable = function(value)
     if type(value) ~= 'table' then return value end
 
     local copy = {}
@@ -973,6 +1103,7 @@ local function ApplyDeviceAttachment(src, deviceSlot, attachmentSlot)
             return { success = false, message = 'This phone already has a SIM card' }
         end
 
+        local preferredDeviceSlot = nil --tonumber(attachmentData.deviceSlot) or 1
         local simInfo = NormalizeSimCardInfo(attachmentInfo)
         local simNumber = simInfo.simNumber
         local simSerial = simInfo.simSerial
@@ -995,6 +1126,7 @@ local function ApplyDeviceAttachment(src, deviceSlot, attachmentSlot)
         deviceInfo = EnsurePhoneDeviceInfo(Player, CopyTable(deviceItem.info))
         deviceInfo.simNumber = simNumber
         deviceInfo.simSerial = simSerial
+        deviceInfo.simSlot = preferredDeviceSlot
         deviceInfo.simContacts = simContacts
         deviceInfo.description = 'SIM: ' .. simNumber
         deviceItem = SetInventoryItemInfoBySlot(Player, deviceSlot, deviceInfo, deviceInfo.description)
@@ -1016,26 +1148,45 @@ local function ApplyDeviceAttachment(src, deviceSlot, attachmentSlot)
     end
 
     if mode == 'tablet' then
-        if deviceInfo.cryptoDrive then
-            return { success = false, message = 'This tablet already has a crypto drive inserted' }
-        end
-
         local attachmentName = attachmentItem.name
         local attachmentConfig = QBCore.Shared.Items[attachmentName]
+        deviceInfo = NormalizeTabletDeviceInfo(deviceInfo)
+        local preferredDeviceSlot = nil--tonumber(attachmentData.deviceSlot)
+
         if not attachmentInfo.serial and not attachmentInfo.serie then
-            attachmentInfo.serial = 'DRIVE-' .. QBCore.Shared.RandomStr(4) .. QBCore.Shared.RandomInt(4)
+            if attachmentName == 'command_usb' then
+                attachmentInfo.serial = 'CMD-' .. QBCore.Shared.RandomStr(4) .. QBCore.Shared.RandomInt(4)
+            else
+                attachmentInfo.serial = 'DRIVE-' .. QBCore.Shared.RandomStr(4) .. QBCore.Shared.RandomInt(4)
+            end
         end
-        local driveData = {
+
+        if attachmentName == 'command_usb' and deviceInfo.commandUsb then
+            return { success = false, message = 'This tablet already has a command USB installed' }
+        end
+
+        if preferredDeviceSlot and IsTabletModuleSlotOccupied(deviceInfo, preferredDeviceSlot) then
+            return { success = false, message = 'That tablet slot is already occupied' }
+        end
+
+        local moduleData = {
             item = attachmentName,
             label = attachmentConfig and attachmentConfig.label or attachmentItem.label or attachmentName,
             image = attachmentConfig and attachmentConfig.image or attachmentItem.image or (attachmentName .. '.png'),
             inserted = os.time(),
             serial = attachmentInfo.serie or attachmentInfo.serial or attachmentInfo.simSerial,
-            info = attachmentInfo
+            info = attachmentInfo,
+            deviceSlot = preferredDeviceSlot
         }
+        if attachmentName ~= 'command_usb' then
+            moduleData.code = GenerateTabletUsbCode()
+            moduleData.commandName = 'crypto_usb_' .. moduleData.code
+            moduleData.readyToDeplete = attachmentInfo.readyToDeplete == true
+            moduleData.hacked = attachmentInfo.hacked == true
+        end
 
         if not RemoveInventoryItemBySlot(Player, attachmentName, attachmentSlot, 1) then
-            return { success = false, message = 'Could not insert crypto drive' }
+            return { success = false, message = attachmentName == 'command_usb' and 'Could not install command USB' or 'Could not insert crypto drive' }
         end
 
         inventory = Player.PlayerData.items or {}
@@ -1045,31 +1196,38 @@ local function ApplyDeviceAttachment(src, deviceSlot, attachmentSlot)
             return { success = false, message = 'Tablet not found' }
         end
 
-        deviceInfo = type(deviceItem.info) == 'table' and CopyTable(deviceItem.info) or {}
-        deviceInfo.cryptoDrive = driveData
-        deviceInfo.description = 'Crypto drive: ' .. driveData.label
+        deviceInfo = NormalizeTabletDeviceInfo(deviceItem.info)
+        if attachmentName == 'command_usb' then
+            moduleData.deviceSlot = moduleData.deviceSlot or GetNextTabletModuleSlot(deviceInfo)
+            deviceInfo.commandUsb = moduleData
+        else
+            deviceInfo.cryptoDrives = deviceInfo.cryptoDrives or {}
+            moduleData.deviceSlot = moduleData.deviceSlot or GetNextTabletModuleSlot(deviceInfo)
+            deviceInfo.cryptoDrives[#deviceInfo.cryptoDrives + 1] = moduleData
+        end
+        deviceInfo = NormalizeTabletDeviceInfo(deviceInfo)
         deviceItem = SetInventoryItemInfoBySlot(Player, deviceSlot, deviceInfo, deviceInfo.description)
         if not deviceItem then
             AddItem(src, attachmentName, 1, false, attachmentInfo, 'failed tablet drive refund')
-            return { success = false, message = 'Could not save crypto drive to tablet' }
+            return { success = false, message = attachmentName == 'command_usb' and 'Could not save command USB to tablet' or 'Could not save crypto drive to tablet' }
         end
 
         RemoveMatchingInventoryItems(Player, attachmentName, function(item)
             local info = type(item.info) == 'table' and item.info or {}
             local serial = info.serial or info.serie
-            return driveData.serial and serial and tostring(serial) == tostring(driveData.serial)
+            return moduleData.serial and serial and tostring(serial) == tostring(moduleData.serial)
         end)
 
         TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[attachmentName], 'remove')
         TriggerClientEvent('qb-inventory:client:updateInventory', src, Player.PlayerData.items or {})
-        TriggerClientEvent('QBCore:Notify', src, driveData.label .. ' inserted into tablet.', 'success')
-        return { success = true, message = driveData.label .. ' inserted', DeviceData = deviceItem, Inventory = Player.PlayerData.items or {}, removedSlot = attachmentSlot, removedItem = attachmentName }
+        TriggerClientEvent('QBCore:Notify', src, moduleData.label .. ' inserted into tablet.', 'success')
+        return { success = true, message = moduleData.label .. ' inserted', DeviceData = deviceItem, Inventory = Player.PlayerData.items or {}, removedSlot = attachmentSlot, removedItem = attachmentName }
     end
 
     return { success = false, message = 'That item cannot be installed here' }
 end
 
-local function RemoveDeviceAttachment(src, deviceSlot, attachmentName)
+local function RemoveDeviceAttachment(src, deviceSlot, attachmentName, preferredSlot)
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return { success = false, message = 'Player not found' } end
 
@@ -1109,6 +1267,7 @@ local function RemoveDeviceAttachment(src, deviceSlot, attachmentName)
         local newInfo = EnsurePhoneDeviceInfo(Player, CopyTable(originalInfo))
         newInfo.simNumber = nil
         newInfo.simSerial = nil
+        newInfo.simSlot = nil
         newInfo.simContacts = nil
         newInfo.description = 'No SIM installed'
 
@@ -1117,7 +1276,11 @@ local function RemoveDeviceAttachment(src, deviceSlot, attachmentName)
             return { success = false, message = 'Could not remove the SIM from this phone' }
         end
 
-        local addSlot = GetFirstFreeRegularSlot(Player)
+        local addSlot = tonumber(preferredSlot)
+        if addSlot and GetInventoryItemBySlot(Player.PlayerData.items or {}, addSlot) then
+            addSlot = nil
+        end
+        addSlot = addSlot or GetFirstFreeRegularSlot(Player)
         if not addSlot then
             SetInventoryItemInfoBySlot(Player, deviceSlot, originalInfo, originalInfo.description)
             TriggerClientEvent('QBCore:Notify', src, 'Make room in your inventory before removing the SIM card.', 'error')
@@ -1144,37 +1307,82 @@ local function RemoveDeviceAttachment(src, deviceSlot, attachmentName)
         return { success = true, message = 'SIM card removed', DeviceData = deviceItem, Inventory = Player.PlayerData.items or {}, AddedItem = addedItem }
     end
 
-    if deviceName == 'tablet' and (attachmentName == 'crypto_usb' or attachmentName == 'cryptostick') then
-        local driveData = originalInfo.cryptoDrive
-        if not driveData or not driveData.item then
-            return { success = false, message = 'No crypto drive inserted' }
+    if deviceName == 'tablet' then
+        originalInfo = NormalizeTabletDeviceInfo(originalInfo)
+        local parsedName, parsedIdentifier = ParseTabletAttachmentToken(attachmentName)
+        local itemName = parsedName
+        local itemInfo = nil
+        local newInfo = CopyTable(originalInfo)
+        local messageLabel = nil
+
+        if itemName == 'command_usb' then
+            if not originalInfo.commandUsb then
+                return { success = false, message = 'No command USB installed' }
+            end
+
+            itemInfo = originalInfo.commandUsb.info or {}
+            messageLabel = originalInfo.commandUsb.label or 'Command USB'
+            newInfo.commandUsb = nil
+            newInfo.cryptoDrive = nil
+        elseif itemName == 'crypto_usb' or itemName == 'cryptostick' then
+            local drives = originalInfo.cryptoDrives or {}
+            local removeIndex = nil
+            local driveData = nil
+
+            for index, drive in ipairs(drives) do
+                local driveIdentifier = tostring(drive.serial or drive.code or '')
+                if not parsedIdentifier or parsedIdentifier == '' or driveIdentifier == parsedIdentifier then
+                    removeIndex = index
+                    driveData = drive
+                    break
+                end
+            end
+
+            if not driveData and type(originalInfo.cryptoDrive) == 'table' then
+                driveData = originalInfo.cryptoDrive
+                removeIndex = 1
+            end
+
+            if not driveData or not driveData.item then
+                return { success = false, message = 'No crypto drive inserted' }
+            end
+
+            itemName = driveData.item
+            itemInfo = driveData.info or {}
+            messageLabel = driveData.label or 'Crypto Drive'
+            if removeIndex then
+                table.remove(drives, removeIndex)
+            end
+            newInfo.cryptoDrives = drives
+            newInfo.cryptoDrive = nil
+        else
+            return { success = false, message = 'That item cannot be removed from this tablet' }
         end
 
-        local itemName = driveData.item
-        local itemInfo = driveData.info or {}
-        local newInfo = CopyTable(originalInfo)
-        newInfo.cryptoDrive = nil
-        newInfo.description = 'No crypto drive inserted'
-
+        newInfo = NormalizeTabletDeviceInfo(newInfo)
         deviceItem = SetInventoryItemInfoBySlot(Player, deviceSlot, newInfo, newInfo.description)
         if not deviceItem then
-            return { success = false, message = 'Could not remove the crypto drive from this tablet' }
+            return { success = false, message = itemName == 'command_usb' and 'Could not remove the command USB from this tablet' or 'Could not remove the crypto drive from this tablet' }
         end
 
-        local addSlot = GetFirstFreeRegularSlot(Player)
+        local addSlot = tonumber(preferredSlot)
+        if addSlot and GetInventoryItemBySlot(Player.PlayerData.items or {}, addSlot) then
+            addSlot = nil
+        end
+        addSlot = addSlot or GetFirstFreeRegularSlot(Player)
         if not addSlot then
             SetInventoryItemInfoBySlot(Player, deviceSlot, originalInfo, originalInfo.description)
-            TriggerClientEvent('QBCore:Notify', src, 'Make room in your inventory before removing the crypto drive.', 'error')
-            return { success = false, message = 'No room to remove the crypto drive' }
+            TriggerClientEvent('QBCore:Notify', src, itemName == 'command_usb' and 'Make room in your inventory before removing the command USB.' or 'Make room in your inventory before removing the crypto drive.', 'error')
+            return { success = false, message = itemName == 'command_usb' and 'No room to remove the command USB' or 'No room to remove the crypto drive' }
         end
 
         if not AddItem(src, itemName, 1, addSlot, itemInfo, 'removed tablet crypto drive') then
             SetInventoryItemInfoBySlot(Player, deviceSlot, originalInfo, originalInfo.description)
-            TriggerClientEvent('QBCore:Notify', src, 'Make room in your inventory before removing the crypto drive.', 'error')
-            return { success = false, message = 'No room to remove the crypto drive' }
+            TriggerClientEvent('QBCore:Notify', src, itemName == 'command_usb' and 'Make room in your inventory before removing the command USB.' or 'Make room in your inventory before removing the crypto drive.', 'error')
+            return { success = false, message = itemName == 'command_usb' and 'No room to remove the command USB' or 'No room to remove the crypto drive' }
         end
 
-        local driveSerial = driveData.serial or itemInfo.serial or itemInfo.serie
+        local driveSerial = itemInfo.serial or itemInfo.serie
         local addedItem = GetInventoryItemBySlot(Player.PlayerData.items or {}, addSlot, itemName) or BuildItemSnapshot(itemName, 1, addSlot, itemInfo)
         UpsertInventoryItemBySlot(Player, addedItem)
         if driveSerial then
@@ -1187,8 +1395,8 @@ local function RemoveDeviceAttachment(src, deviceSlot, attachmentName)
 
         TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[itemName], 'add')
         TriggerClientEvent('qb-inventory:client:updateInventory', src, Player.PlayerData.items or {})
-        TriggerClientEvent('QBCore:Notify', src, 'Crypto drive removed.', 'success')
-        return { success = true, message = 'Crypto drive removed', DeviceData = deviceItem, Inventory = Player.PlayerData.items or {}, AddedItem = addedItem }
+        TriggerClientEvent('QBCore:Notify', src, (messageLabel or itemName) .. ' removed.', 'success')
+        return { success = true, message = (messageLabel or itemName) .. ' removed', DeviceData = deviceItem, Inventory = Player.PlayerData.items or {}, AddedItem = addedItem }
     end
 
     return { success = false, message = 'That installed item cannot be removed here' }
@@ -1223,7 +1431,7 @@ QBCore.Functions.CreateCallback('qb-inventory:server:removeDeviceAttachment', fu
         return
     end
 
-    cb(RemoveDeviceAttachment(source, deviceData.slot, attachmentData.attachment))
+    cb(RemoveDeviceAttachment(source, deviceData.slot, attachmentData.attachment, attachmentData.targetSlot))
 end)
 
 QBCore.Functions.CreateCallback('qb-inventory:server:applyWeaponAttachment', function(source, cb, weaponData, attachmentData)

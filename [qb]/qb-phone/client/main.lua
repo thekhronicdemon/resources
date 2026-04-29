@@ -1561,60 +1561,149 @@ local function SaveToInternalGallery()
     FreeMemoryForHighQualityPhoto()
 end
 
-RegisterNUICallback('TakePhoto', function(_, cb)
+local function ShowPhoneCameraHelpText()
+    BeginTextCommandDisplayHelp('STRING')
+    AddTextComponentSubstringPlayerName('ENTER Capture  |  BACKSPACE Cancel  |  UP ARROW Selfie')
+    EndTextCommandDisplayHelp(0, false, false, -1)
+end
+
+local function FinishPhoneCameraCapture(cb, imageUrl)
+    if imageUrl and imageUrl ~= '' then
+        SaveToInternalGallery()
+    end
+
+    DestroyMobilePhone()
+    CellCamActivate(false, false)
+    CellFrontCamActivate(false)
+    frontCam = false
+
+    if imageUrl and imageUrl ~= '' then
+        TriggerServerEvent('qb-phone:server:addImageToGallery', imageUrl)
+        Wait(400)
+        TriggerServerEvent('qb-phone:server:getImageFromGallery')
+        cb(imageUrl)
+    else
+        cb('')
+    end
+end
+
+local function CapturePhonePhotoLocal(cb)
+    exports['screenshot-basic']:requestScreenshot({
+        encoding = 'jpg',
+        quality = 0.65
+    }, function(data)
+        if not data or data == '' then
+            cb(nil)
+            return
+        end
+
+        cb(data)
+    end)
+end
+
+RegisterNUICallback('TakePhoto', function(data, cb)
     SetNuiFocus(false, false)
+    frontCam = data and data.selfie == true or false
     CreateMobilePhone(1)
     CellCamActivate(true, true)
+    CellFrontCamActivate(frontCam)
+    QBCore.Functions.Notify('Enter capture | Up Arrow selfie | Backspace cancel', 'primary')
     local takePhoto = true
+    local takingSnapshot = false
+
+    local function finalizeCapture(imageUrl)
+        takingSnapshot = false
+        takePhoto = false
+        FinishPhoneCameraCapture(cb, imageUrl)
+    end
+
     while takePhoto do
-        if IsControlJustPressed(1, 27) then -- Toogle Mode
+        if IsControlJustPressed(1, 27) or IsControlJustPressed(1, 172) then -- Toggle front/selfie cam
             frontCam = not frontCam
             CellFrontCamActivate(frontCam)
+            QBCore.Functions.Notify(frontCam and 'Selfie mode enabled' or 'Rear camera enabled', 'primary')
         elseif IsControlJustPressed(1, 177) then -- CANCEL
-            DestroyMobilePhone()
-            CellCamActivate(false, false)
-            cb(json.encode({ url = nil }))
+            takePhoto = false
+            FinishPhoneCameraCapture(cb, nil)
             break
-        elseif IsControlJustPressed(1, 176) then -- TAKE.. PIC
+        elseif IsControlJustPressed(1, 176) and not takingSnapshot then -- TAKE PIC
+            takingSnapshot = true
             if Config.Fivemerr == true then
                 -- Fivemerr uploads via the server using screenshot-basic to further guard your API key.
-                return QBCore.Functions.TriggerCallback('qb-phone:server:UploadToFivemerr', function(fivemerrData)
+                QBCore.Functions.TriggerCallback('qb-phone:server:UploadToFivemerr', function(fivemerrData)
                     if fivemerrData == nil then
-                        DestroyMobilePhone()
-                        CellCamActivate(false, false)
+                        CapturePhonePhotoLocal(function(localImage)
+                            if not localImage then
+                                QBCore.Functions.Notify('Could not capture photo', 'error')
+                                finalizeCapture(nil)
+                                return
+                            end
+
+                            finalizeCapture(localImage)
+                        end)
                         return
                     end
 
-                    SaveToInternalGallery()
                     local imageData = json.decode(fivemerrData)
-                    DestroyMobilePhone()
-                    CellCamActivate(false, false)
-                    TriggerServerEvent('qb-phone:server:addImageToGallery', imageData.url)
-                    Wait(400)
-                    TriggerServerEvent('qb-phone:server:getImageFromGallery')
-                    cb(json.encode(imageData.url))
+                    local imageUrl = imageData and (imageData.url or imageData.link or imageData.image)
+                    if not imageUrl or imageUrl == '' then
+                        CapturePhonePhotoLocal(function(localImage)
+                            if not localImage then
+                                QBCore.Functions.Notify('Could not capture photo', 'error')
+                                finalizeCapture(nil)
+                                return
+                            end
+
+                            finalizeCapture(localImage)
+                        end)
+                        return
+                    end
+
+                    finalizeCapture(imageUrl)
+                end)
+            else
+                QBCore.Functions.TriggerCallback('qb-phone:server:GetWebhook', function(hook)
+                    if hook and hook ~= '' then
+                        exports['screenshot-basic']:requestScreenshotUpload(tostring(hook), 'files[]', {
+                            encoding = 'jpg',
+                            quality = 0.65
+                        }, function(uploadData)
+                            local image = json.decode(uploadData or '{}')
+                            local attachment = image and image.attachments and image.attachments[1]
+                            local imageUrl = attachment and (attachment.proxy_url or attachment.url)
+
+                            if not imageUrl or imageUrl == '' then
+                                CapturePhonePhotoLocal(function(localImage)
+                                    if not localImage then
+                                        QBCore.Functions.Notify('Could not capture photo', 'error')
+                                        finalizeCapture(nil)
+                                        return
+                                    end
+
+                                    finalizeCapture(localImage)
+                                end)
+                                return
+                            end
+
+                            finalizeCapture(imageUrl)
+                        end)
+                        return
+                    end
+
+                    CapturePhonePhotoLocal(function(localImage)
+                        if not localImage then
+                            QBCore.Functions.Notify('Could not capture photo', 'error')
+                            finalizeCapture(nil)
+                            return
+                        end
+
+                        finalizeCapture(localImage)
+                    end)
                 end)
             end
-
-            QBCore.Functions.TriggerCallback('qb-phone:server:GetWebhook', function(hook)
-                if not hook then
-                    QBCore.Functions.Notify('Camera not setup', 'error')
-                    return
-                end
-
-                exports['screenshot-basic']:requestScreenshotUpload(tostring(hook), 'files[]', function(data)
-                    SaveToInternalGallery()
-                    local image = json.decode(data)
-                    DestroyMobilePhone()
-                    CellCamActivate(false, false)
-                    TriggerServerEvent('qb-phone:server:addImageToGallery', image.attachments[1].proxy_url)
-                    Wait(400)
-                    TriggerServerEvent('qb-phone:server:getImageFromGallery')
-                    cb(json.encode(image.attachments[1].proxy_url))
-                    takePhoto = false
-                end)
-            end)
         end
+
+        ShowPhoneCameraHelpText()
         HideHudComponentThisFrame(7)
         HideHudComponentThisFrame(8)
         HideHudComponentThisFrame(9)

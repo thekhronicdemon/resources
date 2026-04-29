@@ -66,6 +66,7 @@ local function NormalizeInventorySimCards(items)
 
     local installedSimNumbers = {}
     local installedDriveSerials = {}
+    local installedCommandSerials = {}
     for _, item in pairs(items) do
         if item and item.name then
             local itemName = item.name:lower()
@@ -73,12 +74,29 @@ local function NormalizeInventorySimCards(items)
 
             if itemName == 'phone' and info.simNumber then
                 installedSimNumbers[tostring(info.simNumber)] = true
-            elseif itemName == 'tablet' and type(info.cryptoDrive) == 'table' then
-                local drive = info.cryptoDrive
-                local driveInfo = type(drive.info) == 'table' and drive.info or {}
-                local serial = drive.serial or driveInfo.serial or driveInfo.serie
-                if serial then
-                    installedDriveSerials[tostring(serial)] = true
+            elseif itemName == 'tablet' then
+                local drives = {}
+                if type(info.cryptoDrives) == 'table' and next(info.cryptoDrives) ~= nil then
+                    drives = info.cryptoDrives
+                elseif type(info.cryptoDrive) == 'table' then
+                    drives = { info.cryptoDrive }
+                end
+
+                for _, drive in pairs(drives) do
+                    if type(drive) == 'table' then
+                        local driveInfo = type(drive.info) == 'table' and drive.info or {}
+                        local serial = drive.serial or driveInfo.serial or driveInfo.serie
+                        if serial then
+                            installedDriveSerials[tostring(serial)] = true
+                        end
+                    end
+                end
+
+                if type(info.commandUsb) == 'table' then
+                    local serial = info.commandUsb.serial or (type(info.commandUsb.info) == 'table' and (info.commandUsb.info.serial or info.commandUsb.info.serie))
+                    if serial then
+                        installedCommandSerials[tostring(serial)] = true
+                    end
                 end
             end
         end
@@ -101,6 +119,13 @@ local function NormalizeInventorySimCards(items)
             local info = type(item.info) == 'table' and item.info or {}
             local serial = info.serial or info.serie
             if serial and installedDriveSerials[tostring(serial)] then
+                items[key] = nil
+                changed = true
+            end
+        elseif item and item.name and item.name:lower() == 'command_usb' then
+            local info = type(item.info) == 'table' and item.info or {}
+            local serial = info.serial or info.serie
+            if serial and installedCommandSerials[tostring(serial)] then
                 items[key] = nil
                 changed = true
             end

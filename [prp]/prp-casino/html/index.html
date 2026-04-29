@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRP Blackjack</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app" class="hidden">
+        <div class="panel">
+            <div class="header">
+                <div>
+                    <h1>BLACKJACK</h1>
+                    <p id="limits">Table Limits</p>
+                </div>
+                <button id="closeBtn" class="esc">ESC</button>
+            </div>
+
+            <div id="setup">
+                <label>Bet Amount</label>
+                <input id="betInput" type="number" min="100" max="5000" value="100" />
+                <button id="dealBtn" class="primary">Deal Cards</button>
+            </div>
+
+            <div id="game" class="hidden">
+                <div class="scoreRow">
+                    <div>
+                        <span>Dealer</span>
+                        <strong id="dealerScore">0</strong>
+                    </div>
+                    <div>
+                        <span>Your Hand</span>
+                        <strong id="playerScore">0</strong>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="hitBtn">Hit</button>
+                    <button id="standBtn">Stand</button>
+                </div>
+
+                <p class="tableHint">Cards are shown on the table. Use <b>E</b> to hit, <b>G</b> to stand, or <b>Backspace</b> to leave.</p>
+                <p id="status">playing</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

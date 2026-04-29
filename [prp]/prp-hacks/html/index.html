@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRP Hacks</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="hackRoot" class="hidden">
+        <div id="loadingScreen" class="loading-screen hidden">
+            <div class="terminal-card">
+                <div class="terminal-top">
+                    <span>PRP-HACKS v1.1.0</span>
+                    <span id="loadingHackType">// TETRIS HACK</span>
+                </div>
+                <div class="terminal-frame">
+                    <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+                    <div id="loadingIcon" class="loading-icon tetris-icon" aria-hidden="true"></div>
+                    <div class="loading-label-row"><span>//LOADING IN</span><strong id="loadingPercent">0%</strong></div>
+                    <div class="loading-bar"><div id="loadingFill" class="loading-fill"></div></div>
+                    <div class="loading-title">HACK STARTING</div>
+                    <div id="loadingGameName" class="loading-subtitle">TETRIS HACK</div>
+                    <div id="loadingTarget" class="loading-target">TARGET: SCORE 1000</div>
+                    <div id="loadingHint" class="loading-hint">GET READY</div>
+                </div>
+            </div>
+        </div>
+        <div id="gameScreen" class="hack-shell hidden">
+            <div class="hack-header">
+                <h1 id="hackTitle">PRP HACK</h1>
+                <div class="stats">
+                    <div><span>Score</span><strong id="scoreText">0</strong></div>
+                    <div><span>Target</span><strong id="targetText">1000</strong></div>
+                    <div><span>Time</span><strong id="timeText">--</strong></div>
+                </div>
+            </div>
+            <div class="game-wrap">
+                <canvas id="gameCanvas" width="420" height="560"></canvas>
+                <div id="typingGame" class="typing-game hidden">
+                    <div id="typingErrors" class="typing-errors">[ ERRORS: 0/3 ]</div>
+                    <pre id="typingText" class="typing-text"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="banner" class="banner hidden"><div id="bannerText">Hack Completed</div></div>
+    <script src="app.js"></script>
+</body>
+</html>

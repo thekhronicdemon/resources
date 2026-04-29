@@ -103,47 +103,34 @@
                             <img :src="'images/' + selectedDevice.image" alt="" />
                             <div>
                                 <div class="weapon-mod-name">{{ selectedDevice.label || selectedDevice.name }}</div>
-                                <div class="weapon-mod-note">{{ selectedDeviceModMessage || 'Choose a compatible insert from your inventory.' }}</div>
+                                <div class="weapon-mod-note">{{ selectedDeviceModMessage || 'Drag compatible items from your inventory into the device bay. Drag installed modules back into an empty inventory slot to remove them.' }}</div>
                             </div>
                         </div>
 
                         <div class="weapon-mod-section">
-                            <div class="inline-hotbar-title">Available Inserts</div>
-                            <div class="weapon-mod-grid">
-                                <div v-for="attachment in selectedDeviceAvailableAttachments"
-                                    :key="attachment.attachment + '-' + attachment.slot"
-                                    class="item-slot prp-slot weapon-mod-slot" @click="applyDeviceAttachment(attachment)">
-                                    <div class="slot-number">{{ attachment.slot }}</div>
-                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
-                                    <div class="item-slot-amount">
-                                        <p>x{{ attachment.amount }}</p>
-                                    </div>
-                                    <div class="item-slot-label">
-                                        <p>{{ attachment.label }}</p>
-                                    </div>
-                                </div>
-                                <div class="weapon-mod-empty" v-if="selectedDeviceAvailableAttachments.length === 0">
-                                    No compatible inserts in your inventory.
-                                </div>
-                            </div>
-                        </div>
+                            <div class="inline-hotbar-title">Device Bay</div>
+                            <div class="device-slot-grid">
+                                <div v-for="slot in getDeviceModuleSlots()"
+                                    :key="slot.key"
+                                    class="item-slot prp-slot weapon-mod-slot device-module-slot"
+                                    :class="{ installed: !!slot.attachment, 'device-installed': !!slot.attachment }"
+                                    :data-device-slot="slot.slotId"
+                                    @mousedown="event => slot.attachment && handleDeviceAttachmentMouseDown(event, slot.attachment)">
 
-                        <div class="weapon-mod-section">
-                            <div class="inline-hotbar-title">Installed</div>
-                            <div class="weapon-mod-grid">
-                                <div v-for="attachment in selectedDeviceAttachments" :key="attachment.attachment"
-                                    class="item-slot prp-slot weapon-mod-slot installed device-installed"
-                                    @click="removeDeviceAttachment(attachment)">
-                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
-                                    <div class="item-slot-label">
-                                        <p>{{ attachment.label }}</p>
-                                        <p class="device-mod-detail" v-if="attachment.detail">{{ attachment.detail }}</p>
+                                    <div class="slot-number">{{ slot.shortLabel }}</div>
+
+                                    <template v-if="slot.attachment">
+                                        <div class="item-slot-img"><img :src="'images/' + slot.attachment.image" alt="" /></div>
+                                        <div class="item-slot-label">
+                                            <p>{{ slot.attachment.label }}</p>
+                                            <p class="device-mod-detail" v-if="slot.attachment.detail">{{ slot.attachment.detail }}</p>
+                                        </div>
+                                    </template>
+
+                                    <div v-else class="device-slot-empty">
+                                        <strong>{{ slot.label }}</strong>
+                                        <span>Drop compatible item here</span>
                                     </div>
-                                    <button class="device-remove-action" type="button"
-                                        @click.stop="removeDeviceAttachment(attachment)">Remove</button>
-                                </div>
-                                <div class="weapon-mod-empty" v-if="selectedDeviceAttachments.length === 0">
-                                Nothing installed.
                                 </div>
                             </div>
                         </div>

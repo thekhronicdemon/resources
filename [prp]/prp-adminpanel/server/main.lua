@@ -35,88 +35,19 @@ local function logPlayer(eventType, src, citizenid, name, details)
         eventType, src and tostring(src) or '', citizenid or '', name or '', details or ''
     })
 end
-local function normalizeInventory(inv)
-    local out = {}
-    if type(inv) ~= 'table' then return out end
-    for k, item in pairs(inv) do
-        if type(item) == 'table' and item.name then
-            local name = tostring(item.name)
-            local shared = QBCore.Shared and QBCore.Shared.Items and QBCore.Shared.Items[name:lower()] or nil
-            out[#out+1] = {
-                name = name,
-                label = item.label or (shared and shared.label) or name,
-                amount = tonumber(item.amount or item.count or 1) or 1,
-                slot = tonumber(item.slot or k) or k,
-                image = item.image or (shared and shared.image) or (name .. '.png'),
-                info = item.info or item.metadata or {}
-            }
-        end
-    end
-    table.sort(out, function(a, b) return tonumber(a.slot) < tonumber(b.slot) end)
-    return out
-end
-
-local function findPlayerByCitizenid(citizenid)
-    for _, s in ipairs(GetPlayers()) do
-        local src = tonumber(s)
-        local P = QBCore.Functions.GetPlayer(src)
-        if P and P.PlayerData.citizenid == citizenid then return src, P end
-    end
-    return nil, nil
-end
-
-local function firstFreeSlot(inv)
-    local used = {}
-    if type(inv) == 'table' then
-        for k, item in pairs(inv) do
-            if type(item) == 'table' then used[tonumber(item.slot or k) or k] = true end
-        end
-    end
-    for i = 1, 100 do if not used[i] then return i end end
-    return #inv + 1
-end
-
 local function sanitizeHtml(html)
     html = tostring(html or '')
     html = html:gsub('<script.->.-</script>', ''):gsub('<iframe.->.-</iframe>', ''):gsub('on%w+%s*=%s*".-"', ''):gsub("on%w+%s*=%s*'.-'", '')
     return html:sub(1, Config.MaxNoteLength or 5000)
 end
 
-local function columnExists(tableName, columnName)
-    local rows = MySQL.query.await(('SHOW COLUMNS FROM `%s` LIKE ?'):format(tableName), { columnName }) or {}
-    return rows[1] ~= nil
-end
-
-local function ensureNotesTable()
-    MySQL.query.await([[CREATE TABLE IF NOT EXISTS prp_admin_notes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        citizenid VARCHAR(64) NOT NULL,
-        note_html MEDIUMTEXT NULL,
-        note_text TEXT NULL,
-        admin_src VARCHAR(20) NULL,
-        admin_name VARCHAR(128) NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )]])
-
-    if not columnExists('prp_admin_notes', 'note_html') then
-        MySQL.query.await('ALTER TABLE prp_admin_notes ADD COLUMN note_html MEDIUMTEXT NULL')
-    end
-    if not columnExists('prp_admin_notes', 'note_text') then
-        MySQL.query.await('ALTER TABLE prp_admin_notes ADD COLUMN note_text TEXT NULL')
-    end
-    if not columnExists('prp_admin_notes', 'admin_src') then
-        MySQL.query.await('ALTER TABLE prp_admin_notes ADD COLUMN admin_src VARCHAR(20) NULL')
-    end
-    if not columnExists('prp_admin_notes', 'admin_name') then
-        MySQL.query.await('ALTER TABLE prp_admin_notes ADD COLUMN admin_name VARCHAR(128) NULL')
-    end
-    if not columnExists('prp_admin_notes', 'created_at') then
-        MySQL.query.await('ALTER TABLE prp_admin_notes ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
-    end
-end
-
 CreateThread(function()
-    ensureNotesTable()
+    MySQL.query.await([[CREATE TABLE IF NOT EXISTS prp_admin_notes (id INT AUTO_INCREMENT PRIMARY KEY, citizenid VARCHAR(64) NOT NULL, note_html MEDIUMTEXT, note_text TEXT, admin_src VARCHAR(20), admin_name VARCHAR(128), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)]])
+    pcall(function() MySQL.query.await([[ALTER TABLE prp_admin_notes ADD COLUMN IF NOT EXISTS note_html MEDIUMTEXT]]) end)
+    pcall(function() MySQL.query.await([[ALTER TABLE prp_admin_notes ADD COLUMN IF NOT EXISTS note_text TEXT]]) end)
+    pcall(function() MySQL.query.await([[ALTER TABLE prp_admin_notes ADD COLUMN IF NOT EXISTS admin_src VARCHAR(20)]]) end)
+    pcall(function() MySQL.query.await([[ALTER TABLE prp_admin_notes ADD COLUMN IF NOT EXISTS admin_name VARCHAR(128)]]) end)
+    pcall(function() MySQL.query.await([[ALTER TABLE prp_admin_notes ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP]]) end)
     MySQL.query.await([[CREATE TABLE IF NOT EXISTS prp_player_logs (id INT AUTO_INCREMENT PRIMARY KEY, event_type VARCHAR(32), src VARCHAR(20), citizenid VARCHAR(64), name VARCHAR(128), details TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)]])
     MySQL.query.await([[CREATE TABLE IF NOT EXISTS prp_admin_flags (id INT AUTO_INCREMENT PRIMARY KEY, citizenid VARCHAR(64), flag_type VARCHAR(64), reason TEXT, admin_src VARCHAR(20), admin_name VARCHAR(128), active TINYINT DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)]])
     MySQL.query.await([[CREATE TABLE IF NOT EXISTS prp_admin_audit (id INT AUTO_INCREMENT PRIMARY KEY, admin_src VARCHAR(20), admin_name VARCHAR(128), action VARCHAR(64), target_id VARCHAR(20), target_citizenid VARCHAR(64), details TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)]])
@@ -174,10 +105,10 @@ QBCore.Functions.CreateCallback('prp-adminpanel:server:getProfile', function(src
     local citizenid=tostring(data.citizenid or ''); local targetId=tonumber(data.id); local profile={citizenid=citizenid, id=data.id, online=false, autoPunishWarnings=Config.AutoPunishWarnings or 3}
     local target = targetId and QBCore.Functions.GetPlayer(targetId) or nil
     if target then
-        local pd=target.PlayerData; profile.online=true; profile.id=targetId; profile.name=GetPlayerName(targetId); profile.job=pd.job and pd.job.name; profile.jobLabel=pd.job and pd.job.label; profile.gang=pd.gang and pd.gang.name; profile.gangLabel=pd.gang and pd.gang.label; profile.money=pd.money or {}; profile.inventory=normalizeInventory(pd.items or pd.inventory or {})
+        local pd=target.PlayerData; profile.online=true; profile.id=targetId; profile.name=GetPlayerName(targetId); profile.job=pd.job and pd.job.name; profile.jobLabel=pd.job and pd.job.label; profile.gang=pd.gang and pd.gang.name; profile.gangLabel=pd.gang and pd.gang.label; profile.money=pd.money or {}; profile.inventory=pd.items or pd.inventory or {}
     else
         local row=MySQL.single.await('SELECT * FROM players WHERE citizenid=? LIMIT 1', {citizenid})
-        if row then local char=json.decode(row.charinfo or '{}') or {}; local job=json.decode(row.job or '{}') or {}; local gang=json.decode(row.gang or '{}') or {}; profile.name=((char.firstname or '')..' '..(char.lastname or '')):gsub('^%s*(.-)%s*$','%1'); profile.job=job.name; profile.jobLabel=job.label; profile.gang=gang.name; profile.gangLabel=gang.label; profile.money=json.decode(row.money or '{}') or {}; profile.inventory=normalizeInventory(json.decode(row.inventory or '[]') or {}) end
+        if row then local char=json.decode(row.charinfo or '{}') or {}; local job=json.decode(row.job or '{}') or {}; local gang=json.decode(row.gang or '{}') or {}; profile.name=((char.firstname or '')..' '..(char.lastname or '')):gsub('^%s*(.-)%s*$','%1'); profile.job=job.name; profile.jobLabel=job.label; profile.gang=gang.name; profile.gangLabel=gang.label; profile.money=json.decode(row.money or '{}') or {}; profile.inventory=json.decode(row.inventory or '[]') or {} end
     end
     profile.notes=MySQL.query.await('SELECT * FROM prp_admin_notes WHERE citizenid=? ORDER BY created_at DESC LIMIT 50', {citizenid}) or {}
     profile.flags=MySQL.query.await('SELECT * FROM prp_admin_flags WHERE citizenid=? AND active=1 ORDER BY created_at DESC LIMIT 50', {citizenid}) or {}
@@ -187,174 +118,13 @@ QBCore.Functions.CreateCallback('prp-adminpanel:server:getProfile', function(src
     cb(profile)
 end)
 
-
-QBCore.Functions.CreateCallback('prp-adminpanel:server:addNote', function(src, cb, data)
-    if not IsPanelAdmin(src) then cb({ ok = false, error = 'no_permission' }) return end
-    data = data or {}
-
-    local citizenid = tostring(data.citizenid or '')
-    if citizenid == '' or citizenid == 'nil' then cb({ ok = false, error = 'missing_citizenid' }) return end
-
-    local html = sanitizeHtml(data.note_html or '')
-    local text = tostring(data.note_text or ''):sub(1, Config.MaxNoteLength or 5000)
-    if text:gsub('%s+', '') == '' then cb({ ok = false, error = 'empty_note' }) return end
-
-    local ok, result = pcall(function()
-        ensureNotesTable()
-        local insertId = MySQL.insert.await('INSERT INTO prp_admin_notes (citizenid, note_html, note_text, admin_src, admin_name) VALUES (?, ?, ?, ?, ?)', {
-            citizenid, html, text, tostring(src), adminName(src)
-        })
-        local saved = nil
-        if insertId then
-            saved = MySQL.single.await('SELECT * FROM prp_admin_notes WHERE id = ? LIMIT 1', { insertId })
-        end
-        if not saved then
-            saved = MySQL.single.await('SELECT * FROM prp_admin_notes WHERE citizenid = ? AND admin_src = ? ORDER BY id DESC LIMIT 1', { citizenid, tostring(src) })
-        end
-        audit(src, 'add_note', citizenid, text:sub(1, 250))
-        return saved
-    end)
-
-    if not ok then
-        print(('^1[prp-adminpanel] Failed to save note for %s: %s^7'):format(citizenid, tostring(result)))
-        cb({ ok = false, error = 'database_error_check_console' })
-        return
-    end
-
-    cb({ ok = true, note = result or { citizenid = citizenid, note_html = html, note_text = text, admin_name = adminName(src), created_at = os.date('%Y-%m-%d %H:%M:%S') }, admin_name = adminName(src) })
+RegisterNetEvent('prp-adminpanel:server:addNote', function(data)
+    local src=source; if not IsPanelAdmin(src) then return end
+    local citizenid=tostring(data.citizenid or ''); if citizenid=='' then return end
+    local html=sanitizeHtml(data.note_html); local text=tostring(data.note_text or ''):sub(1, Config.MaxNoteLength or 5000); if text=='' then return end
+    MySQL.insert.await('INSERT INTO prp_admin_notes (citizenid, note_html, note_text, admin_src, admin_name) VALUES (?, ?, ?, ?, ?)', {citizenid, html, text, tostring(src), adminName(src)})
+    audit(src, 'add_note', citizenid, text:sub(1, 250))
 end)
-
-QBCore.Functions.CreateCallback('prp-adminpanel:server:getNotes', function(src, cb, citizenid)
-    if not IsPanelAdmin(src) then cb({}) return end
-    citizenid = tostring(citizenid or '')
-    if citizenid == '' then cb({}) return end
-    local ok, notes = pcall(function()
-        ensureNotesTable()
-        return MySQL.query.await('SELECT * FROM prp_admin_notes WHERE citizenid=? ORDER BY created_at DESC, id DESC LIMIT 50', { citizenid }) or {}
-    end)
-    if not ok then
-        print(('^1[prp-adminpanel] Failed to load notes for %s: %s^7'):format(citizenid, tostring(notes)))
-        cb({})
-        return
-    end
-    cb(notes)
-end)
-
-RegisterNetEvent('prp-adminpanel:server:setMoney', function(data)
-    local src = source
-    if not IsPanelAdmin(src) then return end
-    data = data or {}
-    local citizenid = tostring(data.citizenid or '')
-    local moneyType = tostring(data.moneyType or '')
-    local amount = tonumber(data.amount)
-    if citizenid == '' or not amount or amount < 0 then return end
-
-    local allowed = { cash = true, bank = true, crypto = true }
-    if not allowed[moneyType] then return end
-    amount = math.floor(amount)
-
-    local targetSrc = nil
-    for _, s in ipairs(GetPlayers()) do
-        local P = QBCore.Functions.GetPlayer(tonumber(s))
-        if P and P.PlayerData.citizenid == citizenid then targetSrc = tonumber(s) break end
-    end
-
-    if targetSrc then
-        local P = QBCore.Functions.GetPlayer(targetSrc)
-        local current = tonumber(P.PlayerData.money and P.PlayerData.money[moneyType] or 0) or 0
-        if amount > current then
-            P.Functions.AddMoney(moneyType, amount - current, 'admin-panel-set-money')
-        elseif amount < current then
-            P.Functions.RemoveMoney(moneyType, current - amount, 'admin-panel-set-money')
-        end
-    else
-        local row = MySQL.single.await('SELECT money FROM players WHERE citizenid = ? LIMIT 1', { citizenid })
-        if not row then return end
-        local money = json.decode(row.money or '{}') or {}
-        money[moneyType] = amount
-        MySQL.update.await('UPDATE players SET money = ? WHERE citizenid = ?', { json.encode(money), citizenid })
-    end
-
-    audit(src, 'set_' .. moneyType, citizenid, ('Set %s to %s'):format(moneyType, amount))
-end)
-
-QBCore.Functions.CreateCallback('prp-adminpanel:server:addItem', function(src, cb, data)
-    if not IsPanelAdmin(src) then cb({ ok = false, error = 'no_permission' }) return end
-    data = data or {}
-    local citizenid = tostring(data.citizenid or '')
-    local itemName = tostring(data.itemName or ''):lower():gsub('%s+', '')
-    local amount = math.floor(tonumber(data.amount) or 0)
-    if citizenid == '' or itemName == '' or amount <= 0 then cb({ ok = false, error = 'missing_data' }) return end
-
-    local shared = QBCore.Shared and QBCore.Shared.Items and QBCore.Shared.Items[itemName]
-    if not shared then cb({ ok = false, error = 'invalid_item' }) return end
-
-    local targetSrc, P = findPlayerByCitizenid(citizenid)
-    if P then
-        local ok = P.Functions.AddItem(itemName, amount, false, {})
-        if not ok then cb({ ok = false, error = 'add_failed' }) return end
-        TriggerClientEvent('inventory:client:ItemBox', targetSrc, shared, 'add', amount)
-    else
-        local row = MySQL.single.await('SELECT inventory FROM players WHERE citizenid = ? LIMIT 1', { citizenid })
-        if not row then cb({ ok = false, error = 'player_not_found' }) return end
-        local inv = json.decode(row.inventory or '[]') or {}
-        local found = false
-        for k, item in pairs(inv) do
-            if type(item) == 'table' and tostring(item.name):lower() == itemName then
-                item.amount = (tonumber(item.amount or item.count or 0) or 0) + amount
-                found = true
-                break
-            end
-        end
-        if not found then
-            inv[#inv + 1] = { name = itemName, amount = amount, info = {}, type = shared.type or 'item', slot = firstFreeSlot(inv) }
-        end
-        MySQL.update.await('UPDATE players SET inventory = ? WHERE citizenid = ?', { json.encode(inv), citizenid })
-    end
-
-    audit(src, 'add_item', citizenid, ('Added %sx %s'):format(amount, itemName))
-    cb({ ok = true })
-end)
-
-QBCore.Functions.CreateCallback('prp-adminpanel:server:removeItem', function(src, cb, data)
-    if not IsPanelAdmin(src) then cb({ ok = false, error = 'no_permission' }) return end
-    data = data or {}
-    local citizenid = tostring(data.citizenid or '')
-    local itemName = tostring(data.itemName or ''):lower():gsub('%s+', '')
-    local amount = math.floor(tonumber(data.amount) or 0)
-    local slot = tonumber(data.slot)
-    if citizenid == '' or itemName == '' or amount <= 0 then cb({ ok = false, error = 'missing_data' }) return end
-
-    local shared = QBCore.Shared and QBCore.Shared.Items and QBCore.Shared.Items[itemName] or { label = itemName, image = itemName .. '.png' }
-    local targetSrc, P = findPlayerByCitizenid(citizenid)
-    if P then
-        local ok = P.Functions.RemoveItem(itemName, amount, slot)
-        if not ok then cb({ ok = false, error = 'remove_failed' }) return end
-        TriggerClientEvent('inventory:client:ItemBox', targetSrc, shared, 'remove', amount)
-    else
-        local row = MySQL.single.await('SELECT inventory FROM players WHERE citizenid = ? LIMIT 1', { citizenid })
-        if not row then cb({ ok = false, error = 'player_not_found' }) return end
-        local inv = json.decode(row.inventory or '[]') or {}
-        local removed = false
-        for k, item in pairs(inv) do
-            if type(item) == 'table' and tostring(item.name):lower() == itemName and (not slot or tonumber(item.slot or k) == slot) then
-                local current = tonumber(item.amount or item.count or 0) or 0
-                local newAmount = current - amount
-                if newAmount > 0 then item.amount = newAmount else inv[k] = nil end
-                removed = true
-                break
-            end
-        end
-        if not removed then cb({ ok = false, error = 'item_not_found' }) return end
-        local packed = {}
-        for _, item in pairs(inv) do if type(item) == 'table' then packed[#packed + 1] = item end end
-        MySQL.update.await('UPDATE players SET inventory = ? WHERE citizenid = ?', { json.encode(packed), citizenid })
-    end
-
-    audit(src, 'remove_item', citizenid, ('Removed %sx %s%s'):format(amount, itemName, slot and (' from slot '..slot) or ''))
-    cb({ ok = true })
-end)
-
 RegisterNetEvent('prp-adminpanel:server:addFlag', function(data)
     local src=source; if not IsPanelAdmin(src) then return end
     local citizenid=tostring(data.citizenid or ''); local flag=tostring(data.flagType or 'warning'); local reason=tostring(data.reason or 'No reason supplied.'):sub(1,500)
@@ -376,6 +146,56 @@ RegisterNetEvent('prp-adminpanel:server:ban', function(target, reason, hours)
     audit(src,'ban',{id=target,citizenid=P and P.PlayerData.citizenid or ''},reason); DropPlayer(target, ('Banned: %s'):format(reason))
 end)
 
+RegisterNetEvent('prp-adminpanel:server:playerAction', function(data)
+    local src = source
+    if not IsPanelAdmin(src) then return end
+    local action = tostring(data.action or '')
+    local target = tonumber(data.id)
+    if not target or not GetPlayerName(target) then return end
+
+    local TP = QBCore.Functions.GetPlayer(target)
+    local targetMeta = { id = target, citizenid = TP and TP.PlayerData.citizenid or '' }
+
+    if action == 'spectate' then
+        TriggerClientEvent('prp-adminpanel:client:spectatePlayer', src, target)
+        audit(src, 'spectate_player', targetMeta, ('Spectating ID %s'):format(target))
+    elseif action == 'goto' then
+        local ped = GetPlayerPed(target)
+        if ped and ped ~= 0 then
+            local coords = GetEntityCoords(ped)
+            TriggerClientEvent('prp-adminpanel:client:teleportToCoords', src, coords)
+            audit(src, 'spawn_to_player', targetMeta, ('Teleported to ID %s'):format(target))
+        end
+    elseif action == 'freeze' then
+        TriggerClientEvent('prp-adminpanel:client:toggleFreezeSelf', target)
+        audit(src, 'freeze_player_toggle', targetMeta, ('Toggled freeze on ID %s'):format(target))
+    elseif action == 'kill' then
+        TriggerClientEvent('prp-adminpanel:client:killSelf', target)
+        audit(src, 'kill_player', targetMeta, ('Killed ID %s'):format(target))
+    elseif action == 'revive' then
+        TriggerClientEvent('prp-adminpanel:client:reviveSelf', target)
+        audit(src, 'revive_player', targetMeta, ('Revived ID %s'):format(target))
+    end
+end)
+
+RegisterNetEvent('prp-adminpanel:server:adminMassAction', function(data)
+    local src = source
+    if not IsDevAdmin(src) then return end
+    local action = tostring(data.action or '')
+
+    if action == 'healEveryone' then
+        for _, id in ipairs(GetPlayers()) do
+            TriggerClientEvent('prp-adminpanel:client:healSelf', tonumber(id))
+        end
+        audit(src, 'heal_everyone', nil, 'Healed all online players')
+    elseif action == 'reviveEveryone' then
+        for _, id in ipairs(GetPlayers()) do
+            TriggerClientEvent('prp-adminpanel:client:reviveSelf', tonumber(id))
+        end
+        audit(src, 'revive_everyone', nil, 'Revived all online players')
+    end
+end)
+
 QBCore.Functions.CreateCallback('prp-adminpanel:server:getLogs', function(src, cb, data) if not IsPanelAdmin(src) then cb({}) return end local t=tostring(data.type or ''); if t~='' then cb(MySQL.query.await('SELECT * FROM prp_player_logs WHERE event_type=? ORDER BY created_at DESC LIMIT 150',{t}) or {}) else cb(MySQL.query.await('SELECT * FROM prp_player_logs ORDER BY created_at DESC LIMIT 150') or {}) end end)
 QBCore.Functions.CreateCallback('prp-adminpanel:server:getAudit', function(src, cb) if not IsPanelAdmin(src) then cb({}) return end cb(MySQL.query.await('SELECT * FROM prp_admin_audit ORDER BY created_at DESC LIMIT 150') or {}) end)
 
@@ -392,3 +212,120 @@ RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
 end)
 CreateThread(function() while true do recordActivityPeak(); Wait((Config.ActivitySampleMinutes or 5)*60*1000) end end)
 RegisterCommand(Config.Command, function(src) if src<=0 then return end if not IsPanelAdmin(src) then TriggerClientEvent('QBCore:Notify',src,'Access denied.','error') return end TriggerClientEvent('prp-adminpanel:client:requestOpen', src) end, false)
+
+local function findOnlineByCitizenId(citizenid)
+    for _, s in ipairs(GetPlayers()) do
+        local src = tonumber(s)
+        local P = QBCore.Functions.GetPlayer(src)
+        if P and P.PlayerData and P.PlayerData.citizenid == citizenid then return src, P end
+    end
+    return nil, nil
+end
+
+RegisterNetEvent('prp-adminpanel:server:editNote', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local id = tonumber(data.id); if not id then return end
+    local html = sanitizeHtml(data.note_html); local text = tostring(data.note_text or ''):sub(1, Config.MaxNoteLength or 5000)
+    local row = MySQL.single.await('SELECT citizenid FROM prp_admin_notes WHERE id=? LIMIT 1', { id })
+    MySQL.update.await('UPDATE prp_admin_notes SET note_html=?, note_text=?, admin_src=?, admin_name=? WHERE id=?', { html, text, tostring(src), adminName(src), id })
+    audit(src, 'edit_note', row and row.citizenid or '', ('Edited note #%s'):format(id))
+end)
+
+RegisterNetEvent('prp-adminpanel:server:deleteNote', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local id = tonumber(data.id); if not id then return end
+    local row = MySQL.single.await('SELECT citizenid FROM prp_admin_notes WHERE id=? LIMIT 1', { id })
+    MySQL.update.await('DELETE FROM prp_admin_notes WHERE id=?', { id })
+    audit(src, 'delete_note', row and row.citizenid or '', ('Deleted note #%s'):format(id))
+end)
+
+RegisterNetEvent('prp-adminpanel:server:editFlag', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local id = tonumber(data.id); if not id then return end
+    local reason = tostring(data.reason or ''):sub(1, 500)
+    local row = MySQL.single.await('SELECT citizenid FROM prp_admin_flags WHERE id=? LIMIT 1', { id })
+    MySQL.update.await('UPDATE prp_admin_flags SET reason=?, admin_src=?, admin_name=? WHERE id=?', { reason, tostring(src), adminName(src), id })
+    audit(src, 'edit_flag', row and row.citizenid or '', ('Edited flag/warning #%s'):format(id))
+end)
+
+RegisterNetEvent('prp-adminpanel:server:deleteFlag', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local id = tonumber(data.id); if not id then return end
+    local row = MySQL.single.await('SELECT citizenid FROM prp_admin_flags WHERE id=? LIMIT 1', { id })
+    MySQL.update.await('UPDATE prp_admin_flags SET active=0 WHERE id=?', { id })
+    audit(src, 'delete_flag', row and row.citizenid or '', ('Deleted flag/warning #%s'):format(id))
+end)
+
+RegisterNetEvent('prp-adminpanel:server:setMoney', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local citizenid = tostring(data.citizenid or '')
+    local moneyType = tostring(data.type or '')
+    local amount = tonumber(data.amount) or 0
+    if citizenid == '' or (moneyType ~= 'cash' and moneyType ~= 'bank' and moneyType ~= 'crypto') then return end
+    local targetSrc, P = findOnlineByCitizenId(citizenid)
+    if P and P.Functions and P.Functions.SetMoney then
+        P.Functions.SetMoney(moneyType, amount, 'admin-panel-set')
+    else
+        local row = MySQL.single.await('SELECT money FROM players WHERE citizenid=? LIMIT 1', { citizenid })
+        if row then
+            local money = json.decode(row.money or '{}') or {}
+            money[moneyType] = amount
+            MySQL.update.await('UPDATE players SET money=? WHERE citizenid=?', { json.encode(money), citizenid })
+        end
+    end
+    audit(src, 'set_money_' .. moneyType, { id = targetSrc or '', citizenid = citizenid }, ('Set %s to %s'):format(moneyType, amount))
+end)
+
+RegisterNetEvent('prp-adminpanel:server:addItem', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local citizenid = tostring(data.citizenid or '')
+    local item = tostring(data.item or '')
+    local amount = tonumber(data.amount) or 1
+    if citizenid == '' or item == '' or amount <= 0 then return end
+    local targetSrc, P = findOnlineByCitizenId(citizenid)
+    if P and P.Functions and P.Functions.AddItem then
+        P.Functions.AddItem(item, amount)
+        TriggerClientEvent('inventory:client:ItemBox', targetSrc, QBCore.Shared.Items[item], 'add', amount)
+    else
+        local row = MySQL.single.await('SELECT inventory FROM players WHERE citizenid=? LIMIT 1', { citizenid })
+        if row then
+            local inv = json.decode(row.inventory or '[]') or {}
+            local added = false
+            for _, it in ipairs(inv) do
+                if it.name == item then it.amount = (tonumber(it.amount) or tonumber(it.count) or 0) + amount; added = true; break end
+            end
+            if not added then inv[#inv+1] = { name = item, amount = amount, slot = #inv + 1, info = {} } end
+            MySQL.update.await('UPDATE players SET inventory=? WHERE citizenid=?', { json.encode(inv), citizenid })
+        end
+    end
+    audit(src, 'add_item', { id = targetSrc or '', citizenid = citizenid }, ('Added %sx %s'):format(amount, item))
+end)
+
+RegisterNetEvent('prp-adminpanel:server:removeItem', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local citizenid = tostring(data.citizenid or '')
+    local item = tostring(data.item or '')
+    local amount = tonumber(data.amount) or 1
+    if citizenid == '' or item == '' or amount <= 0 then return end
+    local targetSrc, P = findOnlineByCitizenId(citizenid)
+    if P and P.Functions and P.Functions.RemoveItem then
+        P.Functions.RemoveItem(item, amount)
+        TriggerClientEvent('inventory:client:ItemBox', targetSrc, QBCore.Shared.Items[item], 'remove', amount)
+    else
+        local row = MySQL.single.await('SELECT inventory FROM players WHERE citizenid=? LIMIT 1', { citizenid })
+        if row then
+            local inv = json.decode(row.inventory or '[]') or {}
+            for i = #inv, 1, -1 do
+                local it = inv[i]
+                if it.name == item then
+                    local current = tonumber(it.amount) or tonumber(it.count) or 0
+                    current = current - amount
+                    if current <= 0 then table.remove(inv, i) else it.amount = current end
+                    break
+                end
+            end
+            MySQL.update.await('UPDATE players SET inventory=? WHERE citizenid=?', { json.encode(inv), citizenid })
+        end
+    end
+    audit(src, 'remove_item', { id = targetSrc or '', citizenid = citizenid }, ('Removed %sx %s'):format(amount, item))
+end)

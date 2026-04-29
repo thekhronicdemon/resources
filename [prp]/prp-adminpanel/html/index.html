@@ -9,7 +9,7 @@
 <body>
   <div id="app" class="hidden">
     <aside>
-      <div class="brand"><span>PRP</span><small>Admin Panel</small></div>
+      <div class="brand"><img src="images/logo.png" onerror="this.style.display='none'" /><small>Admin Panel</small></div>
       <button data-tab="home" class="active">Home</button>
       <button data-tab="search">Players</button>
       <button data-tab="logs">Logs</button>
@@ -57,9 +57,11 @@
       <section id="dev" class="tab">
         <div id="devLocked" class="panel hidden"><h2>Developer Options Locked</h2><p>You need developer admin access.</p></div>
         <div id="devTools" class="devgrid">
-          <div class="panel"><h2>Objects</h2><input id="objectModel" placeholder="prop_barrier_work05" /><label><input id="objectFreeze" type="checkbox" checked /> Freeze Object</label><button data-dev="spawnObject">Spawn / Place Object</button><button data-dev="closestObject">Get Closest Object</button><button data-dev="deleteClosestObject" class="danger">Delete Closest Object</button><p class="hint">Move with camera. Enter places. Backspace cancels.</p></div>
-          <div class="panel"><h2>Cars</h2><input id="vehicleModel" placeholder="sultan" /><label><input id="vehicleLimit" type="checkbox" checked /> Max Vehicle Limit On</label><button data-dev="spawnVehicle">Spawn Car</button></div>
-          <div class="panel"><h2>Ped</h2><input id="pedModel" placeholder="s_m_y_cop_01" /><input id="pedAnim" placeholder="Animation search/name placeholder" /><label><input id="pedFreeze" type="checkbox" checked /> Freeze Ped</label><button data-dev="spawnPed">Spawn Ped</button><button data-dev="closestPed">Get Closest Ped</button></div>
+          <div class="panel"><h2>Objects</h2><input id="objectModel" placeholder="prop_barrier_work05" /><div class="switchRow"><span>Freeze Object</span><button class="toggleBtn on" id="objectFreezeToggle" data-toggle="objectFreeze"><span></span></button></div><button data-dev="spawnObject">Spawn / Place Object</button><button data-dev="closestObject">Get Closest Object</button><button data-dev="deleteClosestObject" class="danger">Delete Closest Object</button><p class="hint">Move with camera. Enter places. Backspace cancels.</p></div>
+          <div class="panel"><h2>Cars</h2><input id="vehicleModel" placeholder="sultan" /><div class="switchRow"><span>Max Vehicle Limit</span><button class="toggleBtn on" id="vehicleLimitToggle" data-toggle="vehicleLimit"><span></span></button></div><button data-dev="spawnVehicle">Spawn Car</button></div>
+          <div class="panel"><h2>Ped</h2><input id="pedModel" placeholder="s_m_y_cop_01" /><input id="pedAnim" placeholder="Animation search/name placeholder" /><div class="switchRow"><span>Freeze Ped</span><button class="toggleBtn on" id="pedFreezeToggle" data-toggle="pedFreeze"><span></span></button></div><button data-dev="spawnPed">Spawn Ped</button><button data-dev="closestPed">Get Closest Ped</button></div>
+          <div class="panel"><h2>Admin Toggles</h2><div class="switchRow"><span>Name Plates: State ID</span><button class="toggleBtn" data-devtoggle="toggleNameStateId"><span></span></button></div><div class="switchRow"><span>Name Plates: Health</span><button class="toggleBtn" data-devtoggle="toggleNameHealth"><span></span></button></div><div class="switchRow"><span>Name Plates: Armour</span><button class="toggleBtn" data-devtoggle="toggleNameArmor"><span></span></button></div><div class="switchRow"><span>NoClip</span><button class="toggleBtn" data-devtoggle="toggleNoClip"><span></span></button></div><div class="switchRow"><span>Vanish</span><button class="toggleBtn" data-devtoggle="toggleVanish"><span></span></button></div><p class="hint">Nameplate toggles are separate: State ID, health, and armour.</p></div>
+          <div class="panel"><h2>Server Actions</h2><button data-admin-action="healEveryone" class="success">Heal Everyone</button><button data-admin-action="reviveEveryone" class="warn">Revive Everyone</button><p class="hint">These actions are audit logged.</p></div>
         </div>
       </section>
     </main>

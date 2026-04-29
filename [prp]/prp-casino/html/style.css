@@ -1,0 +1,144 @@
+* {
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding: 32px;
+}
+
+.panel {
+    width: 360px;
+    background: rgba(8, 16, 18, 0.90);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 18px;
+    color: white;
+    padding: 18px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 27px;
+    letter-spacing: 2px;
+}
+
+p {
+    margin: 4px 0;
+    color: #cbd5d7;
+}
+
+.esc {
+    height: 40px;
+    min-width: 48px;
+    background: rgba(255,255,255,0.15);
+}
+
+label {
+    display: block;
+    color: #cbd5d7;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+input {
+    width: 100%;
+    padding: 13px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    outline: none;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+button {
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.13);
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+button:hover {
+    background: rgba(255,255,255,0.20);
+}
+
+.primary {
+    width: 100%;
+    background: #14b86a;
+}
+
+.primary:hover {
+    background: #18cc77;
+}
+
+.scoreRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.scoreRow > div {
+    background: rgba(255,255,255,0.08);
+    padding: 12px;
+    border-radius: 14px;
+}
+
+.scoreRow span {
+    display: block;
+    color: #cbd5d7;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.scoreRow strong {
+    font-size: 24px;
+}
+
+.actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.tableHint {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #d9e8ea;
+}
+
+#status {
+    margin-top: 14px;
+    min-height: 22px;
+    color: #f2d36b;
+    font-weight: 700;
+}

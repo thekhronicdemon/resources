@@ -341,7 +341,8 @@ local function GetTabletItem(Player)
     local fallback = nil
     for _, item in pairs(Player.PlayerData.items) do
         if item and item.name and item.name:lower() == 'tablet' then
-            if type(item.info) == 'table' and item.info.cryptoDrive then
+            local info = type(item.info) == 'table' and item.info or {}
+            if info.cryptoDrive or info.commandUsb or (type(info.cryptoDrives) == 'table' and next(info.cryptoDrives) ~= nil) then
                 return item
             end
             fallback = fallback or item
@@ -371,12 +372,106 @@ local function SetInventoryItemInfo(Player, slot, info)
     return false
 end
 
-local function GetTabletDriveDescription(drive)
+local function GenerateTabletUsbCode()
+    return string.char(math.random(65, 90)) .. string.format('%02d', math.random(0, 99))
+end
+
+local function NormalizeTabletDrive(drive)
     if type(drive) ~= 'table' then
-        return 'No crypto drive inserted'
+        return nil
     end
 
-    return ('Crypto drive installed: %s'):format(drive.label or drive.item or 'Crypto USB')
+    local copy = CopyTable(drive)
+    copy.item = copy.item or 'crypto_usb'
+    copy.code = tostring(copy.code or GenerateTabletUsbCode()):upper()
+    if not copy.code:match('^[A-Z]%d%d$') then
+        copy.code = GenerateTabletUsbCode()
+    end
+    copy.commandName = copy.commandName or ('crypto_usb_' .. copy.code)
+    copy.readyToDeplete = copy.readyToDeplete == true or copy.hacked == true
+    copy.hacked = copy.hacked == true or copy.readyToDeplete == true
+    return copy
+end
+
+local function NormalizeTabletDriveList(value)
+    local drives = {}
+    if type(value) ~= 'table' then
+        return drives
+    end
+
+    if value.item then
+        local normalized = NormalizeTabletDrive(value)
+        if normalized then
+            drives[1] = normalized
+        end
+        return drives
+    end
+
+    for _, drive in pairs(value) do
+        local normalized = NormalizeTabletDrive(drive)
+        if normalized then
+            drives[#drives + 1] = normalized
+        end
+    end
+
+    return drives
+end
+
+local function NormalizeCommandUsb(value)
+    if type(value) ~= 'table' then
+        return nil
+    end
+
+    local copy = CopyTable(value)
+    copy.item = copy.item or 'command_usb'
+    copy.label = copy.label or 'Command USB'
+    return copy
+end
+
+local function GetTabletCommandUsb(info)
+    info = type(info) == 'table' and info or {}
+    return NormalizeCommandUsb(info.commandUsb)
+end
+
+local function GetTabletDrives(info)
+    info = type(info) == 'table' and info or {}
+    if type(info.cryptoDrives) == 'table' then
+        return NormalizeTabletDriveList(info.cryptoDrives)
+    end
+    if type(info.cryptoDrive) == 'table' then
+        return NormalizeTabletDriveList({ info.cryptoDrive })
+    end
+    return {}
+end
+
+local function GetTabletDescription(commandUsb, drives)
+    local parts = {}
+
+    if commandUsb then
+        parts[#parts + 1] = 'Command USB installed'
+    end
+
+    if type(drives) == 'table' and #drives > 0 then
+        parts[#parts + 1] = ('Crypto USBs installed: %s'):format(#drives)
+    end
+
+    if #parts == 0 then
+        return 'No tablet modules installed'
+    end
+
+    return table.concat(parts, ' | ')
+end
+
+local function ApplyTabletModulesToInfo(info, commandUsb, drives)
+    info = type(info) == 'table' and CopyTable(info) or {}
+    drives = NormalizeTabletDriveList(drives)
+    commandUsb = NormalizeCommandUsb(commandUsb)
+
+    info.commandUsb = commandUsb and CopyTable(commandUsb) or nil
+    info.cryptoDrives = #drives > 0 and CopyTable(drives) or nil
+    info.cryptoDrive = drives[1] and CopyTable(drives[1]) or nil
+    info.description = GetTabletDescription(commandUsb, drives)
+    return info
 end
 
 local function GetTabletDeviceState(citizenid)
@@ -400,15 +495,20 @@ local function GetTabletDeviceState(citizenid)
         { citizenid }
     ) or {}
 
-    local cryptoDrive = DecodeStoredTable(row.cryptoDrive)
-    if next(cryptoDrive) == nil then
-        cryptoDrive = nil
+    local appState = DecodeStoredTable(row.appState)
+    appState = type(appState) == 'table' and CopyTable(appState) or {}
+    appState.cryptoDrives = NormalizeTabletDriveList(appState.cryptoDrives)
+    appState.commandUsb = NormalizeCommandUsb(appState.commandUsb)
+
+    local cryptoDrive = NormalizeTabletDrive(DecodeStoredTable(row.cryptoDrive))
+    if #appState.cryptoDrives == 0 and cryptoDrive then
+        appState.cryptoDrives = { CopyTable(cryptoDrive) }
     end
 
     return {
         citizenid = citizenid,
-        cryptoDrive = cryptoDrive,
-        appState = DecodeStoredTable(row.appState),
+        cryptoDrive = appState.cryptoDrives[1] and CopyTable(appState.cryptoDrives[1]) or cryptoDrive,
+        appState = appState,
     }
 end
 
@@ -417,6 +517,10 @@ local function SaveTabletDeviceState(citizenid, state)
     if citizenid == '' then return end
 
     state = state or {}
+    state.appState = type(state.appState) == 'table' and CopyTable(state.appState) or {}
+    state.appState.cryptoDrives = NormalizeTabletDriveList(state.appState.cryptoDrives or state.cryptoDrive)
+    state.appState.commandUsb = NormalizeCommandUsb(state.appState.commandUsb)
+    state.cryptoDrive = state.appState.cryptoDrives[1] and CopyTable(state.appState.cryptoDrives[1]) or nil
     MySQL.insert.await(
         'INSERT INTO prp_tablet_devices (citizenid, crypto_drive, app_state) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE crypto_drive = VALUES(crypto_drive), app_state = VALUES(app_state)',
         {
@@ -429,9 +533,32 @@ end
 
 local function SetTabletCryptoDrive(citizenid, drive)
     local state = GetTabletDeviceState(citizenid)
-    state.cryptoDrive = type(drive) == 'table' and CopyTable(drive) or nil
+    state.appState = state.appState or {}
+    state.appState.cryptoDrives = drive and NormalizeTabletDriveList({ drive }) or {}
+    state.cryptoDrive = state.appState.cryptoDrives[1] and CopyTable(state.appState.cryptoDrives[1]) or nil
     SaveTabletDeviceState(citizenid, state)
     return state
+end
+
+local function SaveTabletModuleState(Player, tablet, tabletInfo, commandUsb, drives)
+    if not Player or not Player.PlayerData then return nil end
+
+    drives = NormalizeTabletDriveList(drives)
+    commandUsb = NormalizeCommandUsb(commandUsb)
+    tabletInfo = ApplyTabletModulesToInfo(tabletInfo, commandUsb, drives)
+
+    if tablet and tablet.slot then
+        SetInventoryItemInfo(Player, tablet.slot, tabletInfo)
+    end
+
+    local state = GetTabletDeviceState(Player.PlayerData.citizenid)
+    state.appState = state.appState or {}
+    state.appState.cryptoDrives = CopyTable(drives)
+    state.appState.commandUsb = commandUsb and CopyTable(commandUsb) or nil
+    state.cryptoDrive = drives[1] and CopyTable(drives[1]) or nil
+    SaveTabletDeviceState(Player.PlayerData.citizenid, state)
+
+    return tabletInfo, state
 end
 
 local function SyncTabletDriveState(Player)
@@ -443,27 +570,38 @@ local function SyncTabletDriveState(Player)
     local device = GetTabletDeviceState(citizenid)
     local tablet = GetTabletItem(Player)
     local info = tablet and type(tablet.info) == 'table' and CopyTable(tablet.info) or {}
-    local metadataDrive = type(info.cryptoDrive) == 'table' and CopyTable(info.cryptoDrive) or nil
+    local metadataDrives = GetTabletDrives(info)
+    local metadataCommandUsb = GetTabletCommandUsb(info)
+    local storedDrives = NormalizeTabletDriveList(device.appState.cryptoDrives)
+    local storedCommandUsb = NormalizeCommandUsb(device.appState.commandUsb)
 
-    if metadataDrive then
-        if not device.cryptoDrive or EncodeJson(device.cryptoDrive) ~= EncodeJson(metadataDrive) then
-            SetTabletCryptoDrive(citizenid, metadataDrive)
+    if #metadataDrives > 0 or metadataCommandUsb then
+        local metadataState = {
+            cryptoDrives = CopyTable(metadataDrives),
+            commandUsb = metadataCommandUsb and CopyTable(metadataCommandUsb) or nil,
+        }
+        if EncodeJson(device.appState.cryptoDrives) ~= EncodeJson(metadataState.cryptoDrives)
+            or EncodeJson(device.appState.commandUsb) ~= EncodeJson(metadataState.commandUsb) then
+            device.appState = metadataState
+            device.cryptoDrive = metadataDrives[1] and CopyTable(metadataDrives[1]) or nil
+            SaveTabletDeviceState(citizenid, device)
         end
-        info.description = GetTabletDriveDescription(metadataDrive)
-        return metadataDrive, tablet, info
-    end
 
-    if device.cryptoDrive then
-        info.cryptoDrive = CopyTable(device.cryptoDrive)
-        info.description = GetTabletDriveDescription(device.cryptoDrive)
+        info = ApplyTabletModulesToInfo(info, metadataCommandUsb, metadataDrives)
         if tablet and tablet.slot then
             SetInventoryItemInfo(Player, tablet.slot, info)
         end
-        return CopyTable(device.cryptoDrive), tablet, info
+        return metadataDrives[1], tablet, info, metadataState
     end
 
-    info.description = GetTabletDriveDescription(nil)
-    return nil, tablet, info
+    info = ApplyTabletModulesToInfo(info, storedCommandUsb, storedDrives)
+    if tablet and tablet.slot then
+        SetInventoryItemInfo(Player, tablet.slot, info)
+    end
+    return storedDrives[1], tablet, info, {
+        cryptoDrives = storedDrives,
+        commandUsb = storedCommandUsb,
+    }
 end
 
 local function AddCryptoTransaction(citizenid, title, message)
@@ -528,14 +666,48 @@ local function RemoveTabletMiningJob(source, jobId)
     end
 end
 
+local function FindTabletDriveBySerial(drives, serial)
+    serial = tostring(serial or '')
+    if serial == '' then return nil, nil end
+
+    for index, drive in ipairs(drives or {}) do
+        if tostring(drive.serial or '') == serial then
+            return drive, index
+        end
+    end
+
+    return nil, nil
+end
+
+local function FindTabletDriveByCommand(drives, commandName)
+    commandName = Trim(commandName):lower()
+    if commandName == '' then return nil, nil end
+
+    for index, drive in ipairs(drives or {}) do
+        if Trim(drive.commandName):lower() == commandName then
+            return drive, index
+        end
+    end
+
+    return nil, nil
+end
+
 local function GetTabletStatus(source, Player)
     local drive = nil
+    local commandUsb = nil
+    local drives = {}
     if Player and Player.PlayerData then
-        drive = SyncTabletDriveState(Player)
+        local modules = nil
+        drive, _, _, modules = SyncTabletDriveState(Player)
+        drives = NormalizeTabletDriveList((modules or {}).cryptoDrives)
+        commandUsb = NormalizeCommandUsb((modules or {}).commandUsb)
     end
 
     return {
         cryptoDrive = drive,
+        cryptoDrives = drives,
+        commandUsb = commandUsb,
+        canOpenTerminal = commandUsb ~= nil,
         activeMining = GetTabletMiningJobs(source)
     }
 end
@@ -1409,6 +1581,83 @@ local function GetRacingSummary(source)
     return { success = false, tracks = {}, publicRaces = {} }
 end
 
+local function BuildTerminalCommandLines(status)
+    local lines = CopyTable((Config.Terminal or {}).KnownCommands or {})
+
+    for _, drive in ipairs((status or {}).cryptoDrives or {}) do
+        lines[#lines + 1] = ('run %s'):format(drive.commandName or ('crypto_usb_' .. tostring(drive.code or '???')))
+    end
+
+    if #lines == 0 then
+        lines[1] = 'run cmd'
+    end
+
+    return lines
+end
+
+local function StartTabletMiningJob(src, Player, drive, drives, commandUsb, tablet, tabletInfo)
+    local miningConfig = Config.CryptoMining or {}
+    local minSeconds = tonumber(miningConfig.MinSeconds) or 180
+    local maxSeconds = tonumber(miningConfig.MaxSeconds) or 900
+    if maxSeconds < minSeconds then maxSeconds = minSeconds end
+
+    local minReward = math.floor((tonumber(miningConfig.MinReward) or 0.12) * 1000000)
+    local maxReward = math.floor((tonumber(miningConfig.MaxReward) or 0.85) * 1000000)
+    if maxReward < minReward then maxReward = minReward end
+
+    local seconds = math.random(minSeconds, maxSeconds)
+    local reward = math.random(minReward, maxReward) / 1000000
+    local jobId = 'RIG-' .. QBCore.Shared.RandomStr(4) .. QBCore.Shared.RandomInt(4)
+    local startedAt = os.time()
+    local miningJob = {
+        id = jobId,
+        item = drive.item,
+        label = drive.commandName or drive.label or 'Crypto USB',
+        image = drive.image,
+        reward = reward,
+        seconds = seconds,
+        startedAt = startedAt,
+        finishesAt = startedAt + seconds,
+        driveSerial = drive.serial,
+        driveCode = drive.code,
+    }
+
+    TabletMining[src] = TabletMining[src] or {}
+    TabletMining[src][#TabletMining[src] + 1] = miningJob
+
+    drives = NormalizeTabletDriveList(drives)
+    for index = #drives, 1, -1 do
+        if tostring(drives[index].serial or '') == tostring(drive.serial or '') then
+            table.remove(drives, index)
+            break
+        end
+    end
+
+    SaveTabletModuleState(Player, tablet, tabletInfo, commandUsb, drives)
+    TriggerClientEvent('qb-inventory:client:updateInventory', src, Player.PlayerData.items or {})
+
+    SetTimeout(seconds * 1000, function()
+        local Target = QBCore.Functions.GetPlayer(src)
+        RemoveTabletMiningJob(src, jobId)
+
+        if not Target then return end
+
+        Target.Functions.AddMoney('crypto', reward, 'tablet crypto mining')
+        local message = ('%s paid out %.6f Qbit.'):format(miningJob.label, reward)
+        AddCryptoTransaction(Target.PlayerData.citizenid, 'Tablet Rig', message)
+        Notify(src, message, 'success')
+        TriggerClientEvent('prp-tablet:client:MiningComplete', src, reward, message, GetTabletStatus(src, Target))
+    end)
+
+    return {
+        success = true,
+        message = ('%s depletion started. ETA %s minute(s).'):format(miningJob.label, math.ceil(seconds / 60)),
+        seconds = seconds,
+        status = GetTabletStatus(src, Player),
+        activeMining = GetTabletMiningJobs(src)
+    }
+end
+
 QBCore.Functions.CreateUseableItem('tablet', function(source)
     TriggerClientEvent('prp-tablet:client:UseTablet', source)
 end)
@@ -1435,6 +1684,17 @@ QBCore.Functions.CreateUseableItem('cryptostick', function(source)
     TriggerClientEvent('prp-tablet:client:UseTablet', source)
 end)
 
+QBCore.Functions.CreateUseableItem('command_usb', function(source)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if not GetTabletItem(Player) then
+        Notify(source, 'You need a tablet before installing this terminal module.', 'error')
+        return
+    end
+
+    Notify(source, 'Install this command USB into a tablet from inventory attachments.', 'primary')
+    TriggerClientEvent('prp-tablet:client:UseTablet', source)
+end)
+
 QBCore.Functions.CreateCallback('prp-tablet:server:GetTabletData', function(source, cb)
     local Player = QBCore.Functions.GetPlayer(source)
     if not Player then
@@ -1457,7 +1717,6 @@ QBCore.Functions.CreateCallback('prp-tablet:server:GetTabletData', function(sour
             items = BuildAdvertisements(18),
         },
         admin = BuildAdminData(source),
-        mdt = BuildMdtSummary(source, Player),
         racingSummary = GetRacingSummary(source),
         crypto = tonumber(Player.PlayerData.money.crypto) or 0,
     })
@@ -1471,77 +1730,155 @@ QBCore.Functions.CreateCallback('prp-tablet:server:StartCryptoMine', function(so
         return
     end
 
-    local miningConfig = Config.CryptoMining or {}
-    local insertedDrive, tablet, tabletInfo = SyncTabletDriveState(Player)
+    local _, tablet, tabletInfo, modules = SyncTabletDriveState(Player)
+    local drives = NormalizeTabletDriveList((modules or {}).cryptoDrives)
+    local commandUsb = NormalizeCommandUsb((modules or {}).commandUsb)
+    local activeJobs = GetTabletMiningJobs(src)
 
-    if not tablet or not insertedDrive or not insertedDrive.item then
-        local activeJobs = GetTabletMiningJobs(src)
-        if #activeJobs > 0 then
-            cb({ success = true, message = 'Active crypto USBs shown.', activeMining = activeJobs })
-            return
+    if not tablet then
+        cb({ success = false, message = 'You need a tablet.', activeMining = activeJobs })
+        return
+    end
+
+    local readyDrive = nil
+    for _, drive in ipairs(drives) do
+        if drive.readyToDeplete == true then
+            readyDrive = drive
+            break
         end
+    end
 
-        cb({ success = false, message = 'Insert a crypto drive into the tablet first.', activeMining = activeJobs })
+    if readyDrive then
+        cb(StartTabletMiningJob(src, Player, readyDrive, drives, commandUsb, tablet, tabletInfo))
         return
     end
 
-    tabletInfo.cryptoDrive = nil
-    tabletInfo.description = GetTabletDriveDescription(nil)
-    if not SetInventoryItemInfo(Player, tablet.slot, tabletInfo) then
-        cb({ success = false, message = 'Could not read the crypto drive.' })
+    if #drives > 0 then
+        cb({
+            success = false,
+            message = 'Run the USB in the tablet terminal first, then press Deplete USB.',
+            status = GetTabletStatus(src, Player),
+            activeMining = activeJobs
+        })
         return
     end
-    SetTabletCryptoDrive(Player.PlayerData.citizenid, nil)
 
-    TriggerClientEvent('qb-inventory:client:updateInventory', src, Player.PlayerData.items or {})
-    Notify(src, ('%s consumed by the crypto rig.'):format(insertedDrive.label or 'Crypto USB'), 'primary')
+    if #activeJobs > 0 then
+        cb({ success = true, message = 'Active crypto USBs shown.', activeMining = activeJobs, status = GetTabletStatus(src, Player) })
+        return
+    end
 
-    local minSeconds = tonumber(miningConfig.MinSeconds) or 180
-    local maxSeconds = tonumber(miningConfig.MaxSeconds) or 900
-    if maxSeconds < minSeconds then maxSeconds = minSeconds end
+    cb({ success = false, message = 'Insert a crypto drive into the tablet first.', activeMining = activeJobs, status = GetTabletStatus(src, Player) })
+end)
 
-    local minReward = math.floor((tonumber(miningConfig.MinReward) or 0.12) * 1000000)
-    local maxReward = math.floor((tonumber(miningConfig.MaxReward) or 0.85) * 1000000)
-    if maxReward < minReward then maxReward = minReward end
+QBCore.Functions.CreateCallback('prp-tablet:server:PrepareTerminalHack', function(source, cb, commandName)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if not Player then
+        cb({ success = false, message = 'Player not found.' })
+        return
+    end
 
-    local seconds = math.random(minSeconds, maxSeconds)
-    local reward = math.random(minReward, maxReward) / 1000000
-    local jobId = 'RIG-' .. QBCore.Shared.RandomStr(4) .. QBCore.Shared.RandomInt(4)
-    local startedAt = os.time()
-    local miningJob = {
-        id = jobId,
-        item = insertedDrive.item,
-        label = insertedDrive.label or 'Crypto USB',
-        image = insertedDrive.image,
-        reward = reward,
-        seconds = seconds,
-        startedAt = startedAt,
-        finishesAt = startedAt + seconds
-    }
+    local _, _, _, modules = SyncTabletDriveState(Player)
+    local drives = NormalizeTabletDriveList((modules or {}).cryptoDrives)
+    local commandUsb = NormalizeCommandUsb((modules or {}).commandUsb)
+    if not commandUsb then
+        cb({ success = false, message = 'Command USB is not installed in this tablet.' })
+        return
+    end
 
-    TabletMining[src] = TabletMining[src] or {}
-    TabletMining[src][#TabletMining[src] + 1] = miningJob
+    local drive = FindTabletDriveByCommand(drives, commandName)
+    if not drive then
+        cb({ success = false, message = 'Unknown terminal target.' })
+        return
+    end
 
-    SetTimeout(seconds * 1000, function()
-        local Target = QBCore.Functions.GetPlayer(src)
-        RemoveTabletMiningJob(src, jobId)
+    if drive.readyToDeplete then
+        cb({ success = false, message = (drive.commandName or drive.label or 'USB') .. ' is already unlocked. Open Crypto Rig and hit Deplete USB.' })
+        return
+    end
 
-        if not Target then return end
-
-        Target.Functions.AddMoney('crypto', reward, 'tablet crypto mining')
-        local message = ('Crypto rig paid out %.6f Qbit.'):format(reward)
-        AddCryptoTransaction(Target.PlayerData.citizenid, 'Tablet Rig', message)
-        Notify(src, message, 'success')
-        TriggerClientEvent('prp-tablet:client:MiningComplete', src, reward, message, GetTabletMiningJobs(src))
-    end)
+    local games = (Config.Terminal or {}).HackGames or { 'typing' }
+    local game = games[math.random(1, #games)]
+    local options = CopyTable((((Config.Terminal or {}).HackOptions or {})[game]) or {})
+    options.title = options.title or 'USB ACCESS'
 
     cb({
         success = true,
-        message = ('%s started. ETA %s minute(s).'):format(miningJob.label, math.ceil(seconds / 60)),
-        seconds = seconds,
-        status = GetTabletStatus(src, Player),
-        activeMining = GetTabletMiningJobs(src)
+        drive = {
+            serial = drive.serial,
+            code = drive.code,
+            commandName = drive.commandName,
+            label = drive.label,
+        },
+        hack = {
+            game = game,
+            options = options,
+        },
+        message = ('Launching %s...'):format(drive.commandName or drive.label or 'USB')
     })
+end)
+
+QBCore.Functions.CreateCallback('prp-tablet:server:CompleteTerminalHack', function(source, cb, serial)
+    local Player = QBCore.Functions.GetPlayer(source)
+    if not Player then
+        cb({ success = false, message = 'Player not found.' })
+        return
+    end
+
+    local _, tablet, tabletInfo, modules = SyncTabletDriveState(Player)
+    local drives = NormalizeTabletDriveList((modules or {}).cryptoDrives)
+    local commandUsb = NormalizeCommandUsb((modules or {}).commandUsb)
+    local drive, index = FindTabletDriveBySerial(drives, serial)
+
+    if not tablet or not drive or not index then
+        cb({ success = false, message = 'USB target no longer exists.' })
+        return
+    end
+
+    drives[index].hacked = true
+    drives[index].readyToDeplete = true
+    drives[index].hackedAt = os.time()
+
+    SaveTabletModuleState(Player, tablet, tabletInfo, commandUsb, drives)
+    TriggerClientEvent('qb-inventory:client:updateInventory', source, Player.PlayerData.items or {})
+
+    cb({
+        success = true,
+        message = ('%s unlocked. Open Crypto Rig and choose Deplete USB.'):format(drive.commandName or drive.label or 'USB'),
+        status = GetTabletStatus(source, Player),
+        lines = {
+            ('USB handshake accepted: %s'):format(drive.commandName or drive.label or 'USB'),
+            'Kernel bypass complete.',
+            'Crypto rig permissions elevated.',
+            'Open Crypto Rig and run Deplete USB.'
+        }
+    })
+end)
+
+QBCore.Functions.CreateCallback('prp-tablet:server:StartUsbDepletion', function(source, cb, serial)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then
+        cb({ success = false, message = 'Player not found.' })
+        return
+    end
+
+    local _, tablet, tabletInfo, modules = SyncTabletDriveState(Player)
+    local drives = NormalizeTabletDriveList((modules or {}).cryptoDrives)
+    local commandUsb = NormalizeCommandUsb((modules or {}).commandUsb)
+    local drive = FindTabletDriveBySerial(drives, serial)
+
+    if not tablet or not drive then
+        cb({ success = false, message = 'That USB is no longer installed.' })
+        return
+    end
+
+    if not drive.readyToDeplete then
+        cb({ success = false, message = 'Solve the USB hack in terminal before depletion.' })
+        return
+    end
+
+    cb(StartTabletMiningJob(src, Player, drive, drives, commandUsb, tablet, tabletInfo))
 end)
 
 QBCore.Functions.CreateCallback('prp-tablet:server:GetBusinessData', function(source, cb)

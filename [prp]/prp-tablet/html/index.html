@@ -71,6 +71,9 @@
         <symbol id="icon-note" viewBox="0 0 24 24">
             <path d="M6 3h9l5 5v13H6V3zm8 1.8V9h4.2L14 4.8zM8 11v2h8v-2H8zm0 4v2h8v-2H8zm0-8v2h4V7H8z"/>
         </symbol>
+        <symbol id="icon-code" viewBox="0 0 24 24">
+            <path d="m8.4 7.1-4.9 4.9 4.9 4.9 1.4-1.4L6.3 12l3.5-3.5-1.4-1.4zm7.2 0-1.4 1.4 3.5 3.5-3.5 3.5 1.4 1.4 4.9-4.9-4.9-4.9zM12.9 4l-3.1 16h1.9l3.1-16h-1.9z"/>
+        </symbol>
     </svg>
 
     <main id="tablet-root" class="tablet-root" style="display: none; visibility: hidden;">
@@ -83,7 +86,12 @@
                         <svg><use href="#icon-home"></use></svg>
                     </button>
                 </div>
-                <span id="page-status" class="page-status">Online</span>
+                <div class="system-right">
+                    <button id="terminal-toggle" class="system-utility hidden" aria-label="Terminal" title="Terminal">
+                        <svg><use href="#icon-code"></use></svg>
+                    </button>
+                    <span id="page-status" class="page-status">Online</span>
+                </div>
             </header>
 
             <div class="tablet-body">
@@ -798,10 +806,14 @@
                         <section class="app-panel active" data-app="crypto" data-panel="overview">
                             <div class="panel-stack">
                                 <section class="summary-panel">
-                                    <p class="eyebrow">Inserted drive</p>
-                                    <h2 id="crypto-drive" class="section-title">No drive installed</h2>
+                                    <p class="eyebrow">Installed modules</p>
+                                    <h2 id="crypto-drive" class="section-title">No USBs installed</h2>
                                     <span id="crypto-balance" class="meta-copy">0.000000 Qbit</span>
-                                    <button id="start-mining" class="action-button primary">Start rig</button>
+                                    <div class="tool-actions">
+                                        <button id="open-terminal-shortcut" class="action-button"><svg><use href="#icon-code"></use></svg>Open Terminal</button>
+                                        <button id="start-mining" class="action-button primary">Deplete First USB</button>
+                                    </div>
+                                    <div id="crypto-drive-list" class="tool-list usb-drive-list"></div>
                                 </section>
                             </div>
                         </section>
@@ -836,7 +848,8 @@
                                         <h2 class="section-title">Device state</h2>
                                     </div>
                                     <div class="tool-list">
-                                        <article class="tool-row"><span>Inserted drive</span><strong id="crypto-tool-drive">None</strong></article>
+                                        <article class="tool-row"><span>Installed USBs</span><strong id="crypto-tool-drive">None</strong></article>
+                                        <article class="tool-row"><span>Command USB</span><strong id="crypto-tool-command">Not installed</strong></article>
                                         <article class="tool-row"><span>Active rigs</span><strong id="crypto-tool-active-count">0</strong></article>
                                         <article class="tool-row"><span>Wallet</span><strong id="crypto-tool-balance">0.000000 Qbit</strong></article>
                                     </div>
@@ -848,6 +861,23 @@
                     </section>
                 </section>
             </div>
+        </section>
+
+        <section id="terminal-panel" class="terminal-panel hidden" aria-hidden="true">
+            <div class="terminal-header">
+                <div class="terminal-header-copy">
+                    <strong>TERMINAL</strong>
+                    <span id="terminal-root-label">~/main/</span>
+                </div>
+                <button id="terminal-close" class="terminal-close" aria-label="Close terminal">
+                    <svg><use href="#icon-x"></use></svg>
+                </button>
+            </div>
+            <div id="terminal-output" class="terminal-output"></div>
+            <form id="terminal-form" class="terminal-input-row">
+                <span class="terminal-prompt">~/main/ $</span>
+                <input id="terminal-input" class="terminal-input" autocomplete="off" spellcheck="false" placeholder="run cmd">
+            </form>
         </section>
 
         <div id="modal-layer" class="modal-layer hidden">

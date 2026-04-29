@@ -4,6 +4,7 @@ const toast = document.getElementById("toast");
 const sidebarStack = document.getElementById("sidebar-stack");
 const sidebarAppLabel = document.getElementById("sidebar-app-label");
 const sidebarPanelLabel = document.getElementById("sidebar-panel-label");
+const terminalPanel = document.getElementById("terminal-panel");
 
 const APP_ICONS = {
     home: "home",
@@ -11,12 +12,13 @@ const APP_ICONS = {
     business: "briefcase",
     ads: "bullhorn",
     crypto: "chip",
-    mdt: "shield",
     admin: "settings",
     crime: "search",
     boosting: "bolt",
     royale: "map"
 };
+
+const TERMINAL_ROOT = "~/main/";
 
 const PANEL_DEFAULTS = {
     home: "home",
@@ -24,7 +26,6 @@ const PANEL_DEFAULTS = {
     business: "overview",
     ads: "feed",
     crypto: "overview",
-    mdt: "overview",
     admin: "overview"
 };
 
@@ -52,12 +53,6 @@ const PANEL_LABELS = {
         races: "Track control",
         moderation: "Moderation"
     },
-    mdt: {
-        overview: "Open cases",
-        suspects: "Suspect search",
-        reports: "Report editor",
-        personnel: "Personnel"
-    },
     crypto: {
         overview: "Rig status",
         jobs: "Rig queue",
@@ -73,7 +68,6 @@ const state = {
         business: "overview",
         ads: "feed",
         crypto: "overview",
-        mdt: "overview",
         admin: "overview"
     },
     apps: [],
@@ -84,7 +78,6 @@ const state = {
         business: { success: false, employees: [], messages: [] },
         ads: { success: true, items: [] },
         admin: { success: false },
-        mdt: { success: false, reports: [] },
         racing: {
             success: false,
             tracks: [],
@@ -120,7 +113,10 @@ const state = {
         selectedOfficer: null,
         businessReplyTo: null,
         businessEditId: null,
-        showDeletedRecords: false
+        showDeletedRecords: false,
+        terminalOpen: false,
+        terminalBusy: false,
+        terminalHistory: []
     }
 };
 
@@ -291,6 +287,130 @@ function showToast(message, tone = "neutral") {
     }, 3200);
 }
 
+function terminalDrives() {
+    return (((state.data || {}).status || {}).cryptoDrives) || [];
+}
+
+function terminalCommandList() {
+    return [
+        "run cmd",
+        ...terminalDrives().map((drive) => `run ${drive.commandName || `crypto_usb_${drive.code || "???"}`}`)
+    ];
+}
+
+function pushTerminalLine(text, tone = "muted") {
+    state.ui.terminalHistory = state.ui.terminalHistory || [];
+    state.ui.terminalHistory.push({ text, tone });
+}
+
+function ensureTerminalBoot() {
+    if ((state.ui.terminalHistory || []).length) {
+        return;
+    }
+
+    pushTerminalLine("PRP tablet terminal online.", "good");
+    pushTerminalLine(`Root mounted at ${TERMINAL_ROOT}`, "muted");
+    pushTerminalLine('Type "run cmd" to list available commands.', "muted");
+}
+
+function renderTerminal() {
+    const available = !!(((state.data || {}).status || {}).commandUsb);
+    const button = document.getElementById("terminal-toggle");
+    const shortcut = document.getElementById("open-terminal-shortcut");
+    const output = document.getElementById("terminal-output");
+    const input = document.getElementById("terminal-input");
+    const rootLabel = document.getElementById("terminal-root-label");
+
+    if (button) {
+        button.classList.toggle("hidden", !available);
+    }
+    if (shortcut) {
+        shortcut.disabled = !available;
+    }
+    if (rootLabel) {
+        rootLabel.textContent = TERMINAL_ROOT;
+    }
+
+    if (!terminalPanel) {
+        return;
+    }
+
+    terminalPanel.classList.toggle("hidden", !state.ui.terminalOpen);
+    terminalPanel.setAttribute("aria-hidden", state.ui.terminalOpen ? "false" : "true");
+
+    if (output) {
+        output.innerHTML = (state.ui.terminalHistory || []).map((entry) => `
+            <div class="terminal-line ${escapeHtml(entry.tone || "muted")}">${escapeHtml(entry.text || "")}</div>
+        `).join("");
+        output.scrollTop = output.scrollHeight;
+    }
+
+    if (input) {
+        input.disabled = !available || state.ui.terminalBusy;
+        input.placeholder = available ? "run cmd" : "Install Command USB";
+    }
+}
+
+function openTerminal() {
+    if (!(((state.data || {}).status || {}).commandUsb)) {
+        showToast("Install a Command USB into the tablet first.", "bad");
+        return;
+    }
+
+    state.ui.terminalOpen = true;
+    ensureTerminalBoot();
+    renderTerminal();
+
+    const input = document.getElementById("terminal-input");
+    if (input) {
+        input.focus();
+    }
+}
+
+function closeTerminal() {
+    state.ui.terminalOpen = false;
+    state.ui.terminalBusy = false;
+    renderTerminal();
+}
+
+function runTerminalCommand(command) {
+    const normalized = String(command || "").trim();
+    if (!normalized) {
+        return;
+    }
+
+    pushTerminalLine(`${TERMINAL_ROOT}$ ${normalized}`, "command");
+
+    if (normalized.toLowerCase() === "run cmd") {
+        pushTerminalLine("Known commands:", "good");
+        terminalCommandList().forEach((entry) => pushTerminalLine(`- ${entry}`, "muted"));
+        renderTerminal();
+        return;
+    }
+
+    state.ui.terminalBusy = true;
+    renderTerminal();
+
+    post("TabletRunTerminalCommand", { command: normalized }).then((resp) => {
+        if (resp && resp.message) {
+            pushTerminalLine(resp.message, resp.success === false ? "bad" : "good");
+        }
+        if (resp && resp.status) {
+            state.data.status = resp.status;
+            renderHome();
+            renderCrypto();
+        }
+        if (!resp || !resp.pending) {
+            state.ui.terminalBusy = false;
+            renderTerminal();
+        }
+    }).catch(() => {
+        pushTerminalLine("Terminal command failed to run.", "bad");
+        state.ui.terminalBusy = false;
+        renderTerminal();
+    });
+}
+
 function syncClock() {
     const now = new Date();
     document.getElementById("system-time").textContent = now.toLocaleTimeString([], {
@@ -373,16 +493,6 @@ function sidebarItemsFor(app) {
             { kind: "panel", app: "admin", panel: "overview", icon: "settings", label: "Overview" },
             { kind: "panel", app: "admin", panel: "races", icon: "flag", label: "Tracks" },
             { kind: "panel", app: "admin", panel: "moderation", icon: "shield", label: "Moderation" }
-        ];
-    }
-
-    if (app === "mdt") {
-        return [
-            { kind: "app", app: "home", icon: "home", label: "Home" },
-            { kind: "panel", app: "mdt", panel: "overview", icon: "shield", label: "Overview" },
-            { kind: "panel", app: "mdt", panel: "suspects", icon: "search", label: "Suspects" },
-            { kind: "panel", app: "mdt", panel: "reports", icon: "note", label: "Reports" },
-            { kind: "panel", app: "mdt", panel: "personnel", icon: "users", label: "Personnel" }
         ];
     }
 
@@ -536,7 +646,7 @@ function renderHome() {
 
     const appGrid = $("#app-grid");
     appGrid.innerHTML = visibleApps().map((app) => {
-        const supported = ["racing", "business", "ads", "crypto", "mdt", "admin"].includes(app.id) && !app.disabled;
+        const supported = ["racing", "business", "ads", "crypto", "admin"].includes(app.id) && !app.disabled;
         const icon = APP_ICONS[app.id] || "home";
         let statusText = "Soon";
 
@@ -548,8 +658,6 @@ function renderHome() {
             statusText = `${((state.data.ads || {}).items || []).length} ads`;
         } else if (app.id === "crypto") {
             statusText = `${(((state.data.status || {}).activeMining) || []).length} active`;
-        } else if (app.id === "mdt") {
-            statusText = `${((state.data.mdt || {}).openReports) || 0} open`;
         } else if (app.id === "admin") {
             statusText = `${(((state.data.admin || {}).summary) || {}).reports || 0} reports`;
         }
@@ -1819,14 +1927,60 @@ function renderMdt() {
 
 function renderCrypto() {
     const status = state.data.status || {};
-    const drive = status.cryptoDrive || null;
+    const drives = Array.isArray(status.cryptoDrives) ? status.cryptoDrives : [];
     const active = status.activeMining || [];
+    const commandUsb = status.commandUsb || null;
+    const driveList = $("#crypto-drive-list");
 
-    $("#crypto-drive").textContent = drive ? (drive.label || "Crypto USB") : "No drive installed";
+    $("#crypto-drive").textContent = drives.length
+        ? `${drives.length} USB${drives.length === 1 ? "" : "s"} installed`
+        : "No USBs installed";
     $("#crypto-balance").textContent = qbit(state.data.crypto);
-    $("#crypto-tool-drive").textContent = drive ? (drive.label || "Crypto USB") : "None";
+    $("#crypto-tool-drive").textContent = String(drives.length || 0);
+    $("#crypto-tool-command").textContent = commandUsb
+        ? (commandUsb.label || commandUsb.name || "Installed")
+        : "Not installed";
     $("#crypto-tool-active-count").textContent = String(active.length);
     $("#crypto-tool-balance").textContent = qbit(state.data.crypto);
+
+    if (driveList) {
+        if (!drives.length) {
+            driveList.innerHTML = `
+                <article class="usb-drive-row empty-row">
+                    <div>
+                        <h2 class="row-title">No crypto USBs installed</h2>
+                        <span class="meta-copy">Load a crypto USB into the tablet inventory slot to unlock it here.</span>
+                    </div>
+                </article>
+            `;
+        } else {
+            driveList.innerHTML = drives.map((drive) => `
+                <article class="usb-drive-row">
+                    <div class="usb-drive-head">
+                        <div>
+                            <strong class="usb-drive-name">${escapeHtml(drive.commandName || drive.label || "Crypto USB")}</strong>
+                            <div class="usb-drive-meta">
+                                <span>${escapeHtml(drive.label || "Crypto USB")}</span>
+                                <span>${escapeHtml(drive.serial || "No serial")}</span>
+                                <span>${escapeHtml(drive.code || "---")}</span>
+                            </div>
+                        </div>
+                        <div class="row-tags">
+                            ${raceBadge(drive.readyToDeplete ? "Unlocked" : drive.hacked ? "Ready" : "Locked", drive.readyToDeplete ? "good" : "")}
+                        </div>
+                    </div>
+                    <div class="tool-actions">
+                        <button class="row-action" data-open-terminal-usb="${escapeHtml(drive.commandName || "")}" ${commandUsb ? "" : "disabled"}>
+                            ${drive.readyToDeplete ? "Review in Terminal" : "Run in Terminal"}
+                        </button>
+                        <button class="row-action accent" data-deplete-usb="${escapeHtml(drive.serial || "")}" ${drive.readyToDeplete ? "" : "disabled"}>
+                            Deplete USB
+                        </button>
+                    </div>
+                </article>
+            `).join("");
+        }
+    }
 
     const list = $("#mining-list");
     if (!active.length) {
@@ -1863,25 +2017,23 @@ function render() {
     renderBusiness();
     renderAds();
     renderAdmin();
-    renderMdt();
     renderCrypto();
+    renderTerminal();
     syncView();
 }
 
 function triggerMiningStart() {
     post("TabletStartCryptoMine").then((resp) => {
-        if (resp.status) {
+        if (resp && resp.status) {
             state.data.status = resp.status;
-        } else if (resp.activeMining) {
+        } else if (resp && resp.activeMining) {
             state.data.status = state.data.status || {};
             state.data.status.activeMining = resp.activeMining;
-            if (resp.success !== false) {
-                state.data.status.cryptoDrive = null;
-            }
         }
         setMessage("crypto-message", resp.message || "", resp.success === false ? "bad" : "good");
         renderHome();
         renderCrypto();
+        renderTerminal();
     });
 }
 
@@ -1906,6 +2058,9 @@ function openTablet(payload) {
     state.ui.businessEditId = null;
     state.ui.showDeletedRecords = false;
     state.ui.homeAdIndex = 0;
+    state.ui.terminalOpen = false;
+    state.ui.terminalBusy = false;
+    state.ui.terminalHistory = [];
     state.data.racing = mergeClaimedRewardState(state.data.racing);
     document.documentElement.classList.add("tablet-visible");
     document.body.classList.add("tablet-visible");
@@ -1934,6 +2089,8 @@ function openTablet(payload) {
 function closeTablet() {
     state.open = false;
     state.ui.claimedRewardTiers = {};
+    state.ui.terminalOpen = false;
+    state.ui.terminalBusy = false;
     clearInterval(homeAdTimer);
     homeAdTimer = null;
     document.documentElement.classList.remove("tablet-visible");
@@ -1957,6 +2114,7 @@ function refreshTablet() {
     return post("TabletRefresh").then((data) => {
         if (data && data.success !== false) {
             state.data = data;
+            state.data.racing = mergeClaimedRewardState(state.data.racing);
             render();
         }
         return data;
@@ -2049,10 +2207,29 @@ window.addEventListener("message", (event) => {
 
     if (data.action === "tabletMiningComplete") {
         setMessage("crypto-message", data.message || "Crypto reward received.", "good");
-        state.data.status = state.data.status || {};
-        state.data.status.activeMining = data.activeMining || [];
+        state.data.status = data.status || { activeMining: [] };
         renderHome();
         renderCrypto();
+        renderTerminal();
+        return;
+    }
+
+    if (data.action === "tabletTerminalResult") {
+        const payload = data.payload || {};
+        const lines = Array.isArray(payload.lines) ? payload.lines : [];
+        const tone = payload.success === false ? "bad" : "good";
+
+        lines.forEach((line) => pushTerminalLine(line, tone));
+        if (payload.message) {
+            pushTerminalLine(payload.message, tone);
+        }
+        if (payload.status) {
+            state.data.status = payload.status;
+            renderHome();
+            renderCrypto();
+        }
+        state.ui.terminalBusy = false;
+        renderTerminal();
         return;
     }
 
@@ -2366,6 +2543,31 @@ document.addEventListener("click", (event) => {
         });
     }
 
+    const openTerminalUsb = event.target.closest("[data-open-terminal-usb]");
+    if (openTerminalUsb) {
+        openTerminal();
+        const input = document.getElementById("terminal-input");
+        if (input) {
+            input.value = `run ${openTerminalUsb.dataset.openTerminalUsb || ""}`.trim();
+            input.focus();
+        }
+        return;
+    }
+
+    const depleteUsb = event.target.closest("[data-deplete-usb]");
+    if (depleteUsb) {
+        post("TabletStartUsbDepletion", { serial: depleteUsb.dataset.depleteUsb }).then((resp) => {
+            if (resp && resp.status) {
+                state.data.status = resp.status;
+            }
+            setMessage("crypto-message", (resp && resp.message) || "USB depletion started.", resp && resp.success === false ? "bad" : "good");
+            renderHome();
+            renderCrypto();
+            renderTerminal();
+        });
+        return;
+    }
+
     const loadReport = event.target.closest("[data-load-report]");
     if (loadReport) {
         const reports = (state.data.mdt || {}).reports || [];
@@ -2417,12 +2619,24 @@ document.addEventListener("click", (event) => {
 });
 
 $("#close-tablet").addEventListener("click", () => post("CloseTablet").then(closeTablet));
+$("#terminal-toggle").addEventListener("click", openTerminal);
+$("#open-terminal-shortcut").addEventListener("click", openTerminal);
+$("#terminal-close").addEventListener("click", closeTerminal);
 $("#create-zone-open").addEventListener("click", () => openModal("create-track"));
 $("#join-private-open").addEventListener("click", () => openModal("private-race"));
 $("#refresh-racing").addEventListener("click", () => refreshRacing(true));
 $("#refresh-business").addEventListener("click", () => refreshBusiness(true));
 $("#refresh-admin").addEventListener("click", () => refreshAdmin(true));
 $("#start-mining").addEventListener("click", triggerMiningStart);
+$("#terminal-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = $("#terminal-input");
+    const command = input ? input.value : "";
+    if (input) {
+        input.value = "";
+    }
+    runTerminalCommand(command);
+});
 
 $("#launch-track-creator").addEventListener("click", () => {
     post("TabletCreateRaceZone", { name: $("#track-name-input").value }).then((resp) => {

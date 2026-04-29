@@ -589,6 +589,10 @@ const InventoryContainer = Vue.createApp({
                     el.closest(".right-grid")
             );
 
+            const deviceSlotElement = elementsUnderCursor
+                .map((el) => el.classList.contains("device-module-slot") ? el : (el.closest && el.closest(".device-module-slot")))
+                .find(Boolean);
+
             const overInventoryContainer = elementsUnderCursor.some(
                 (el) =>
                     el.closest(".inventory-panel") ||
@@ -602,6 +606,15 @@ const InventoryContainer = Vue.createApp({
                 const quickSlot = Number(quickSlotElement.dataset.slot);
                 if (quickSlot) {
                     this.assignQuickSlot(quickSlot, this.currentlyDraggingSlot);
+                }
+                this.clearDragData();
+                return;
+            }
+
+            if (deviceSlotElement) {
+                const targetDeviceSlot = deviceSlotElement.dataset.deviceSlot;
+                if (targetDeviceSlot) {
+                    this.handleDropOnDeviceSlot(targetDeviceSlot);
                 }
                 this.clearDragData();
                 return;
@@ -644,6 +657,18 @@ const InventoryContainer = Vue.createApp({
         handleDropOnPlayerSlot(targetSlot) {
             if (!this.currentlyDraggingItem) return;
 
+            if (this.dragStartInventoryType === "device") {
+                const existing = this.playerInventory[targetSlot];
+                if (existing) {
+                    this.selectedDeviceModMessage = "Drop installed modules into an empty inventory slot.";
+                    this.inventoryError(targetSlot);
+                    return;
+                }
+
+                this.removeDeviceAttachment(this.currentlyDraggingItem, targetSlot);
+                return;
+            }
+
             if (this.isShopInventory && this.dragStartInventoryType === "other") {
                 this.handlePurchase(
                     targetSlot,
@@ -666,6 +691,35 @@ const InventoryContainer = Vue.createApp({
             }
 
             this.handleItemDrop("other", targetSlot);
+        },
+
+        handleDropOnDeviceSlot(slotId) {
+            if (!this.currentlyDraggingItem || !this.selectedDevice) return;
+
+            const deviceSlot = this.findDeviceModuleSlot(slotId);
+            if (!deviceSlot) return;
+
+            if (this.dragStartInventoryType !== "player") {
+                this.selectedDeviceModMessage = "Drag a compatible item from your inventory into the bay.";
+                return;
+            }
+
+            if (deviceSlot.attachment) {
+                this.selectedDeviceModMessage = `${deviceSlot.label} is already occupied.`;
+                this.inventoryError(this.currentlyDraggingSlot);
+                return;
+            }
+
+            if (!this.canInstallIntoDeviceSlot(deviceSlot, this.currentlyDraggingItem)) {
+                this.selectedDeviceModMessage = `${this.currentlyDraggingItem.label || this.currentlyDraggingItem.name} does not fit in that bay.`;
+                this.inventoryError(this.currentlyDraggingSlot);
+                return;
+            }
+
+            const attachment = this.deviceAttachmentFromItem(this.currentlyDraggingItem);
+            if (!attachment) return;
+
+            this.applyDeviceAttachment(attachment);
         },
 
         handleDropOutsideInventory() {
@@ -1230,20 +1284,49 @@ const InventoryContainer = Vue.createApp({
             return item && (item.name === "phone" || item.name === "tablet");
         },
 
+        parseDeviceAttachmentToken(value) {
+            const token = String(value || "");
+            const divider = token.indexOf("|");
+
+            if (divider === -1) {
+                return {
+                    itemName: token,
+                    identifier: ""
+                };
+            }
+
+            return {
+                itemName: token.slice(0, divider),
+                identifier: token.slice(divider + 1)
+            };
+        },
+
+        normalizeDeviceAttachment(attachment) {
+            if (!attachment) return null;
+
+            const parsed = this.parseDeviceAttachmentToken(attachment.attachment);
+            return {
+                ...attachment,
+                itemName: parsed.itemName,
+                identifier: parsed.identifier
+            };
+        },
+
         buildAvailableDeviceAttachments(device) {
             if (!device || !device.name) return [];
 
             const info = device.info || {};
             if (device.name === "phone" && info.simNumber) return [];
-            if (device.name === "tablet" && info.cryptoDrive) return [];
 
             const allowed = {
                 phone: { simcard: true },
-                tablet: { crypto_usb: true, cryptostick: true }
+                tablet: { crypto_usb: true, cryptostick: true, command_usb: true }
             }[device.name] || {};
+            const commandInstalled = device.name === "tablet" && !!info.commandUsb;
 
             return Object.values(this.playerInventory)
                 .filter((item) => item && item.name && allowed[item.name] && item.slot !== device.slot)
+                .filter((item) => !(commandInstalled && item.name === "command_usb"))
                 .map((item) => ({
                     attachment: item.name,
                     label: item.label || item.name,
@@ -1271,6 +1354,65 @@ const InventoryContainer = Vue.createApp({
             return merged;
         },
 
+        getDeviceModuleSlots() {
+            if (!this.selectedDevice || !this.selectedDevice.name) return [];
+
+            const installed = (this.selectedDeviceAttachments || [])
+                .map((attachment) => this.normalizeDeviceAttachment(attachment))
+                .filter(Boolean);
+
+            if (this.selectedDevice.name === "phone") {
+                const sim = installed.find((entry) => entry.itemName === "simcard") || null;
+
+                return [{
+                    key: "phone-sim",
+                    slotId: "sim",
+                    shortLabel: "SIM",
+                    label: "SIM Card",
+                    accepts: ["simcard"],
+                    attachment: sim
+                }];
+            }
+
+            if (this.selectedDevice.name === "tablet") {
+                const command = installed.find((entry) => entry.itemName === "command_usb") || null;
+                const drives = installed.filter((entry) => entry.itemName === "crypto_usb" || entry.itemName === "cryptostick");
+                const cryptoSlotCount = Math.max(6, drives.length + 1);
+
+                const slots = [{
+                    key: "tablet-command",
+                    slotId: "command",
+                    shortLabel: "CMD",
+                    label: "Command USB",
+                    accepts: ["command_usb"],
+                    attachment: command
+                }];
+
+                for (let index = 0; index < cryptoSlotCount; index++) {
+                    slots.push({
+                        key: `tablet-crypto-${index + 1}`,
+                        slotId: `crypto-${index + 1}`,
+                        shortLabel: `U${index + 1}`,
+                        label: "Crypto USB",
+                        accepts: ["crypto_usb", "cryptostick"],
+                        attachment: drives[index] || null
+                    });
+                }
+
+                return slots;
+            }
+
+            return [];
+        },
+
+        findDeviceModuleSlot(slotId) {
+            return this.getDeviceModuleSlots().find((slot) => slot.slotId === slotId) || null;
+        },
+
+        canInstallIntoDeviceSlot(slot, item) {
+            return !!(slot && item && Array.isArray(slot.accepts) && slot.accepts.includes(item.name));
+        },
+
         deviceAttachmentFromItem(item) {
             if (!item || !item.name || !item.slot) return null;
 
@@ -1282,6 +1424,41 @@ const InventoryContainer = Vue.createApp({
                 slot: item.slot,
                 detail: item.info && (item.info.simNumber || item.info.serial || item.info.serie)
             };
+        },
+
+        handleDeviceAttachmentMouseDown(event, attachment) {
+            if (event.button !== 0) return;
+            event.preventDefault();
+
+            const normalized = this.normalizeDeviceAttachment(attachment);
+            if (!normalized) return;
+
+            const slotElement = event.target.closest(".device-module-slot");
+            if (!slotElement) return;
+
+            const ghostElement = this.createGhostElement(slotElement);
+            document.body.appendChild(ghostElement);
+
+            const offsetX = ghostElement.offsetWidth / 2;
+            const offsetY = ghostElement.offsetHeight / 2;
+            ghostElement.style.left = `${event.clientX - offsetX}px`;
+            ghostElement.style.top = `${event.clientY - offsetY}px`;
+
+            this.ghostElement = ghostElement;
+            this.currentlyDraggingItem = {
+                ...normalized,
+                __deviceAttachment: true,
+                name: normalized.itemName,
+                label: normalized.label,
+                image: normalized.image
+            };
+            this.currentlyDraggingSlot = normalized.attachment;
+            this.dragStartX = event.clientX;
+            this.dragStartY = event.clientY;
+            this.dragStartInventoryType = "device";
+            this.showContextMenu = false;
+            this.showSubmenu = false;
+            this.activeSubmenu = null;
         },
 
         updateDeviceModData(data) {
@@ -1434,11 +1611,14 @@ const InventoryContainer = Vue.createApp({
             });
         },
 
-        removeDeviceAttachment(attachment) {
+        removeDeviceAttachment(attachment, targetSlot = null) {
             if (!this.selectedDevice || !attachment || attachment.removable === false) return;
 
             axios.post("https://qb-inventory/RemoveDeviceAttachment", {
-                AttachmentData: attachment,
+                AttachmentData: {
+                    ...attachment,
+                    targetSlot
+                },
                 DeviceData: this.selectedDevice
             }).then((response) => {
                 if (response.data && response.data.success) {
