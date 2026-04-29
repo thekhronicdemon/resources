@@ -3,7 +3,7 @@ game 'gta5'
 
 lua54 'yes'
 
-author 'OpenAI'
+author 'PRP'
 description 'prp-ELS - no HUD emergency light and siren controller'
 version '1.5.0'
 

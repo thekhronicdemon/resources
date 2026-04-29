@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 
 name 'prp-hacks'
-author 'PRP / ChatGPT'
+author 'PRP'
 description 'Reusable PRP hack minigames: Tetris, Flappy, Crossy, Memory, and Typing'
 version '1.2.0'
 

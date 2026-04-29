@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-author 'OpenAI'
+author 'PRP'
 description 'PRP Scrapyard replacement for QB-Core'
 version '1.2.0'
 

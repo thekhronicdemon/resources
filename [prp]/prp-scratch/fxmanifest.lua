@@ -3,7 +3,7 @@ game 'gta5'
 lua54 'yes'
 
 name 'prp-scratch'
-author 'OpenAI'
+author 'PRP'
 description 'Configurable scratch ticket system for QB-Core'
 version '1.0.0'
 

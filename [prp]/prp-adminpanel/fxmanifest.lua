@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 
 name 'prp-adminpanel'
-author 'PRP / ChatGPT'
+author 'PRP'
 description 'Admin panel with player tools and developer options for QBCore'
 version '0.1.0'
 

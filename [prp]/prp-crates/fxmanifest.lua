@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-author 'OpenAI'
+author 'PRP'
 description 'PRP Crates - CS style instant rolling crate system for QB-Core'
 version '1.0.1'
 
