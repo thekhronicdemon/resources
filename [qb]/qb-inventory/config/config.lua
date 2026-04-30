@@ -24,6 +24,23 @@ Config = {
 
     ShopSellBackRate = 0.70,
 
+    StackableItems = {
+        markedbills = true,
+    },
+
+    ItemHealth = {
+        Enabled = true,
+        MetadataKey = 'quality',
+        DefaultHealth = 100,
+        RemoveAtZero = true,
+        RemoveWeaponsAtZero = true,
+        Items = {
+            -- Example:
+            -- lockpick = { health = 100, degradeOnUse = 25 },
+            -- radio = { health = 100 },
+        },
+    },
+
     ItemDropObject = `bkr_prop_duffel_bag_01a`,
     ItemDropObjectBone = 28422,
     ItemDropObjectOffset = {

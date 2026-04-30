@@ -31,14 +31,8 @@ local function triggerCruiseControl(veh)
         if speed > 0 and GetVehicleCurrentGear(veh) > 0 then
             speed = GetEntitySpeed(veh)
             local isTurningOrHandbraking = IsControlPressed(2, 76) or IsControlPressed(2, 63) or IsControlPressed(2, 64)
-            if GetResourceState('qb-fuel') == 'started' then
-                if exports['qb-fuel']:GetFuel(veh) <= 10 then
-                    QBCore.Functions.Notify(Lang:t('cruise.not_Enough_Fuel'), 'error')
-                    return
-                end
-            end
-            if GetResourceState('LegacyFuel') == 'started' then
-                if exports['LegacyFuel']:GetFuel(veh) <= 10 then
+            if GetResourceState('prp-fuel') == 'started' then
+                if exports['prp-fuel']:GetFuel(veh) <= 10 then
                     QBCore.Functions.Notify(Lang:t('cruise.not_Enough_Fuel'), 'error')
                     return
                 end

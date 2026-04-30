@@ -802,14 +802,15 @@ const InventoryContainer = Vue.createApp({
                 if (targetItem) {
                     const targetAmount = Number(targetItem.amount) > 0 ? Number(targetItem.amount) : 1;
 
-                    if (targetItem.name !== sourceItem.name || targetItem.unique) {
+                    if (targetItem.name === sourceItem.name) {
                         this.postInventoryData(
                             this.dragStartInventoryType,
                             targetInventoryType,
                             this.currentlyDraggingSlot,
                             targetSlotNumber,
-                            sourceAmount,
-                            targetAmount
+                            amountToTransfer,
+                            targetAmount,
+                            { skipLocalMove: true }
                         );
                     } else {
                         this.postInventoryData(
@@ -817,7 +818,7 @@ const InventoryContainer = Vue.createApp({
                             targetInventoryType,
                             this.currentlyDraggingSlot,
                             targetSlotNumber,
-                            amountToTransfer,
+                            sourceAmount,
                             targetAmount
                         );
                     }
@@ -850,7 +851,7 @@ const InventoryContainer = Vue.createApp({
             this.dragStartInventoryType = "player";
         },
 
-        postInventoryData(fromInventory, toInventory, fromSlot, toSlot, fromAmount, toAmount) {
+        postInventoryData(fromInventory, toInventory, fromSlot, toSlot, fromAmount, toAmount, options = {}) {
             const fromInventoryName = fromInventory === "other" ? this.otherInventoryName : fromInventory;
             const toInventoryName = toInventory === "other" ? this.otherInventoryName : toInventory;
 
@@ -864,13 +865,15 @@ const InventoryContainer = Vue.createApp({
                     toAmount
                 })
                 .then(() => {
-                    this.applyLocalInventoryMove(
-                        fromInventory,
-                        toInventory,
-                        fromSlot,
-                        toSlot,
-                        fromAmount
-                    );
+                    if (!options.skipLocalMove) {
+                        this.applyLocalInventoryMove(
+                            fromInventory,
+                            toInventory,
+                            fromSlot,
+                            toSlot,
+                            fromAmount
+                        );
+                    }
                     this.refreshQuickSlots();
                     this.clearDragData();
                 })

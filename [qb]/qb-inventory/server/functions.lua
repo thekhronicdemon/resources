@@ -134,6 +134,149 @@ local function NormalizeInventorySimCards(items)
     return changed
 end
 
+local function GetItemHealthSettings()
+    local settings = Config.ItemHealth
+    if not settings or settings.Enabled == false then return nil end
+    return settings
+end
+
+local function GetItemHealthKey()
+    local settings = GetItemHealthSettings()
+    return (settings and settings.MetadataKey) or 'quality'
+end
+
+local function ClampItemHealth(value, defaultValue)
+    value = tonumber(value)
+    if value == nil then value = tonumber(defaultValue) or 100 end
+    if value < 0 then return 0 end
+    if value > 100 then return 100 end
+    return math.floor((value * 100) + 0.5) / 100
+end
+
+local function GetItemHealthConfig(itemName, itemInfo)
+    local settings = GetItemHealthSettings()
+    if not settings or not itemName then return nil end
+
+    itemName = tostring(itemName):lower()
+    itemInfo = itemInfo or QBCore.Shared.Items[itemName]
+
+    if itemInfo and itemInfo.type == 'weapon' then
+        if settings.Weapons == false then return nil end
+        return type(settings.Weapons) == 'table' and settings.Weapons or {}
+    end
+
+    local configuredItems = settings.Items or {}
+    local itemConfig = configuredItems[itemName]
+    if itemConfig == nil then return nil end
+    if itemConfig == true then return {} end
+    if type(itemConfig) == 'number' then return { health = itemConfig } end
+    if type(itemConfig) == 'table' then return itemConfig end
+
+    return nil
+end
+
+local function GetDefaultItemHealth(itemConfig)
+    local settings = GetItemHealthSettings() or {}
+    itemConfig = type(itemConfig) == 'table' and itemConfig or {}
+    return tonumber(itemConfig.health or itemConfig.defaultHealth or settings.DefaultHealth) or 100
+end
+
+local function ShouldRemoveItemAtZero(itemName, itemInfo, itemConfig)
+    local settings = GetItemHealthSettings()
+    if not settings then return false end
+
+    itemName = itemName and tostring(itemName):lower()
+    itemInfo = itemInfo or (itemName and QBCore.Shared.Items[itemName])
+    itemConfig = type(itemConfig) == 'table' and itemConfig or {}
+
+    if itemInfo and itemInfo.type == 'weapon' then
+        if itemConfig.removeAtZero ~= nil then return itemConfig.removeAtZero ~= false end
+        return settings.RemoveWeaponsAtZero ~= false
+    end
+
+    if itemConfig.removeAtZero ~= nil then return itemConfig.removeAtZero ~= false end
+    return settings.RemoveAtZero ~= false
+end
+
+local function EnsureItemHealthInfo(itemName, itemInfo, info)
+    local itemConfig = GetItemHealthConfig(itemName, itemInfo)
+    info = type(info) == 'table' and info or {}
+    if not itemConfig then return info end
+
+    local healthKey = GetItemHealthKey()
+    local health = info[healthKey]
+    if health == nil and healthKey ~= 'health' then
+        health = info.health
+    end
+
+    info[healthKey] = ClampItemHealth(health, GetDefaultItemHealth(itemConfig))
+    return info
+end
+
+local function GetItemHealthValue(item)
+    if not item or type(item.info) ~= 'table' then return nil end
+    local healthKey = GetItemHealthKey()
+    local health = item.info[healthKey]
+    if health == nil and healthKey ~= 'health' then
+        health = item.info.health
+    end
+    return tonumber(health)
+end
+
+local function IsItemHealthDepleted(item, itemInfo, itemConfig)
+    if not item or not item.name then return false end
+    itemInfo = itemInfo or QBCore.Shared.Items[item.name:lower()]
+    itemConfig = itemConfig or GetItemHealthConfig(item.name, itemInfo)
+    if not itemConfig or not ShouldRemoveItemAtZero(item.name, itemInfo, itemConfig) then return false end
+
+    local health = GetItemHealthValue(item)
+    return health ~= nil and health <= 0
+end
+
+local function NormalizeInventoryItemHealth(items, removeBroken)
+    local removedItems = {}
+    if type(items) ~= 'table' then return removedItems end
+
+    for key, item in pairs(items) do
+        if item and item.name then
+            local itemName = item.name:lower()
+            local itemInfo = QBCore.Shared.Items[itemName]
+            if itemInfo then
+                item.info = EnsureItemHealthInfo(itemName, itemInfo, item.info)
+                if removeBroken and IsItemHealthDepleted(item, itemInfo) then
+                    removedItems[#removedItems + 1] = item.name
+                    items[key] = nil
+                end
+            end
+        end
+    end
+
+    return removedItems
+end
+
+local function GetHealthInventory(identifier)
+    local player = QBCore.Functions.GetPlayer(identifier)
+    if player then return player.PlayerData.items, player end
+    if Inventories[identifier] then return Inventories[identifier].items end
+    if Drops[identifier] then return Drops[identifier].items end
+    return nil
+end
+
+local function GetHealthInventoryItem(inventory, itemName, slot)
+    if type(inventory) ~= 'table' then return nil end
+
+    slot = tonumber(slot)
+    itemName = itemName and tostring(itemName):lower()
+
+    for key, invItem in pairs(inventory) do
+        if invItem and invItem.name and (not slot or tonumber(invItem.slot) == slot) and (not itemName or invItem.name:lower() == itemName) then
+            return invItem, key
+        end
+    end
+
+    return nil
+end
+
 local function SetupShopItems(shopItems)
     local items = {}
     local slot = 1
@@ -205,6 +348,10 @@ function LoadInventory(source, citizenid)
     end
 
     NormalizeInventorySimCards(loadedInventory)
+    local removedBrokenItems = NormalizeInventoryItemHealth(loadedInventory, true)
+    if #removedBrokenItems > 0 then
+        print(('The following broken items were removed for player %s: %s'):format(source and GetPlayerName(source) or citizenid, table.concat(removedBrokenItems, ', ')))
+    end
     return loadedInventory
 end
 
@@ -305,13 +452,158 @@ function SetItemData(source, itemName, key, val, slot)
         item = GetItemByName(source, itemName)
         if not item then return false end
     end
-    item[key] = val
+
+    local itemInfo = QBCore.Shared.Items[item.name:lower()]
+    local healthKey = GetItemHealthKey()
+    if key == 'info' and type(val) == 'table' then
+        item.info = EnsureItemHealthInfo(item.name, itemInfo, val)
+    elseif key == healthKey or key == 'quality' or key == 'health' then
+        item.info = EnsureItemHealthInfo(item.name, itemInfo, item.info)
+        item.info[healthKey] = ClampItemHealth(val, GetItemHealthValue(item) or 100)
+    else
+        item[key] = val
+    end
+
     Player.PlayerData.items[item.slot] = item
     Player.Functions.SetPlayerData('items', Player.PlayerData.items)
+
+    if IsItemHealthDepleted(item, itemInfo) then
+        RemoveBrokenItem(source, item.name, item.slot, 'item health depleted')
+    end
+
     return true
 end
 
 exports('SetItemData', SetItemData)
+
+function GetItemHealth(source, itemName, slot)
+    local inventory = GetHealthInventory(source)
+    if not inventory then return nil end
+
+    local item = GetHealthInventoryItem(inventory, itemName, slot)
+    if not item then return nil end
+
+    local itemInfo = QBCore.Shared.Items[item.name:lower()]
+    item.info = EnsureItemHealthInfo(item.name, itemInfo, item.info)
+    return GetItemHealthValue(item)
+end
+
+exports('GetItemHealth', GetItemHealth)
+
+function SetItemHealth(identifier, itemName, slot, health, reason)
+    local inventory, player = GetHealthInventory(identifier)
+    if not inventory then return false end
+
+    local item, itemKey = GetHealthInventoryItem(inventory, itemName, slot)
+    if not item then return false end
+
+    local itemInfo = QBCore.Shared.Items[item.name:lower()]
+    local itemConfig = GetItemHealthConfig(item.name, itemInfo)
+    if not itemConfig then return false end
+
+    local healthKey = GetItemHealthKey()
+    item.info = EnsureItemHealthInfo(item.name, itemInfo, item.info)
+    item.info[healthKey] = ClampItemHealth(health, GetDefaultItemHealth(itemConfig))
+    inventory[itemKey] = item
+
+    if IsItemHealthDepleted(item, itemInfo, itemConfig) then
+        local removed = RemoveItem(identifier, item.name, tonumber(item.amount) or 1, item.slot, reason or 'item health depleted')
+        return removed, 0, removed
+    end
+
+    if player then
+        player.Functions.SetPlayerData('items', inventory)
+    end
+
+    return true, item.info[healthKey], false
+end
+
+exports('SetItemHealth', SetItemHealth)
+
+function DamageItemHealth(identifier, itemName, slot, amount, reason)
+    amount = math.abs(tonumber(amount) or 0)
+    if amount <= 0 then return false end
+
+    local inventory = GetHealthInventory(identifier)
+    if not inventory then return false end
+
+    local item = GetHealthInventoryItem(inventory, itemName, slot)
+    if not item then return false end
+
+    local itemInfo = QBCore.Shared.Items[item.name:lower()]
+    local itemConfig = GetItemHealthConfig(item.name, itemInfo)
+    if not itemConfig then return false end
+
+    item.info = EnsureItemHealthInfo(item.name, itemInfo, item.info)
+    local currentHealth = GetItemHealthValue(item) or GetDefaultItemHealth(itemConfig)
+    return SetItemHealth(identifier, item.name, item.slot, currentHealth - amount, reason or 'item health damaged')
+end
+
+exports('DamageItemHealth', DamageItemHealth)
+
+function RemoveBrokenItem(identifier, itemName, slot, reason)
+    local inventory = GetHealthInventory(identifier)
+    if not inventory then return false end
+
+    local item = GetHealthInventoryItem(inventory, itemName, slot)
+    if not item then return false end
+
+    local itemInfo = QBCore.Shared.Items[item.name:lower()]
+    local itemConfig = GetItemHealthConfig(item.name, itemInfo)
+    if not itemConfig then return false end
+
+    item.info = EnsureItemHealthInfo(item.name, itemInfo, item.info)
+    if not IsItemHealthDepleted(item, itemInfo, itemConfig) then return false end
+
+    return RemoveItem(identifier, item.name, tonumber(item.amount) or 1, item.slot, reason or 'item health depleted')
+end
+
+exports('RemoveBrokenItem', RemoveBrokenItem)
+
+function RemoveBrokenItems(identifier, reason)
+    local inventory = GetHealthInventory(identifier)
+    if not inventory then return false, 0 end
+
+    local brokenItems = {}
+    for _, item in pairs(inventory) do
+        if item and item.name then
+            local itemInfo = QBCore.Shared.Items[item.name:lower()]
+            local itemConfig = GetItemHealthConfig(item.name, itemInfo)
+            item.info = EnsureItemHealthInfo(item.name, itemInfo, item.info)
+            if itemConfig and IsItemHealthDepleted(item, itemInfo, itemConfig) then
+                brokenItems[#brokenItems + 1] = {
+                    name = item.name,
+                    amount = tonumber(item.amount) or 1,
+                    slot = item.slot,
+                }
+            end
+        end
+    end
+
+    local removed = 0
+    for _, item in ipairs(brokenItems) do
+        if RemoveItem(identifier, item.name, item.amount, item.slot, reason or 'item health depleted') then
+            removed = removed + 1
+        end
+    end
+
+    return removed > 0, removed
+end
+
+exports('RemoveBrokenItems', RemoveBrokenItems)
+
+function GetItemHealthUseDamage(item)
+    local itemName = type(item) == 'table' and item.name or item
+    if not itemName then return 0 end
+
+    local itemInfo = QBCore.Shared.Items[tostring(itemName):lower()]
+    local itemConfig = GetItemHealthConfig(itemName, itemInfo)
+    if not itemConfig then return 0 end
+
+    return tonumber(itemConfig.degradeOnUse or itemConfig.damageOnUse or itemConfig.useDamage) or 0
+end
+
+exports('GetItemHealthUseDamage', GetItemHealthUseDamage)
 
 function UseItem(itemName, ...)
     local itemData = QBCore.Functions.CanUseItem(itemName)
@@ -828,6 +1120,7 @@ function AddItem(identifier, item, amount, slot, info, reason)
         return false
     end
     info = itemInfo.name == 'simcard' and NormalizeSimCardInfo(info) or (info or {})
+    info = EnsureItemHealthInfo(itemInfo.name, itemInfo, info)
     local inventory, inventoryWeight, inventorySlots
     local player = QBCore.Functions.GetPlayer(identifier)
 
@@ -864,6 +1157,7 @@ function AddItem(identifier, item, amount, slot, info, reason)
         if slot then
             for _, invItem in pairs(inventory) do
                 if invItem.slot == slot then
+                    invItem.info = EnsureItemHealthInfo(invItem.name, itemInfo, invItem.info)
                     invItem.amount = invItem.amount + amount
                     updated = true
                     break
@@ -900,6 +1194,7 @@ function AddItem(identifier, item, amount, slot, info, reason)
             if not inventory[slot].info.serie then
                 inventory[slot].info.serie = tostring(QBCore.Shared.RandomInt(2) .. QBCore.Shared.RandomStr(3) .. QBCore.Shared.RandomInt(1) .. QBCore.Shared.RandomStr(2) .. QBCore.Shared.RandomInt(3) .. QBCore.Shared.RandomStr(4))
             end
+            inventory[slot].info = EnsureItemHealthInfo(itemInfo.name, itemInfo, inventory[slot].info)
             if not inventory[slot].info.quality then
                 inventory[slot].info.quality = 100
             end

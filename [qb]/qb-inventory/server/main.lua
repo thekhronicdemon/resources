@@ -1826,48 +1826,77 @@ RegisterNetEvent('qb-inventory:server:useItem', function(item)
     local itemData = GetItemBySlot(src, item.slot)
     if not itemData then return end
     local itemInfo = QBCore.Shared.Items[itemData.name:lower()]
+    itemData.info = type(itemData.info) == 'table' and itemData.info or {}
+
+    if RemoveBrokenItem(src, itemData.name, itemData.slot, 'broken item used') then
+        TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'remove')
+        TriggerClientEvent('qb-inventory:client:updateInventory', src)
+        return
+    end
+
     if itemData.type == 'weapon' then
         TriggerClientEvent('qb-weapons:client:UseWeapon', src, itemData, itemData.info.quality and itemData.info.quality > 0)
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
     else
         UseItem(itemData.name, src, itemData)
         TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'use')
+        local useDamage = GetItemHealthUseDamage(itemData)
+        if useDamage > 0 then
+            local damaged, _, removed = DamageItemHealth(src, itemData.name, itemData.slot, useDamage, 'item used')
+            if damaged and removed then
+                TriggerClientEvent('qb-inventory:client:ItemBox', src, itemInfo, 'remove')
+                TriggerClientEvent('qb-inventory:client:updateInventory', src)
+            end
+        end
     end
 end)
 -- =========================
 -- INVENTORY HELPERS
 -- =========================
 
-local function getItem(inventoryId, src, slot)
-    local items = {}
-
+local function getInventoryItems(inventoryId, src)
     if inventoryId == 'player' then
         local Player = QBCore.Functions.GetPlayer(src)
         if Player and Player.PlayerData.items then
-            items = Player.PlayerData.items
+            return Player.PlayerData.items, Player
         end
-
     elseif type(inventoryId) == 'string' and inventoryId:find('otherplayer%-') then
         local targetId = tonumber(inventoryId:match('otherplayer%-(.+)'))
         local targetPlayer = QBCore.Functions.GetPlayer(targetId)
         if targetPlayer and targetPlayer.PlayerData.items then
-            items = targetPlayer.PlayerData.items
+            return targetPlayer.PlayerData.items, targetPlayer
         end
-
     elseif type(inventoryId) == 'string' and inventoryId:find('drop%-') == 1 then
         if Drops[inventoryId] then
-            items = Drops[inventoryId].items or {}
+            return Drops[inventoryId].items or {}
         end
+    elseif Inventories[inventoryId] then
+        return Inventories[inventoryId].items or {}
+    end
 
-    else
-        if Inventories[inventoryId] then
-            items = Inventories[inventoryId].items or {}
+    return {}
+end
+
+local function getItem(inventoryId, src, slot)
+    local items = getInventoryItems(inventoryId, src)
+    slot = tonumber(slot)
+
+    for _, item in pairs(items) do
+        if item and tonumber(item.slot) == slot then
+            return item
         end
     end
 
-    for _, item in pairs(items) do
-        if item and item.slot == slot then
-            return item
+    return nil
+end
+
+local function getItemKey(items, slot)
+    slot = tonumber(slot)
+    if not slot or type(items) ~= 'table' then return nil end
+
+    for key, item in pairs(items) do
+        if item and tonumber(item.slot) == slot then
+            return key
         end
     end
 
@@ -1882,6 +1911,33 @@ local function getIdentifier(inventoryId, src)
     else
         return inventoryId
     end
+end
+
+local function SetInventoryItems(inventoryId, src, items)
+    if inventoryId == 'player' then
+        local Player = QBCore.Functions.GetPlayer(src)
+        if Player then Player.Functions.SetPlayerData('items', items) end
+    elseif type(inventoryId) == 'string' and inventoryId:find('otherplayer%-') then
+        local targetId = tonumber(inventoryId:match('otherplayer%-(.+)'))
+        local Target = targetId and QBCore.Functions.GetPlayer(targetId)
+        if Target then Target.Functions.SetPlayerData('items', items) end
+    elseif type(inventoryId) == 'string' and inventoryId:find('drop%-') == 1 then
+        if Drops[inventoryId] then Drops[inventoryId].items = items end
+    elseif Inventories[inventoryId] then
+        Inventories[inventoryId].items = items
+    end
+end
+
+local function CanStackInventoryItems(fromItem, toItem)
+    if not fromItem or not toItem or fromItem.name ~= toItem.name then return false end
+
+    local itemName = fromItem.name:lower()
+    local stackConfig = Config.StackableItems or {}
+    if stackConfig[itemName] ~= nil then
+        return stackConfig[itemName] == true
+    end
+
+    return fromItem.unique ~= true and toItem.unique ~= true
 end
 
 local function SetQuickSlotValue(quickslots, quickSlot, itemSlot)
@@ -1980,11 +2036,39 @@ RegisterNetEvent('qb-inventory:server:SetInventoryData', function(fromInventory,
     end
 
     if toItem and fromItem.name == toItem.name then
-        if RemoveItem(fromId, fromItem.name, fromAmount, fromSlot, 'stacked item') then
-            AddItem(toId, toItem.name, fromAmount, toSlot, toItem.info, 'stacked item')
-            inventoryChanged = true
+        if not CanStackInventoryItems(fromItem, toItem) then
+            TriggerClientEvent('QBCore:Notify', src, "This item can't be stacked.", 'error')
+            TriggerClientEvent('qb-inventory:client:updateInventory', src)
+            return
         end
-        
+
+        local fromItems = getInventoryItems(fromInventory, src)
+        local toItems = getInventoryItems(toInventory, src)
+        local fromKey = getItemKey(fromItems, fromSlot)
+        local toKey = getItemKey(toItems, toSlot)
+        if not fromKey or not toKey or (fromInventory == toInventory and fromSlot == toSlot) then
+            TriggerClientEvent('qb-inventory:client:updateInventory', src)
+            return
+        end
+
+        local sourceAmount = tonumber(fromItems[fromKey].amount) or 1
+        local moveAmount = math.min(fromAmount, sourceAmount)
+        if moveAmount < 1 then return end
+
+        toItems[toKey].amount = (tonumber(toItems[toKey].amount) or 1) + moveAmount
+        fromItems[fromKey].amount = sourceAmount - moveAmount
+        if fromItems[fromKey].amount <= 0 then
+            fromItems[fromKey] = nil
+        end
+
+        SetInventoryItems(fromInventory, src, fromItems)
+        if fromInventory ~= toInventory then
+            SetInventoryItems(toInventory, src, toItems)
+        end
+
+        fromAmount = moveAmount
+        inventoryChanged = true
+
     elseif not toItem and fromAmount < fromItem.amount then
         if RemoveItem(fromId, fromItem.name, fromAmount, fromSlot, 'split item') then
             AddItem(toId, fromItem.name, fromAmount, toSlot, fromItem.info, 'split item')

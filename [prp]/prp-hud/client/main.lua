@@ -66,7 +66,7 @@ local function getFuelLevel(vehicle)
     if updateTick - lastFuelUpdate > 1000 then
         lastFuelUpdate = updateTick
         local ok, fuel = pcall(function()
-            return exports['LegacyFuel']:GetFuel(vehicle)
+            return exports['prp_fuel']:GetFuel(vehicle)
         end)
         if ok and fuel then
             lastFuelCheck = fuel

@@ -6,7 +6,7 @@ const load = Vue.createApp({
   setup () {
     return {
       CarouselText1: 'You can add/remove items, vehicles, jobs & gangs through the shared folder.',
-      CarouselSubText1: 'Photo captured by: Markyoo#8068',
+      CarouselSubText1: 'Photo captured by: TheKhronicDemon',
       CarouselText2: 'Adding additional player data can be achieved by modifying the qb-core player.lua file.',
       CarouselSubText2: 'Photo captured by: TheKhronicDemon',
       CarouselText3: 'All server-specific adjustments can be made in the config.lua files throughout the build.',

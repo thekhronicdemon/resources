@@ -10,11 +10,23 @@
   <div id="app" class="hidden">
     <aside>
       <div class="brand"><img src="images/logo.png" onerror="this.style.display='none'" /><small>Admin Panel</small></div>
-      <button data-tab="home" class="active">Home</button>
-      <button data-tab="search">Players</button>
-      <button data-tab="logs">Logs</button>
-      <button data-tab="audit">Audit</button>
-      <button data-tab="dev">Developer</button>
+      <nav class="sideNav" aria-label="Admin panel sections">
+        <button data-tab="home" class="navBtn active" aria-label="Home" title="Home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8"/><path d="M5.5 9.2V21h13V9.2"/><path d="M9.5 21v-6h5v6"/></svg>
+        </button>
+        <button data-tab="search" class="navBtn" aria-label="Players" title="Players">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.8c0-2.2-1.8-4-4-4H7c-2.2 0-4 1.8-4 4V20"/><circle cx="9.5" cy="7" r="4"/><path d="M22 20v-1.6c0-1.9-1.3-3.5-3-3.9"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
+        </button>
+        <button data-tab="logs" class="navBtn" aria-label="Logs" title="Logs">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v18H7.5A2.5 2.5 0 0 0 5 22z"/><path d="M5 4.5V22"/><path d="M9 7h7"/><path d="M9 11h7"/><path d="M9 15h5"/></svg>
+        </button>
+        <button data-tab="audit" class="navBtn" aria-label="Audit" title="Audit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M6 16l4-5 3 3 5-8"/><path d="M18 6h-4"/><path d="M18 6v4"/></svg>
+        </button>
+        <button data-tab="dev" class="navBtn" aria-label="Developer" title="Developer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3.5 17.5a2.1 2.1 0 0 0 3 3l6.2-6.2a4 4 0 0 0 5-5l-2.5 2.5-2.1-2.1z"/></svg>
+        </button>
+      </nav>
       <button id="closeBtn" class="ghost">Close</button>
     </aside>
 
@@ -31,7 +43,7 @@
           <div class="panel"><h2>Current Players</h2><div class="toolbar"><button id="allOnlineBtn">Online Players</button><button id="allPlayersBtn">All Players / Offline Search</button></div><div id="playersList" class="list"></div></div>
           <div class="panel"><h2>Admins Online</h2><div id="adminsList" class="list small"></div></div>
         </div>
-        <div class="panel"><h2>Live Player Activity Wave</h2><p class="hint">1 player tiny • 20 mid peak • 40-60 high peak • 100 massive peak. Updates live while the panel is open.</p><canvas id="activityCanvas" width="1000" height="240"></canvas></div>
+        <div class="panel activityPanel"><h2>Live Player Activity Wave</h2><p class="hint">Online player count by hour. Updates while the panel is open.</p><canvas id="activityCanvas" width="3840" height="900"></canvas></div>
       </section>
 
       <section id="search" class="tab">
@@ -57,7 +69,7 @@
       <section id="dev" class="tab">
         <div id="devLocked" class="panel hidden"><h2>Developer Options Locked</h2><p>You need developer admin access.</p></div>
         <div id="devTools" class="devgrid">
-          <div class="panel"><h2>Objects</h2><input id="objectModel" placeholder="prop_barrier_work05" /><div class="switchRow"><span>Freeze Object</span><button class="toggleBtn on" id="objectFreezeToggle" data-toggle="objectFreeze"><span></span></button></div><button data-dev="spawnObject">Spawn / Place Object</button><button data-dev="closestObject">Get Closest Object</button><button data-dev="deleteClosestObject" class="danger">Delete Closest Object</button><p class="hint">Move with camera. Enter places. Backspace cancels.</p></div>
+          <div class="panel"><h2>Objects</h2><input id="objectModel" placeholder="prop_barrier_work05" /><div class="switchRow"><span>Freeze Object</span><button class="toggleBtn on" id="objectFreezeToggle" data-toggle="objectFreeze"><span></span></button></div><button data-dev="spawnObject">Spawn / Place Object</button><button data-dev="closestObject">Get Closest Object</button><button data-dev="deleteClosestObject" class="danger">Delete Closest Object</button><p class="hint">Move with camera. Left / Right rotates. Up / Down pitches. Hold Shift for faster rotation. Enter places. Backspace cancels.</p></div>
           <div class="panel"><h2>Cars</h2><input id="vehicleModel" placeholder="sultan" /><div class="switchRow"><span>Max Vehicle Limit</span><button class="toggleBtn on" id="vehicleLimitToggle" data-toggle="vehicleLimit"><span></span></button></div><button data-dev="spawnVehicle">Spawn Car</button></div>
           <div class="panel"><h2>Ped</h2><input id="pedModel" placeholder="s_m_y_cop_01" /><input id="pedAnim" placeholder="Animation search/name placeholder" /><div class="switchRow"><span>Freeze Ped</span><button class="toggleBtn on" id="pedFreezeToggle" data-toggle="pedFreeze"><span></span></button></div><button data-dev="spawnPed">Spawn Ped</button><button data-dev="closestPed">Get Closest Ped</button></div>
           <div class="panel"><h2>Admin Toggles</h2><div class="switchRow"><span>Name Plates: State ID</span><button class="toggleBtn" data-devtoggle="toggleNameStateId"><span></span></button></div><div class="switchRow"><span>Name Plates: Health</span><button class="toggleBtn" data-devtoggle="toggleNameHealth"><span></span></button></div><div class="switchRow"><span>Name Plates: Armour</span><button class="toggleBtn" data-devtoggle="toggleNameArmor"><span></span></button></div><div class="switchRow"><span>NoClip</span><button class="toggleBtn" data-devtoggle="toggleNoClip"><span></span></button></div><div class="switchRow"><span>Vanish</span><button class="toggleBtn" data-devtoggle="toggleVanish"><span></span></button></div><p class="hint">Nameplate toggles are separate: State ID, health, and armour.</p></div>

@@ -1,5 +1,5 @@
 local newExports = function (funcName, func)
-    AddEventHandler(('__cfx_export_LegacyFuel_%s'):format(funcName), function(setCB)
+    AddEventHandler(('__cfx_export_prp_fuel_%s'):format(funcName), function(setCB)
         setCB(func)
     end)
     exports(funcName, func)

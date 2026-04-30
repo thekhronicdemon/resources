@@ -3,7 +3,7 @@ INSTALL
 2. Put this folder in resources.
 3. In server.cfg:
    ensure chat
-   ensure chat-theme-prp-alert
+   ensure chat-theme-gtao
 4. Restart server.
 
 HOW TO USE
@@ -20,7 +20,7 @@ TriggerEvent('chat:addMessage', {
 })
 
 This version is styled closer to the screenshot:
-- dark compact bars
+- every chat line gets its own compact bubble
+- resource updates are wrapped into colored bubbles automatically
 - yellow invalid command alert
-- grouped follow-up messages
 - fade out after 2 minutes

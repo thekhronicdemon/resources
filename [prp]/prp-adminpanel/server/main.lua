@@ -60,16 +60,61 @@ local function getPlayerSummary(src)
     return { id = src, name = name, citizenid = Player.PlayerData.citizenid, job = Player.PlayerData.job and Player.PlayerData.job.name or 'unemployed', jobLabel = Player.PlayerData.job and Player.PlayerData.job.label or 'Unemployed', grade = Player.PlayerData.job and Player.PlayerData.job.grade and Player.PlayerData.job.grade.name or '', ping = GetPlayerPing(src), online = true }
 end
 local function getOnlinePlayers()
-    local players = {}; for _, s in ipairs(GetPlayers()) do players[#players+1] = getPlayerSummary(tonumber(s)) end
+    local players = {}; for _, s in pairs(GetPlayers()) do players[#players+1] = getPlayerSummary(tonumber(s)) end
     table.sort(players, function(a,b) return a.id < b.id end); return players
 end
 local function getAdminsOnline()
-    local admins = {}; for _, s in ipairs(GetPlayers()) do local src=tonumber(s); if IsPanelAdmin(src) then local P=QBCore.Functions.GetPlayer(src); admins[#admins+1]={id=src,name=GetPlayerName(src),citizenid=P and P.PlayerData.citizenid or 'unknown',ping=GetPlayerPing(src)} end end
+    local admins = {}; for _, s in pairs(GetPlayers()) do local src=tonumber(s); if IsPanelAdmin(src) then local P=QBCore.Functions.GetPlayer(src); admins[#admins+1]={id=src,name=GetPlayerName(src),citizenid=P and P.PlayerData.citizenid or 'unknown',ping=GetPlayerPing(src)} end end
     return admins
 end
-local function recordActivityPeak() local h=tonumber(os.date('%H')) or 0; Activity[h]=math.max(Activity[h] or 0, #GetPlayers()) end
-local function buildActivityGraph() recordActivityPeak(); local g={}; for h=0,(Config.ActivityBuckets or 24)-1 do g[#g+1]={hour=h,count=Activity[h] or 0} end; return g end
-local function dashboard(src) return {players=getOnlinePlayers(), admins=getAdminsOnline(), activity=buildActivityGraph(), jobButtons=Config.JobButtons, devAccess=IsDevAdmin(src)} end
+local function getOnlinePlayerCount()
+    local count = 0
+    for _ in pairs(GetPlayers()) do count = count + 1 end
+    return count
+end
+local function recordActivityPeak()
+    local h = tonumber(os.date('%H')) or 0
+    Activity[h] = math.max(Activity[h] or 0, getOnlinePlayerCount())
+end
+local function buildActivityGraph()
+    recordActivityPeak()
+    local g = {}
+    local currentHour = tonumber(os.date('%H')) or 0
+    local currentOnline = getOnlinePlayerCount()
+    local buckets = Config.ActivityBuckets or 24
+    for i = buckets - 1, 0, -1 do
+        local h = (currentHour - i) % 24
+        g[#g+1] = { hour = h, count = h == currentHour and currentOnline or (Activity[h] or 0) }
+    end
+    return g
+end
+local function getManagedLicenses(metadata)
+    local licenseState = (metadata and (metadata.licences or metadata.licenses)) or {}
+    local licenses = {}
+    for _, license in ipairs(Config.ManagedLicenses or {}) do
+        licenses[#licenses+1] = {
+            key = license.key,
+            label = license.label or license.key,
+            has = licenseState[license.key] == true
+        }
+    end
+    return licenses
+end
+local function isManagedLicense(key)
+    for _, license in ipairs(Config.ManagedLicenses or {}) do
+        if license.key == key then return true, license.label or key end
+    end
+    return false, key
+end
+local function getPlayerVehicles(citizenid)
+    local vehicles = MySQL.query.await('SELECT plate, vehicle, hash, garage, fuel, engine, body, state FROM player_vehicles WHERE citizenid=? ORDER BY vehicle ASC, plate ASC', { citizenid }) or {}
+    for _, vehicle in ipairs(vehicles) do
+        local shared = QBCore.Shared.Vehicles and QBCore.Shared.Vehicles[vehicle.vehicle]
+        vehicle.label = (shared and (shared.name or shared.label)) or vehicle.vehicle
+    end
+    return vehicles
+end
+local function dashboard(src) return {players=getOnlinePlayers(), admins=getAdminsOnline(), activity=buildActivityGraph(), onlineCount=getOnlinePlayerCount(), currentHourPeak=Activity[tonumber(os.date('%H')) or 0] or 0, jobButtons=Config.JobButtons, devAccess=IsDevAdmin(src)} end
 
 RegisterNetEvent('prp-adminpanel:server:open', function()
     local src=source; if not IsPanelAdmin(src) then TriggerClientEvent('QBCore:Notify', src, 'Access denied.', 'error') return end
@@ -105,11 +150,13 @@ QBCore.Functions.CreateCallback('prp-adminpanel:server:getProfile', function(src
     local citizenid=tostring(data.citizenid or ''); local targetId=tonumber(data.id); local profile={citizenid=citizenid, id=data.id, online=false, autoPunishWarnings=Config.AutoPunishWarnings or 3}
     local target = targetId and QBCore.Functions.GetPlayer(targetId) or nil
     if target then
-        local pd=target.PlayerData; profile.online=true; profile.id=targetId; profile.name=GetPlayerName(targetId); profile.job=pd.job and pd.job.name; profile.jobLabel=pd.job and pd.job.label; profile.gang=pd.gang and pd.gang.name; profile.gangLabel=pd.gang and pd.gang.label; profile.money=pd.money or {}; profile.inventory=pd.items or pd.inventory or {}
+        local pd=target.PlayerData; profile.online=true; profile.id=targetId; profile.name=GetPlayerName(targetId); profile.job=pd.job and pd.job.name; profile.jobLabel=pd.job and pd.job.label; profile.gang=pd.gang and pd.gang.name; profile.gangLabel=pd.gang and pd.gang.label; profile.money=pd.money or {}; profile.inventory=pd.items or pd.inventory or {}; profile.licenses=getManagedLicenses(pd.metadata or {})
     else
         local row=MySQL.single.await('SELECT * FROM players WHERE citizenid=? LIMIT 1', {citizenid})
-        if row then local char=json.decode(row.charinfo or '{}') or {}; local job=json.decode(row.job or '{}') or {}; local gang=json.decode(row.gang or '{}') or {}; profile.name=((char.firstname or '')..' '..(char.lastname or '')):gsub('^%s*(.-)%s*$','%1'); profile.job=job.name; profile.jobLabel=job.label; profile.gang=gang.name; profile.gangLabel=gang.label; profile.money=json.decode(row.money or '{}') or {}; profile.inventory=json.decode(row.inventory or '[]') or {} end
+        if row then local char=json.decode(row.charinfo or '{}') or {}; local job=json.decode(row.job or '{}') or {}; local gang=json.decode(row.gang or '{}') or {}; local metadata=json.decode(row.metadata or '{}') or {}; profile.name=((char.firstname or '')..' '..(char.lastname or '')):gsub('^%s*(.-)%s*$','%1'); profile.job=job.name; profile.jobLabel=job.label; profile.gang=gang.name; profile.gangLabel=gang.label; profile.money=json.decode(row.money or '{}') or {}; profile.inventory=json.decode(row.inventory or '[]') or {}; profile.licenses=getManagedLicenses(metadata) end
     end
+    profile.licenses = profile.licenses or getManagedLicenses({})
+    profile.vehicles = getPlayerVehicles(citizenid)
     profile.notes=MySQL.query.await('SELECT * FROM prp_admin_notes WHERE citizenid=? ORDER BY created_at DESC LIMIT 50', {citizenid}) or {}
     profile.flags=MySQL.query.await('SELECT * FROM prp_admin_flags WHERE citizenid=? AND active=1 ORDER BY created_at DESC LIMIT 50', {citizenid}) or {}
     profile.logs=MySQL.query.await('SELECT * FROM prp_player_logs WHERE citizenid=? ORDER BY created_at DESC LIMIT 50', {citizenid}) or {}
@@ -132,7 +179,7 @@ RegisterNetEvent('prp-adminpanel:server:addFlag', function(data)
     audit(src, 'add_flag_'..flag, citizenid, reason)
     local warnings=MySQL.query.await('SELECT id FROM prp_admin_flags WHERE citizenid=? AND flag_type="warning" AND active=1', {citizenid}) or {}
     if flag == 'warning' and Config.AutoPunishWarnings and #warnings >= Config.AutoPunishWarnings then
-        for _, s in ipairs(GetPlayers()) do local P=QBCore.Functions.GetPlayer(tonumber(s)); if P and P.PlayerData.citizenid==citizenid then DropPlayer(tonumber(s), ('Auto punishment: %s warnings reached.'):format(#warnings)); audit(src, 'auto_punish_kick', citizenid, ('Warnings reached %s'):format(#warnings)) end end
+        for _, s in pairs(GetPlayers()) do local P=QBCore.Functions.GetPlayer(tonumber(s)); if P and P.PlayerData.citizenid==citizenid then DropPlayer(tonumber(s), ('Auto punishment: %s warnings reached.'):format(#warnings)); audit(src, 'auto_punish_kick', citizenid, ('Warnings reached %s'):format(#warnings)) end end
     end
 end)
 RegisterNetEvent('prp-adminpanel:server:kick', function(target, reason)
@@ -184,12 +231,12 @@ RegisterNetEvent('prp-adminpanel:server:adminMassAction', function(data)
     local action = tostring(data.action or '')
 
     if action == 'healEveryone' then
-        for _, id in ipairs(GetPlayers()) do
+        for _, id in pairs(GetPlayers()) do
             TriggerClientEvent('prp-adminpanel:client:healSelf', tonumber(id))
         end
         audit(src, 'heal_everyone', nil, 'Healed all online players')
     elseif action == 'reviveEveryone' then
-        for _, id in ipairs(GetPlayers()) do
+        for _, id in pairs(GetPlayers()) do
             TriggerClientEvent('prp-adminpanel:client:reviveSelf', tonumber(id))
         end
         audit(src, 'revive_everyone', nil, 'Revived all online players')
@@ -214,13 +261,94 @@ CreateThread(function() while true do recordActivityPeak(); Wait((Config.Activit
 RegisterCommand(Config.Command, function(src) if src<=0 then return end if not IsPanelAdmin(src) then TriggerClientEvent('QBCore:Notify',src,'Access denied.','error') return end TriggerClientEvent('prp-adminpanel:client:requestOpen', src) end, false)
 
 local function findOnlineByCitizenId(citizenid)
-    for _, s in ipairs(GetPlayers()) do
+    for _, s in pairs(GetPlayers()) do
         local src = tonumber(s)
         local P = QBCore.Functions.GetPlayer(src)
         if P and P.PlayerData and P.PlayerData.citizenid == citizenid then return src, P end
     end
     return nil, nil
 end
+
+RegisterNetEvent('prp-adminpanel:server:revokeLicense', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local citizenid = tostring(data.citizenid or '')
+    local licenseKey = tostring(data.license or '')
+    local allowed, label = isManagedLicense(licenseKey)
+    if citizenid == '' or not allowed then return end
+
+    local targetSrc, P = findOnlineByCitizenId(citizenid)
+    if P and P.Functions then
+        local metadata = P.PlayerData.metadata or {}
+        local licenses = metadata.licences or metadata.licenses or {}
+        licenses[licenseKey] = false
+        P.Functions.SetMetaData('licences', licenses)
+        TriggerClientEvent('QBCore:Notify', targetSrc, ('Your %s license has been revoked.'):format(label), 'error')
+    else
+        local row = MySQL.single.await('SELECT metadata FROM players WHERE citizenid=? LIMIT 1', { citizenid })
+        if row then
+            local metadata = json.decode(row.metadata or '{}') or {}
+            metadata.licences = metadata.licences or metadata.licenses or {}
+            metadata.licences[licenseKey] = false
+            MySQL.update.await('UPDATE players SET metadata=? WHERE citizenid=?', { json.encode(metadata), citizenid })
+        end
+    end
+
+    audit(src, 'revoke_license_' .. licenseKey, { id = targetSrc or '', citizenid = citizenid }, ('Revoked %s license'):format(label))
+    TriggerClientEvent('QBCore:Notify', src, ('Revoked %s license.'):format(label), 'success')
+end)
+
+RegisterNetEvent('prp-adminpanel:server:spawnOwnedVehicle', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local citizenid = tostring(data.citizenid or '')
+    local plate = tostring(data.plate or '')
+    if citizenid == '' or plate == '' then return end
+
+    local vehicle = MySQL.single.await('SELECT plate, vehicle, hash, mods, fuel, engine, body FROM player_vehicles WHERE citizenid=? AND plate=? LIMIT 1', { citizenid, plate })
+    if not vehicle then
+        TriggerClientEvent('QBCore:Notify', src, 'Vehicle not found for this player.', 'error')
+        return
+    end
+
+    TriggerClientEvent('prp-adminpanel:client:spawnOwnedVehicle', src, vehicle)
+    MySQL.update.await('UPDATE player_vehicles SET state=0 WHERE citizenid=? AND plate=?', { citizenid, plate })
+    if GetResourceState('qb-vehiclekeys') == 'started' then
+        pcall(function() exports['qb-vehiclekeys']:GiveKeys(src, vehicle.plate) end)
+    end
+    audit(src, 'spawn_owned_vehicle', { id = src, citizenid = citizenid }, ('Spawned %s plate %s'):format(vehicle.vehicle or 'vehicle', vehicle.plate or plate))
+end)
+
+RegisterNetEvent('prp-adminpanel:server:deleteOwnedVehicle', function(data)
+    local src = source; if not IsPanelAdmin(src) then return end
+    local citizenid = tostring(data.citizenid or '')
+    local plate = tostring(data.plate or '')
+    if citizenid == '' or plate == '' then return end
+
+    local affected = MySQL.update.await('DELETE FROM player_vehicles WHERE citizenid=? AND plate=?', { citizenid, plate }) or 0
+    if type(affected) == 'table' then affected = affected.affectedRows or affected.changedRows or 0 end
+    if tonumber(affected) and tonumber(affected) > 0 then
+        local targetSrc, P = findOnlineByCitizenId(citizenid)
+        if P and P.Functions then
+            local keys = (P.PlayerData.metadata and P.PlayerData.metadata.vehicleKeys) or {}
+            keys[plate] = nil
+            P.Functions.SetMetaData('vehicleKeys', keys)
+            if GetResourceState('qb-vehiclekeys') == 'started' then
+                pcall(function() exports['qb-vehiclekeys']:RemoveKeys(targetSrc, plate) end)
+            end
+        else
+            local row = MySQL.single.await('SELECT metadata FROM players WHERE citizenid=? LIMIT 1', { citizenid })
+            if row then
+                local metadata = json.decode(row.metadata or '{}') or {}
+                metadata.vehicleKeys = metadata.vehicleKeys or {}
+                metadata.vehicleKeys[plate] = nil
+                MySQL.update.await('UPDATE players SET metadata=? WHERE citizenid=?', { json.encode(metadata), citizenid })
+            end
+        end
+        audit(src, 'delete_owned_vehicle', { id = src, citizenid = citizenid }, ('Removed owned vehicle plate %s'):format(plate))
+        TriggerClientEvent('QBCore:Notify', src, ('Removed vehicle %s from this player.'):format(plate), 'success')
+    else
+        TriggerClientEvent('QBCore:Notify', src, 'Vehicle not found for this player.', 'error')
+    end
+end)
 
 RegisterNetEvent('prp-adminpanel:server:editNote', function(data)
     local src = source; if not IsPanelAdmin(src) then return end

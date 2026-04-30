@@ -21,6 +21,11 @@ Config.JobButtons = {
     { label = 'Mechanic', job = 'mechanic' }
 }
 
+Config.ManagedLicenses = {
+    { key = 'driver', label = 'Car' },
+    { key = 'weapon', label = 'Gun' }
+}
+
 Config.AdminGroups = {
     god = true,
     admin = true,

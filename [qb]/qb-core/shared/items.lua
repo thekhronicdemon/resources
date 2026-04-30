@@ -454,7 +454,7 @@ QBShared.Items = {
     phone                        = { name = 'phone', label = 'Phone', weight = 500, type = 'item', image = 'phone.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Neat phone ya got there' },
     pinger                       = { name = 'pinger', label = 'Pinger', weight = 1000, type = 'item', image = 'pinger.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'With a pinger and your phone you can send out your location' },
     radio                        = { name = 'radio', label = 'Radio', weight = 2000, type = 'item', image = 'radio.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'You can communicate with this through a signal' },
-    radioscanner                 = { name = 'radioscanner', label = 'Radio Scanner', weight = 1000, type = 'item', image = 'radioscanner.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'With this you can get some police alerts. Not 100% effective however' },
+    radioscanner                 = { name = 'radioscanner', label = 'Radio Scanner', weight = 1000, type = 'item', image = 'radioscanner.png', unique = true, useable = false, shouldClose = true, rarity = 'uncommon', description = 'With this you can get some police alerts. Not 100% effective however' },
 
     -- Theft and Jewelry
     -- RARE
@@ -473,7 +473,7 @@ QBShared.Items = {
     armor_plate                  = { name = 'armor_plate', label = 'Armor Plate', weight = 1000, type = 'item', image = 'armor.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Adds 25% armor to a worn armour carrier.' },
     empty_evidence_bag           = { name = 'empty_evidence_bag', label = 'Empty Evidence Bag', weight = 0, type = 'item', image = 'evidence.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Used a lot to keep DNA from blood, bullet shells and more' },
     filled_evidence_bag          = { name = 'filled_evidence_bag', label = 'Evidence Bag', weight = 200, type = 'item', image = 'evidence.png', unique = true, useable = false, shouldClose = false, rarity = 'common', description = 'A filled evidence bag to see who committed the crime >:(' },
-    handcuffs                    = { name = 'handcuffs', label = 'Handcuffs', weight = 100, type = 'item', image = 'handcuffs.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Comes in handy when people misbehave. Maybe it can be used for something else?' },
+    handcuffs                    = { name = 'handcuffs', label = 'Handcuffs', weight = 100, type = 'item', image = 'handcuffs.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Comes in handy when people misbehave. Maybe it can be used for something else?' },
     police_stormram              = { name = 'police_stormram', label = 'Stormram', weight = 18000, type = 'item', image = 'police_stormram.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A nice tool to break into doors' },
 
     -- RARE
@@ -495,7 +495,7 @@ QBShared.Items = {
 
     -- Other Tools
     -- COMMON
-    binoculars                   = { name = 'binoculars', label = 'Binoculars', weight = 600, type = 'item', image = 'binoculars.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Sneaky Breaky...' },
+    binoculars                   = { name = 'binoculars', label = 'Binoculars', weight = 600, type = 'item', image = 'binoculars.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Sneaky Breaky...' },
     newsbmic                     = { name = 'newsbmic', label = 'Boom Microphone', weight = 100, type = 'item', image = 'newsbmic.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A Useable BoomMic' },
     newscam                      = { name = 'newscam', label = 'News Camera', weight = 100, type = 'item', image = 'newscam.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A camera for the news' },
     newsmic                      = { name = 'newsmic', label = 'News Microphone', weight = 100, type = 'item', image = 'newsmic.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A microphone for the news' },
@@ -505,13 +505,13 @@ QBShared.Items = {
     casinochips                  = { name = 'casinochips', label = 'Casino Chips', weight = 0, type = 'item', image = 'casinochips.png', unique = false, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Chips For Casino Gambling' },
     certificate                  = { name = 'certificate', label = 'Certificate', weight = 0, type = 'item', image = 'certificate.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'Certificate that proves you own certain stuff' },
     labkey                       = { name = 'labkey', label = 'Key', weight = 500, type = 'item', image = 'labkey.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Key for a lock...?' },
-    lighter                      = { name = 'lighter', label = 'Lighter', weight = 0, type = 'item', image = 'lighter.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'On new years eve a nice fire to stand next to' },
-    markedbills                  = { name = 'markedbills', label = 'Marked Money', weight = 1000, type = 'item', image = 'markedbills.png', unique = true, useable = false, shouldClose = true, rarity = 'uncommon', description = 'Money?' },
+    lighter                      = { name = 'lighter', label = 'Lighter', weight = 0, type = 'item', image = 'lighter.png', unique = true, useable = false, shouldClose = true, rarity = 'uncommon', description = 'On new years eve a nice fire to stand next to' },
+    markedbills                  = { name = 'markedbills', label = 'Marked Money', weight = 100, type = 'item', image = 'markedbills.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'Money?' },
     moneybag                     = { name = 'moneybag', label = 'Money Bag', weight = 0, type = 'item', image = 'moneybag.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A bag with cash' },
     printerdocument              = { name = 'printerdocument', label = 'Document', weight = 500, type = 'item', image = 'printerdocument.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A nice document' },
     stickynote                   = { name = 'stickynote', label = 'Sticky note', weight = 0, type = 'item', image = 'stickynote.png', unique = true, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Sometimes handy to remember something :)' },
-    scratch_ticket               = { name = 'scratch_ticket', label = 'Scratch Ticket', weight = 10, type = 'item', image = 'scratch_ticket.png', unique = true, useable = true, shouldClose = true, rarity = 'rare', description = 'Goodluck.' },
- 
+    scratch_ticket               = { name = 'scratch_ticket', label = 'Scratch Ticket', weight = 10, type = 'item', image = 'scratch_ticket.png', unique = false, useable = true, shouldClose = true, rarity = 'rare', description = 'Goodluck.' },
+        
 
     -- Crafting table's
     -- RARE

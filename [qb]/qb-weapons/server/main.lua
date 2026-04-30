@@ -155,38 +155,45 @@ end)
 
 RegisterNetEvent('qb-weapons:server:UpdateWeaponQuality', function(data, RepeatAmount)
     local src = source
+    if not data or not data.name or not data.slot then return end
+
     local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+
     local WeaponData = QBCore.Shared.Weapons[GetHashKey(data.name)]
+    if not WeaponData then return end
+
     local WeaponSlot = Player.PlayerData.items[data.slot]
-    local DecreaseAmount = Config.DurabilityMultiplier[data.name]
-    if WeaponSlot then
-        if not IsWeaponBlocked(WeaponData.name) then
-            if WeaponSlot.info.quality then
-                for _ = 1, RepeatAmount, 1 do
-                    if WeaponSlot.info.quality - DecreaseAmount > 0 then
-                        WeaponSlot.info.quality = QBCore.Shared.Round(WeaponSlot.info.quality - DecreaseAmount, 2)
-                    else
-                        WeaponSlot.info.quality = 0
-                        TriggerClientEvent('qb-weapons:client:UseWeapon', src, data, false)
-                        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.weapon_broken_need_repair'), 'error')
-                        break
-                    end
-                end
-            else
-                WeaponSlot.info.quality = 100
-                for _ = 1, RepeatAmount, 1 do
-                    if WeaponSlot.info.quality - DecreaseAmount > 0 then
-                        WeaponSlot.info.quality = QBCore.Shared.Round(WeaponSlot.info.quality - DecreaseAmount, 2)
-                    else
-                        WeaponSlot.info.quality = 0
-                        TriggerClientEvent('qb-weapons:client:UseWeapon', src, data, false)
-                        TriggerClientEvent('QBCore:Notify', src, Lang:t('error.weapon_broken_need_repair'), 'error')
-                        break
-                    end
-                end
-            end
+    local DecreaseAmount = tonumber(Config.DurabilityMultiplier[data.name]) or 0
+    if not WeaponSlot or IsWeaponBlocked(WeaponData.name) or DecreaseAmount <= 0 then return end
+
+    WeaponSlot.info = type(WeaponSlot.info) == 'table' and WeaponSlot.info or {}
+    WeaponSlot.info.quality = tonumber(WeaponSlot.info.quality) or 100
+
+    local destroyed = false
+    for _ = 1, tonumber(RepeatAmount) or 1, 1 do
+        if WeaponSlot.info.quality - DecreaseAmount > 0 then
+            WeaponSlot.info.quality = QBCore.Shared.Round(WeaponSlot.info.quality - DecreaseAmount, 2)
+        else
+            WeaponSlot.info.quality = 0
+            destroyed = true
+            break
         end
     end
+
+    if destroyed then
+        local removed = exports['qb-inventory']:RemoveBrokenItem(src, data.name, data.slot, 'weapon destroyed')
+        if removed then
+            TriggerClientEvent('QBCore:Notify', src, 'Your weapon was destroyed.', 'error')
+            TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[data.name], 'remove')
+            TriggerClientEvent('qb-inventory:client:updateInventory', src)
+            return
+        else
+            TriggerClientEvent('QBCore:Notify', src, Lang:t('error.weapon_broken_need_repair'), 'error')
+            TriggerClientEvent('qb-weapons:client:UseWeapon', src, data, false)
+        end
+    end
+
     Player.Functions.SetInventory(Player.PlayerData.items, true)
 end)
 

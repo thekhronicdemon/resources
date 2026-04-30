@@ -20,9 +20,9 @@ Config.Debug = false
 Config.Density = {
     parkedVehicles = 0.65,  -- parked cars
     vehicles       = 0.60,  -- general road traffic
-    peds           = 0.55,  -- walking peds
-    scenarioPeds   = 0.50,  -- scenario peds (standing/sitting/etc)
-    randomVehicles = 0.50,  -- random extra vehicles
+    peds           = 0.25,  -- walking peds
+    scenarioPeds   = 0.25,  -- scenario peds (standing/sitting/etc)
+    randomVehicles = 0.25,  -- random extra vehicles
 }
 
 -- Makes nearby ambient drivers less erratic / less "psycho GTA".

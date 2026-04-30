@@ -3,6 +3,7 @@ local spawnedObjects = {}
 local spawnedPeds = {}
 local placingObject = nil
 local placingFrozen = true
+local placingRotation = vector3(0.0, 0.0, 0.0)
 local nameStateIdOn = false
 local nameHealthOn = false
 local nameArmorOn = false
@@ -81,6 +82,8 @@ RegisterNetEvent('prp-adminpanel:client:devAction', function(data)
         local obj = CreateObject(hash, coords.x, coords.y, coords.z, true, false, false)
         SetEntityAlpha(obj, 150, false)
         SetEntityCollision(obj, false, false)
+        placingRotation = vector3(0.0, 0.0, GetEntityHeading(PlayerPedId()))
+        SetEntityRotation(obj, placingRotation.x, placingRotation.y, placingRotation.z, 2, true)
         placingObject = obj
         placingFrozen = data.freeze == true
         spawnedObjects[#spawnedObjects + 1] = obj
@@ -139,6 +142,18 @@ CreateThread(function()
             if hit then
                 SetEntityCoords(placingObject, coords.x, coords.y, coords.z, false, false, false, false)
             end
+            local rotateStep = IsControlPressed(0, 21) and 3.0 or 1.0
+            if IsControlPressed(0, 174) then -- LEFT ARROW: rotate left
+                placingRotation = vector3(placingRotation.x, placingRotation.y, (placingRotation.z + rotateStep) % 360.0)
+            elseif IsControlPressed(0, 175) then -- RIGHT ARROW: rotate right
+                placingRotation = vector3(placingRotation.x, placingRotation.y, (placingRotation.z - rotateStep) % 360.0)
+            end
+            if IsControlPressed(0, 172) then -- UP ARROW: pitch up
+                placingRotation = vector3(math.min(89.0, placingRotation.x + rotateStep), placingRotation.y, placingRotation.z)
+            elseif IsControlPressed(0, 173) then -- DOWN ARROW: pitch down
+                placingRotation = vector3(math.max(-89.0, placingRotation.x - rotateStep), placingRotation.y, placingRotation.z)
+            end
+            SetEntityRotation(placingObject, placingRotation.x, placingRotation.y, placingRotation.z, 2, true)
             if IsControlJustPressed(0, 191) then -- ENTER
                 SetEntityAlpha(placingObject, 255, false)
                 SetEntityCollision(placingObject, true, true)

@@ -27,9 +27,50 @@ html, body {
     gap: 3px !important;
 }
 
-.chat-message {
+.chat-messages > *:not(.prp-msg),
+.chat-message,
+.msg,
+.message,
+.chat-line {
     margin: 0 !important;
     padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.chat-messages > *:not(.prp-msg)::before,
+.chat-messages > *:not(.prp-msg)::after,
+.chat-message::before,
+.chat-message::after,
+.msg::before,
+.msg::after,
+.message::before,
+.message::after,
+.chat-line::before,
+.chat-line::after {
+    display: none !important;
+    content: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.chat-messages > *:not(.prp-msg) > *:not(.prp-msg),
+.chat-message > div:not(.prp-msg),
+.chat-message .message:not(.prp-msg),
+.chat-message .chat-message-body:not(.prp-msg),
+.msg > div:not(.prp-msg),
+.msg .message:not(.prp-msg),
+.msg .chat-message-body:not(.prp-msg),
+.message > div:not(.prp-msg),
+.chat-line > div:not(.prp-msg) {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
 }
 
 .prp-msg {
@@ -42,15 +83,20 @@ html, body {
     border-radius: 8px;
     animation: prpFadeIn .14s ease-out;
     transition: opacity 1s ease;
-    box-shadow: 0 5px 12px rgba(0,0,0,0.26);
 }
 
 .prp-icon {
-    width: 18px;
-    min-width: 18px;
-    font-size: 14px;
+    width: 36px;
+    min-width: 36px;
+    min-height: 18px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 9px;
     line-height: 1.2;
     margin-top: 1px;
+    text-align: center;
+    font-weight: 900;
+    letter-spacing: 0;
 }
 
 .prp-body {
@@ -80,7 +126,12 @@ html, body {
 .prp-default,
 .prp-ooc,
 .prp-admin,
-.prp-police {
+.prp-police,
+.prp-resource,
+.prp-resource-start,
+.prp-resource-stop,
+.prp-resource-build,
+.prp-error {
     background: rgba(22, 27, 35, 0.84);
     border: 1px solid rgba(255,255,255,0.08);
     backdrop-filter: blur(4px);
@@ -89,6 +140,35 @@ html, body {
 
 .prp-ooc .prp-icon {
     color: #9be544;
+}
+
+.prp-default .prp-icon {
+    color: #dfe7ef;
+}
+
+.prp-admin .prp-icon {
+    color: #ffb4b4;
+}
+
+.prp-police .prp-icon {
+    color: #9cccff;
+}
+
+.prp-resource .prp-icon {
+    color: #9ff5ff;
+}
+
+.prp-resource-start .prp-icon {
+    color: #91ffb7;
+}
+
+.prp-resource-stop .prp-icon,
+.prp-error .prp-icon {
+    color: #ffb0aa;
+}
+
+.prp-resource-build .prp-icon {
+    color: #bfd0ff;
 }
 
 .prp-admin {
@@ -101,13 +181,38 @@ html, body {
     border-color: rgba(88, 167, 255, 0.20);
 }
 
+.prp-resource {
+    background: rgba(23, 45, 50, 0.92);
+    border-color: rgba(100, 210, 220, 0.26);
+}
+
+.prp-resource-start {
+    background: rgba(20, 52, 34, 0.92);
+    border-color: rgba(68, 220, 128, 0.30);
+}
+
+.prp-resource-stop {
+    background: rgba(70, 28, 26, 0.92);
+    border-color: rgba(255, 105, 92, 0.34);
+}
+
+.prp-resource-build {
+    background: rgba(28, 37, 70, 0.92);
+    border-color: rgba(128, 170, 255, 0.32);
+}
+
+.prp-error {
+    background: rgba(76, 24, 32, 0.94);
+    border-color: rgba(255, 86, 112, 0.36);
+}
+
 .prp-system,
 .prp-invalid {
-    background: #e4c315;
+    background: rgba(226, 188, 48, 0.95);
     color: #1d1d1d;
-    border-radius: 4px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.18);
-    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.22);
+    border: 1px solid rgba(0,0,0,0.10);
 }
 
 .prp-system .prp-header,
@@ -120,22 +225,22 @@ html, body {
 .prp-system .prp-icon,
 .prp-invalid .prp-icon {
     color: #2b2b2b;
-    font-size: 15px;
+    background: rgba(0,0,0,0.10);
 }
 
 .prp-msg.grouped {
-    margin-top: 0;
-    padding-top: 5px;
+    margin: 2px 0;
+    padding: 8px 10px;
 }
 
 .prp-msg.grouped .prp-icon {
-    opacity: 0;
-    width: 10px;
-    min-width: 10px;
+    opacity: 1;
+    width: 36px;
+    min-width: 36px;
 }
 
 .prp-msg.grouped .prp-header {
-    display: none;
+    display: block;
 }
 
 .prp-msg.fade-out {

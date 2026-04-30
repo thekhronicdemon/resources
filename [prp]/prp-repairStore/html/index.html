@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>PRP Repair Store</title>
+<style>
+* { box-sizing: border-box; user-select: none; }
+body { margin: 0; overflow: hidden; background: transparent; font-family: Arial, Helvetica, sans-serif; color: white; }
+.hidden { display: none !important; }
+#choice { z-index: 5; position: absolute; bottom: 38px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; }
+.choiceBtn { min-width: 130px; padding: 13px 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(10,12,16,.90); color: white; border-radius: 14px; font-size: 15px; font-weight: 800; box-shadow: 0 12px 30px rgba(0,0,0,.35); cursor: pointer; }
+.choiceBtn:hover { background: rgba(35,40,50,.95); transform: translateY(-2px); }
+#panel { z-index: 5; position: absolute; top: 24px; left: 24px; width: 315px; max-height: calc(100vh - 68px); background: rgba(8,10,14,.93); border: 1px solid rgba(255,255,255,.10); border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.45); overflow: hidden; }
+.header { padding: 8px 9px; background: rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.08); }
+.title { font-size: 15px; font-weight: 900; }
+.subtitle { margin-top: 4px; font-size: 10px; opacity: .7; }
+.content { padding: 5px; overflow-y: auto; max-height: calc(100vh - 180px); }
+.category { margin-bottom: 6px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); }
+.categoryHead { width: 100%; padding: 9px 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.045); cursor: pointer; }
+.categoryHead:hover { background: rgba(255,255,255,.08); }
+.categoryLabel { font-size: 12px; font-weight: 800; }
+.current { font-size: 9px; opacity: .65; }
+.options { display: none; padding: 5px; }
+.category.open .options { display: block; }
+.option { display: flex; justify-content: space-between; align-items: center; padding: 7px 7px; border-radius: 10px; margin: 4px 0; cursor: pointer; font-size: 11px; background: rgba(255,255,255,.025); }
+.option:hover { background: rgba(255,255,255,.095); }
+.option.active { background: rgba(55,170,120,.22); outline: 1px solid rgba(55,255,170,.25); }
+.price { font-size: 10px; opacity: .85; font-weight: 800; }
+.footer { display: flex; gap: 6px; padding: 5px; border-top: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+.smallBtn { flex: 1; padding: 8px 9px; border: 0; border-radius: 10px; background: rgba(255,255,255,.12); color: white; cursor: pointer; font-weight: 800; }
+.smallBtn:hover { background: rgba(255,255,255,.18); }
+.danger { background: rgba(200,40,55,.40); }
+#hint { z-index: 5; position: absolute; bottom: 24px; right: 28px; padding: 10px 14px; background: rgba(8,10,14,.78); border-radius: 12px; font-size: 10px; opacity: .85; }
+#loading { z-index: 5; position: absolute; left: 50%; bottom: 115px; transform: translateX(-50%); padding: 14px 18px; background: rgba(8,10,14,.88); border-radius: 12px; font-weight: 800; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 99px; }
+
+#cameraDragZone {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: transparent;
+    display: none;
+}
+
+#choice, #panel, #hint, #loading {
+    z-index: 5;
+}
+</style>
+</head>
+<body>
+    <div id="choice" class="hidden">
+        <button id="repairBtn" class="choiceBtn" onclick="sendChoice('repair')">Repair</button>
+        <button id="customizeBtn" class="choiceBtn" onclick="sendChoice('customize')">Customize</button>
+        <button id="liveryBtn" class="choiceBtn" onclick="sendChoice('livery')">Liveries</button>
+        <button id="engineBtn" class="choiceBtn" onclick="sendChoice('engine')">Engine Modify</button>
+    </div>
+
+    <div id="panel" class="hidden">
+        <div class="header">
+            <div class="title" id="panelTitle">Customize</div>
+            <div class="subtitle">Hover previews. Click to buy. Drag mouse to move camera.</div>
+        </div>
+        <div id="content" class="content"></div>
+        <div class="footer">
+            <button class="smallBtn" onclick="post('back', {})">Back</button>
+            <button class="smallBtn danger" onclick="post('close', { cancel: true })">Cancel</button>
+            <button class="smallBtn" onclick="post('close', { cancel: false })">Done</button>
+        </div>
+    </div>
+
+    <div id="hint" class="hidden">ESC cancel | Hold left click + drag camera | Scroll zoom</div>
+    <div id="cameraDragZone"></div>
+    <div id="loading" class="hidden">Working...</div>
+
+<script>
+let closing = false;
+let closeLocked = false;
+let mouseDown = false;
+let lastX = 0;
+let lastY = 0;
+
+function resource() { return GetParentResourceName(); }
+
+function post(name, data) {
+    if (name === 'close') {
+        if (closing) return Promise.resolve();
+        closing = true;
+        setTimeout(() => { closing = false; }, 1200);
+    }
+
+    return fetch(`https://${resource()}/${name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data || {})
+    });
+}
+
+function hideAll() {
+    document.getElementById('choice').classList.add('hidden');
+    document.getElementById('panel').classList.add('hidden');
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('hint').classList.add('hidden');
+    const dz = document.getElementById('cameraDragZone'); if (dz) dz.style.display = 'none';
+}
+
+function sendChoice(choice) { post('choice', { choice }); }
+
+function openChoice(showRepair, allowedModes, isMechanic, discountPercent) {
+    closing = false;
+    closeLocked = false;
+    hideAll();
+    document.getElementById('choice').classList.remove('hidden');
+    document.getElementById('hint').classList.remove('hidden');
+    const dz = document.getElementById('cameraDragZone'); if (dz) dz.style.display = 'block';
+
+    allowedModes = allowedModes || { repair: true, customize: true, livery: true, engine: true };
+
+    const repairBtn = document.getElementById('repairBtn');
+    const customizeBtn = document.getElementById('customizeBtn');
+    const liveryBtn = document.getElementById('liveryBtn');
+    const engineBtn = document.getElementById('engineBtn');
+
+    if (repairBtn) repairBtn.style.display = (showRepair === false || allowedModes.repair === false) ? 'none' : 'block';
+    if (customizeBtn) customizeBtn.style.display = allowedModes.customize === false ? 'none' : 'block';
+    if (liveryBtn) liveryBtn.style.display = allowedModes.livery === false ? 'none' : 'block';
+    if (engineBtn) engineBtn.style.display = allowedModes.engine === false ? 'none' : 'block';
+
+    const hint = document.getElementById('hint');
+    if (hint && isMechanic) {
+        hint.innerText = `On-duty mechanic: cosmetics/liveries only | ${discountPercent || 75}% discount`;
+    } else if (hint) {
+        hint.innerText = 'ESC cancel | Hold left/right click + drag camera | Scroll zoom';
+    }
+}
+
+
+function renderItems(items) {
+    const content = document.getElementById('content');
+    content.innerHTML = '';
+
+    (items || []).forEach((item) => {
+        const category = document.createElement('div');
+        category.className = 'category';
+
+        const currentText = item.current === -999 ? 'Different Type' : item.current;
+
+        const head = document.createElement('div');
+        head.className = 'categoryHead';
+        head.innerHTML = `
+            <div>
+                <div class="categoryLabel">${item.label}</div>
+                <div class="current">Current: ${currentText}</div>
+            </div>
+            <div>+</div>
+        `;
+
+        head.onclick = () => {
+            document.querySelectorAll('.category').forEach(c => {
+                if (c !== category) c.classList.remove('open');
+            });
+            category.classList.toggle('open');
+            post('camera', { preset: item.camera || 'diagonal' });
+        };
+
+        const options = document.createElement('div');
+        options.className = 'options';
+
+        (item.options || []).forEach(opt => {
+            const row = document.createElement('div');
+            row.className = 'option';
+            if (String(opt.value) === String(item.current)) row.classList.add('active');
+
+            row.innerHTML = `
+                <span>${opt.label}</span>
+                <span class="price">${Number(opt.price || 0) <= 0 ? 'FREE' : '$' + Number(opt.price || 0).toLocaleString()}</span>
+            `;
+
+            row.onmouseenter = () => {
+                post('preview', { item, value: opt.value });
+            };
+
+            row.onclick = () => {
+                post('buy', { item, value: opt.value, price: opt.price || 0 }).then(() => {
+                    [...options.querySelectorAll('.option')].forEach(o => o.classList.remove('active'));
+                    row.classList.add('active');
+                });
+            };
+
+            options.appendChild(row);
+        });
+
+        category.appendChild(head);
+        category.appendChild(options);
+        content.appendChild(category);
+    });
+}
+
+window.addEventListener('message', (event) => {
+    const data = event.data || {};
+
+    if (data.action === 'openChoice') openChoice(data.showRepair, data.allowedModes, data.isMechanic, data.discountPercent);
+
+    if (data.action === 'openMods') {
+        hideAll();
+        document.getElementById('panel').classList.remove('hidden');
+        document.getElementById('hint').classList.remove('hidden');
+        const dz = document.getElementById('cameraDragZone'); if (dz) dz.style.display = 'block';
+        document.getElementById('panelTitle').innerText = data.title || 'Customize';
+        renderItems(data.items || []);
+    }
+
+    if (data.action === 'setItems') renderItems(data.items || []);
+
+    if (data.action === 'loading') {
+        document.getElementById('choice').classList.add('hidden');
+        document.getElementById('panel').classList.add('hidden');
+        document.getElementById('loading').innerText = data.label || 'Working...';
+        document.getElementById('loading').classList.remove('hidden');
+    }
+
+    if (data.action === 'close') hideAll();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!e.repeat) {
+            post('close', { cancel: true });
+        }
+    }
+});
+
+
+let rotatingCamera = false;
+
+function isUiElement(target) {
+    return !!target.closest('#panel, #choice, #hint, #loading');
+}
+
+document.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 && e.button !== 2) return;
+    if (isUiElement(e.target)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    rotatingCamera = true;
+    mouseDown = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+});
+
+document.addEventListener('mouseup', () => {
+    rotatingCamera = false;
+    mouseDown = false;
+});
+
+document.addEventListener('mouseleave', () => {
+    rotatingCamera = false;
+    mouseDown = false;
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!rotatingCamera || !mouseDown) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    post('camMove', { dx, dy });
+});
+
+document.addEventListener('contextmenu', (e) => {
+    if (!isUiElement(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+});
+
+document.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    post('camZoom', { delta: e.deltaY });
+}, { passive: false });
+
+</script>
+</body>
+</html>
