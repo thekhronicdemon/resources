@@ -626,7 +626,8 @@ local function OpenBanMenu(banplayer)
 end
 
 local function OpenPlayerMenus(player)
-    local Players = MenuV:CreateMenu(false, player.cid .. Lang:t('info.options'), menuLocation, 220, 20, 60, 'size-125', 'none', 'menuv') -- Players Sub Menu
+    local playerCitizenId = player.citizenid
+    local Players = MenuV:CreateMenu(false, playerCitizenId .. Lang:t('info.options'), menuLocation, 220, 20, 60, 'size-125', 'none', 'menuv') -- Players Sub Menu
     Players:ClearItems()
     MenuV:OpenMenu(Players)
     local elements = {
@@ -634,73 +635,73 @@ local function OpenPlayerMenus(player)
             icon = '💀',
             label = Lang:t('menu.kill'),
             value = 'kill',
-            description = Lang:t('menu.kill') .. ' ' .. player.cid
+            description = Lang:t('menu.kill') .. ' ' .. playerCitizenId
         },
         [2] = {
             icon = '🏥',
             label = Lang:t('menu.revive'),
             value = 'revive',
-            description = Lang:t('menu.revive') .. ' ' .. player.cid
+            description = Lang:t('menu.revive') .. ' ' .. playerCitizenId
         },
         [3] = {
             icon = '🥶',
             label = Lang:t('menu.freeze'),
             value = 'freeze',
-            description = Lang:t('menu.freeze') .. ' ' .. player.cid
+            description = Lang:t('menu.freeze') .. ' ' .. playerCitizenId
         },
         [4] = {
             icon = '👀',
             label = Lang:t('menu.spectate'),
             value = 'spectate',
-            description = Lang:t('menu.spectate') .. ' ' .. player.cid
+            description = Lang:t('menu.spectate') .. ' ' .. playerCitizenId
         },
         [5] = {
             icon = '➡️',
             label = Lang:t('info.go_to'),
             value = 'goto',
-            description = Lang:t('info.go_to') .. ' ' .. player.cid .. Lang:t('info.position')
+            description = Lang:t('info.go_to') .. ' ' .. playerCitizenId .. Lang:t('info.position')
         },
         [6] = {
             icon = '⬅️',
             label = Lang:t('menu.bring'),
             value = 'bring',
-            description = Lang:t('menu.bring') .. ' ' .. player.cid .. ' ' .. Lang:t('info.your_position')
+            description = Lang:t('menu.bring') .. ' ' .. playerCitizenId .. ' ' .. Lang:t('info.your_position')
         },
         [7] = {
             icon = '🚗',
             label = Lang:t('menu.sit_in_vehicle'),
             value = 'intovehicle',
-            description = Lang:t('desc.sit_in_veh_desc') .. ' ' .. player.cid .. ' ' .. Lang:t('desc.sit_in_veh_desc2')
+            description = Lang:t('desc.sit_in_veh_desc') .. ' ' .. playerCitizenId .. ' ' .. Lang:t('desc.sit_in_veh_desc2')
         },
         [8] = {
             icon = '🎒',
             label = Lang:t('menu.open_inv'),
             value = 'inventory',
-            description = Lang:t('info.open') .. ' ' .. player.cid .. Lang:t('info.inventories')
+            description = Lang:t('info.open') .. ' ' .. playerCitizenId .. Lang:t('info.inventories')
         },
         [9] = {
             icon = '👕',
             label = Lang:t('menu.give_clothing_menu'),
             value = 'cloth',
-            description = Lang:t('desc.clothing_menu_desc') .. ' ' .. player.cid
+            description = Lang:t('desc.clothing_menu_desc') .. ' ' .. playerCitizenId
         },
         [10] = {
             icon = '🥾',
             label = Lang:t('menu.kick'),
             value = 'kick',
-            description = Lang:t('menu.kick') .. ' ' .. player.cid .. ' ' .. Lang:t('info.reason')
+            description = Lang:t('menu.kick') .. ' ' .. playerCitizenId .. ' ' .. Lang:t('info.reason')
         },
         [11] = {
             icon = '🚫',
             label = Lang:t('menu.ban'),
             value = 'ban',
-            description = Lang:t('menu.ban') .. ' ' .. player.cid .. ' ' .. Lang:t('info.reason')
+            description = Lang:t('menu.ban') .. ' ' .. playerCitizenId .. ' ' .. Lang:t('info.reason')
         },
         [12] = {
             icon = '🎟️',
             label = Lang:t('menu.permissions'),
             value = 'perms',
-            description = Lang:t('info.give') .. ' ' .. player.cid .. ' ' .. Lang:t('menu.permissions')
+            description = Lang:t('info.give') .. ' ' .. playerCitizenId .. ' ' .. Lang:t('menu.permissions')
         }
     }
     for _, v in ipairs(elements) do

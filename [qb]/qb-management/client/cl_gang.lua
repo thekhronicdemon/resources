@@ -153,7 +153,7 @@ RegisterNetEvent('qb-gangmenu:lient:ManageMember', function(data)
                 event = 'qb-gangmenu:server:GradeUpdate',
                 icon = 'fa-solid fa-file-pen',
                 args = {
-                    cid = data.player.empSource,
+                    citizenid = data.player.empSource,
                     grade = tonumber(k),
                     gradename = v.name
                 }

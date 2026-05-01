@@ -148,7 +148,7 @@ RegisterNetEvent('qb-bossmenu:client:ManageEmployee', function(data)
                 event = 'qb-bossmenu:server:GradeUpdate',
                 icon = 'fa-solid fa-file-pen',
                 args = {
-                    cid = data.player.empSource,
+                    citizenid = data.player.empSource,
                     grade = tonumber(k),
                     gradename = v.name
                 }

@@ -57,7 +57,8 @@ end)
 RegisterNetEvent('qb-gangmenu:server:GradeUpdate', function(data)
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
-	local Employee = QBCore.Functions.GetPlayerByCitizenId(data.cid) or QBCore.Functions.GetOfflinePlayerByCitizenId(data.cid)
+	local citizenid = data.citizenid or data.cid
+	local Employee = QBCore.Functions.GetPlayerByCitizenId(citizenid) or QBCore.Functions.GetOfflinePlayerByCitizenId(citizenid)
 
 	if not Player.PlayerData.gang.isboss then
 		ExploitBan(src, 'GradeUpdate Exploiting')

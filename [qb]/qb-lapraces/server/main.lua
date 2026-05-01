@@ -1095,7 +1095,7 @@ RegisterNetEvent('qb-lapraces:server:FinishPlayer', function(RaceData, TotalTime
             MySQL.update.await('UPDATE lapraces SET records = ? WHERE raceid = ?', {
                 json.encode(Races[raceId].Records), raceId
             })
-            TriggerClientEvent('qb-phone:client:RaceNotify', src, 'You have won the WR from ' .. RaceData.RaceName .. ' with a time of: ' .. SecondsToClock(bestLapValue) .. '!')
+            TriggerClientEvent('prp-phone:client:RaceNotify', src, 'You have won the WR from ' .. RaceData.RaceName .. ' with a time of: ' .. SecondsToClock(bestLapValue) .. '!')
         end
     else
         Races[raceId].Records = {
@@ -1108,7 +1108,7 @@ RegisterNetEvent('qb-lapraces:server:FinishPlayer', function(RaceData, TotalTime
         MySQL.update.await('UPDATE lapraces SET records = ? WHERE raceid = ?', {
             json.encode(Races[raceId].Records), raceId
         })
-        TriggerClientEvent('qb-phone:client:RaceNotify', src, 'You have won the WR from ' .. RaceData.RaceName .. ' with a time of: ' .. SecondsToClock(bestLapValue) .. '!')
+        TriggerClientEvent('prp-phone:client:RaceNotify', src, 'You have won the WR from ' .. RaceData.RaceName .. ' with a time of: ' .. SecondsToClock(bestLapValue) .. '!')
     end
 
     if AvailableKey and AvailableRaces[AvailableKey] then
@@ -1140,7 +1140,7 @@ RegisterNetEvent('qb-lapraces:server:FinishPlayer', function(RaceData, TotalTime
         CloseRaceEntry(raceId)
     end
 
-    TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+    TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
 end)
 
 RegisterNetEvent('qb-lapraces:server:CreateLapRace', function(RaceName)
@@ -1214,12 +1214,12 @@ RegisterNetEvent('qb-lapraces:server:JoinRace', function(RaceData)
     AvailableRaces[AvailableKey].RaceData = Races[raceId]
 
     TriggerClientEvent('qb-lapraces:client:JoinRace', src, Races[raceId], AvailableRaces[AvailableKey].Laps)
-    TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+    TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
 
     local Creator = QBCore.Functions.GetPlayerByCitizenId(AvailableRaces[AvailableKey].SetupCitizenId)
     local creatorSource = Creator and Creator.PlayerData and Creator.PlayerData.source
     if creatorSource and creatorSource ~= Player.PlayerData.source then
-        TriggerClientEvent('qb-phone:client:RaceNotify', creatorSource,
+        TriggerClientEvent('prp-phone:client:RaceNotify', creatorSource,
             string.sub(Player.PlayerData.charinfo.firstname, 1, 1) .. '. ' .. Player.PlayerData.charinfo.lastname .. ' joined your race!')
     end
 end)
@@ -1240,7 +1240,7 @@ RegisterNetEvent('qb-lapraces:server:LeaveRace', function(RaceData)
     local Creator = QBCore.Functions.GetPlayerByCitizenId(AvailableRaces[AvailableKey].SetupCitizenId)
     local creatorSource = Creator and Creator.PlayerData and Creator.PlayerData.source
     if creatorSource and creatorSource ~= Player.PlayerData.source then
-        TriggerClientEvent('qb-phone:client:RaceNotify', creatorSource,
+        TriggerClientEvent('prp-phone:client:RaceNotify', creatorSource,
             string.sub(Player.PlayerData.charinfo.firstname, 1, 1) .. '. ' .. Player.PlayerData.charinfo.lastname .. ' left the race.')
     end
 
@@ -1251,7 +1251,7 @@ RegisterNetEvent('qb-lapraces:server:LeaveRace', function(RaceData)
     end
 
     TriggerClientEvent('qb-lapraces:client:LeaveRace', src, Races[raceId])
-    TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+    TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
 end)
 
 RegisterNetEvent('qb-lapraces:server:SetupRace', function(RaceId, Laps, options)
@@ -1343,7 +1343,7 @@ RegisterNetEvent('qb-lapraces:server:SetupRace', function(RaceId, Laps, options)
     Races[RaceId].TabletSettings = AvailableRaces[#AvailableRaces].Settings
 
     TriggerClientEvent('qb-lapraces:client:JoinRace', src, Races[RaceId], laps)
-    TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+    TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
 
     SetTimeout(5 * 60 * 1000, function()
         local AvailableKey = GetOpenedRaceKey(RaceId)
@@ -1351,7 +1351,7 @@ RegisterNetEvent('qb-lapraces:server:SetupRace', function(RaceId, Laps, options)
             RefundHostedRace(AvailableRaces[AvailableKey], 'staged race expired')
             KickAllRacers(RaceId)
             CloseRaceEntry(RaceId)
-            TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+            TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
         end
     end)
 end)
@@ -1377,7 +1377,7 @@ RegisterNetEvent('qb-lapraces:server:CancelRace', function(raceId)
 
     KickAllRacers(raceId)
     CloseRaceEntry(raceId)
-    TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+    TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
 end)
 
 RegisterNetEvent('qb-lapraces:server:UpdateRaceState', function(RaceId, Started, Waiting)
@@ -1427,7 +1427,7 @@ RegisterNetEvent('qb-lapraces:server:StartRace', function(RaceId)
         end
     end
 
-    TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+    TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
 end)
 
 RegisterNetEvent('qb-lapraces:server:SaveRace', function(RaceData)
@@ -1670,7 +1670,7 @@ QBCore.Functions.CreateCallback('qb-lapraces:server:DeleteTrack', function(sourc
     local state = BuildTabletRaceState(source)
     state.message = 'Track deleted.'
     cb(state)
-    TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+    TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
 end)
 
 QBCore.Commands.Add('cancelrace', 'Cancel going race..', {}, false, function(source, args)
@@ -1688,7 +1688,7 @@ QBCore.Commands.Add('cancelrace', 'Cancel going race..', {}, false, function(sou
                 end
                 KickAllRacers(RaceId)
                 CloseRaceEntry(RaceId)
-                TriggerClientEvent('qb-phone:client:UpdateLapraces', -1)
+                TriggerClientEvent('prp-phone:client:UpdateLapraces', -1)
             else
                 TriggerClientEvent('QBCore:Notify', source, 'That race is not open.', 'error')
             end

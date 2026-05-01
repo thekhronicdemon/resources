@@ -225,7 +225,7 @@ RegisterNetEvent('qb-garages:server:syncGarage', function(updatedGarages)
     Config.Garages = updatedGarages
 end)
 
---Call from qb-phone
+--Call from prp-phone
 
 QBCore.Functions.CreateCallback('qb-garages:server:GetPlayerVehicles', function(source, cb)
     local Player = QBCore.Functions.GetPlayer(source)

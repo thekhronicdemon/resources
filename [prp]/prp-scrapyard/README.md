@@ -7,7 +7,7 @@ Fresh rebuilt ZIP for QB-Core.
 - drop zone only at `2351.5, 3132.96, 48.2`
 - final parts NPC only at `2341.62, 3143.59, 48.21`
 - blue mission route blips
-- qb-phone email using `qb-phone:server:sendNewMail`
+- prp-phone email using `prp-phone:server:sendNewMail`
 - no `Lang` dependency
 
 ## Install

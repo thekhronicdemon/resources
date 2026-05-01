@@ -215,7 +215,7 @@ RegisterNetEvent('prp-tablet:client:MiningComplete', function(_, message, status
     QBCore.Functions.Notify(message or 'Crypto reward received.', 'success')
 end)
 
-RegisterNetEvent('qb-phone:client:UpdateLapraces', function()
+RegisterNetEvent('prp-phone:client:UpdateLapraces', function()
     PushRacingUpdate()
 end)
 

@@ -90,7 +90,7 @@ local function openSellContract(bool)
         sellerData = {
             firstname = pData.charinfo.firstname,
             lastname = pData.charinfo.lastname,
-            account = pData.charinfo.account,
+            account = pData.citizenid,
             phone = pData.charinfo.phone
         },
         plate = QBCore.Functions.GetPlate(GetVehiclePedIsUsing(PlayerPedId()))
@@ -107,7 +107,7 @@ local function openBuyContract(sellerData, vehicleData)
         sellerData = {
             firstname = sellerData.charinfo.firstname,
             lastname = sellerData.charinfo.lastname,
-            account = sellerData.charinfo.account,
+            account = sellerData.citizenid or sellerData.charinfo.account,
             phone = sellerData.charinfo.phone
         },
         vehicleData = {

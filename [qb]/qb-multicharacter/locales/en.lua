@@ -46,7 +46,7 @@ local Translations = {
         cash = "Cash",
         bank = "Bank",
         phonenumber = "Phone Number",
-        accountnumber = "Account Number",
+        accountnumber = "Citizen ID",
 
         chardel_header = "Character Registration",
 

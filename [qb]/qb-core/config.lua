@@ -21,7 +21,6 @@ QBConfig.Player.Bloodtypes = {
 
 QBConfig.Player.PlayerDefaults = {
     citizenid = function() return QBCore.Player.CreateCitizenId() end,
-    cid = 1,
     money = function()
         local moneyDefaults = {}
         for moneytype, startamount in pairs(QBConfig.Money.MoneyTypes) do
@@ -37,7 +36,7 @@ QBConfig.Player.PlayerDefaults = {
         gender = 0,
         nationality = 'USA',
         phone = function() return QBCore.Functions.CreatePhoneNumber() end,
-        account = function() return QBCore.Functions.CreateAccountNumber() end
+        account = ''
     },
     job = {
         name = 'unemployed',

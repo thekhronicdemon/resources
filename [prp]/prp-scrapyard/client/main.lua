@@ -122,7 +122,7 @@ end
 
 local function SendMissionMail(plate, color, typeLabel)
     if not Config.UseQBMail then return end
-    TriggerServerEvent('qb-phone:server:sendNewMail', {
+    TriggerServerEvent('prp-phone:server:sendNewMail', {
         sender = Config.Mail.sender,
         subject = Config.Mail.subject,
         message = Config.Mail.message:format(plate, color, typeLabel),

@@ -202,7 +202,7 @@ end)
 
 function MissionNotification()
 	Wait(2000)
-	TriggerServerEvent('qb-phone:server:sendNewMail', {
+	TriggerServerEvent('prp-phone:server:sendNewMail', {
 		sender = "The Boss",
 		subject = "New Target",
 		message = "So you are intrested in making some money? good... go get yourself a Gun and make it happen... sending you the location now.",

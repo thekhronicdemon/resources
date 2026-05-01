@@ -145,6 +145,10 @@ function QBCore.Player.CheckPlayerData(source, PlayerData)
     end
 
     applyDefaults(PlayerData, QBCore.Config.Player.PlayerDefaults)
+    PlayerData.citizenid = tostring(PlayerData.citizenid)
+    PlayerData.charinfo = PlayerData.charinfo or {}
+    PlayerData.charinfo.account = PlayerData.citizenid
+
     if PlayerData.job and QBCore.Shared.ForceJobDefaultDutyAtLogin then
         local jobInfo = QBCore.Shared.Jobs[PlayerData.job.name]
         if jobInfo then
@@ -364,7 +368,7 @@ function QBCore.Player.CreatePlayer(PlayerData, Offline)
             end
             TriggerClientEvent('hud:client:OnMoneyChange', self.PlayerData.source, moneytype, amount, true)
             if moneytype == 'bank' then
-                TriggerClientEvent('qb-phone:client:RemoveBankMoney', self.PlayerData.source, amount)
+                TriggerClientEvent('prp-phone:client:RemoveBankMoney', self.PlayerData.source, amount)
             end
             TriggerClientEvent('QBCore:Client:OnMoneyChange', self.PlayerData.source, moneytype, amount, 'remove', reason)
             TriggerEvent('QBCore:Server:OnMoneyChange', self.PlayerData.source, moneytype, amount, 'remove', reason)
@@ -628,14 +632,22 @@ end
 -- Util Functions
 
 function QBCore.Player.CreateCitizenId()
-    local CitizenId = tostring(QBCore.Shared.RandomStr(3) .. QBCore.Shared.RandomInt(5)):upper()
-    local result = MySQL.prepare.await('SELECT EXISTS(SELECT 1 FROM players WHERE citizenid = ?) AS uniqueCheck', { CitizenId })
-    if result == 0 then return CitizenId end
+    local ranges = {
+        { min = 1000, max = 9999 },
+        { min = 10000, max = 99999 },
+        { min = 100000, max = 999999 },
+    }
+    local range = ranges[math.random(1, #ranges)]
+    local CitizenId = tostring(math.random(range.min, range.max))
+    if not QBCore.Functions.GetPlayerByCitizenId(CitizenId) then
+        local result = MySQL.prepare.await('SELECT EXISTS(SELECT 1 FROM players WHERE citizenid = ?) AS uniqueCheck', { CitizenId })
+        if result == 0 then return CitizenId end
+    end
     return QBCore.Player.CreateCitizenId()
 end
 
 function QBCore.Functions.CreateAccountNumber()
-    local AccountNumber = 'US0' .. math.random(1, 9) .. 'QBCore' .. math.random(1111, 9999) .. math.random(1111, 9999) .. math.random(11, 99)
+    local AccountNumber = tostring(QBCore.Shared.RandomInt(8))
     local result = MySQL.prepare.await('SELECT EXISTS(SELECT 1 FROM players WHERE JSON_UNQUOTE(JSON_EXTRACT(charinfo, "$.account")) = ?) AS uniqueCheck', { AccountNumber })
     if result == 0 then return AccountNumber end
     return QBCore.Functions.CreateAccountNumber()

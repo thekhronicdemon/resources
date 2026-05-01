@@ -23,7 +23,7 @@
                         </ul>
                     </div>
                     <button class="action-button" @click="closeApplication()">Logout</button>
-                    <div class="sidebar-footer">Account Number: {{ accountNumber }}</div>
+                    <div class="sidebar-footer">Citizen ID: {{ accountNumber }}</div>
                 </div>
                 <div class="main-content">
                     <div class="nav-bar">
@@ -84,7 +84,7 @@
                             <button class="action-button" @click="internalTransfer">Transfer</button>
                         </div>
                         <div v-if="transferType === 'external'" class="transfer-options">
-                            <label for="externalAccountNumber">Account Number:</label>
+                            <label for="externalAccountNumber">Citizen ID:</label>
                             <input type="text" id="externalAccountNumber" v-model="externalAccountNumber" />
                             <label for="externalFrom">Account:</label>
                             <select id="externalFrom" v-model="externalFromAccount">
@@ -178,7 +178,7 @@
                         </ul>
                     </div>
                     <button class="action-button" @click="closeApplication()">Logout</button>
-                    <div class="sidebar-footer">Account Number: {{ accountNumber }}</div>
+                    <div class="sidebar-footer">Citizen ID: {{ accountNumber }}</div>
                 </div>
                 <div class="main-content">
                     <div class="money">

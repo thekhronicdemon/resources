@@ -23,7 +23,7 @@ Used Car Sale for QB-Core Framework :blue_car:
 ## Dependencies
 - [qb-core](https://github.com/qbcore-framework/qb-core)
 - [qb-garages](https://github.com/qbcore-framework/qb-garages) - Vehicle ownership
-- [qb-phone](https://github.com/qbcore-framework/qb-phone) - For the e-mail
+- [prp-phone](https://github.com/qbcore-framework/prp-phone) - For the e-mail
 - [qb-logs](https://github.com/qbcore-framework/qb-logs) - Keep event logs
 
 ## Screenshots
@@ -47,7 +47,7 @@ Used Car Sale for QB-Core Framework :blue_car:
 ```
 ensure qb-core
 ensure qb-garages
-ensure qb-phone
+ensure prp-phone
 ensure qb-logs
 ensure qb-vehiclesales
 ```

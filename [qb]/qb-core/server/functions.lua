@@ -93,8 +93,10 @@ end
 ---@param account string
 ---@return table?
 function QBCore.Functions.GetPlayerByAccount(account)
+    account = tostring(account)
     for src in pairs(QBCore.Players) do
-        if QBCore.Players[src].PlayerData.charinfo.account == account then
+        local PlayerData = QBCore.Players[src].PlayerData
+        if tostring(PlayerData.citizenid) == account or tostring(PlayerData.charinfo.account) == account then
             return QBCore.Players[src]
         end
     end

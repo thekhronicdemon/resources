@@ -37,7 +37,7 @@ local Translations = {
     charinfo = {
         firstname = 'not',
         lastname = 'known',
-        account = 'Account not known..',
+        account = 'Citizen ID not known..',
         phone = 'telephone number not known..',
     },
     mail = {

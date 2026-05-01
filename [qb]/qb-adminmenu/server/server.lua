@@ -28,7 +28,6 @@ function GetQBPlayers()
             name = name .. ' | (' .. (player.PlayerData.name or '') .. ')',
             id = id,
             coords = GetEntityCoords(playerPed),
-            cid = name,
             citizenid = player.PlayerData.citizenid,
             sources = playerPed,
             sourceplayer = id

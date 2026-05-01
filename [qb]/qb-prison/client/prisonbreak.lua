@@ -106,7 +106,7 @@ end)
 RegisterNetEvent('prison:client:PrisonBreakAlert', function()
     local coords = vector3(Config.Locations['middle'].coords.x, Config.Locations['middle'].coords.y, Config.Locations['middle'].coords.z)
     local alertData = { title = Lang:t('info.police_alert_title'), coords = { x = coords.x, y = coords.y, z = coords.z }, description = Lang:t('info.police_alert_description') }
-    TriggerEvent('qb-phone:client:addPoliceAlert', alertData)
+    TriggerEvent('prp-phone:client:addPoliceAlert', alertData)
     TriggerEvent('police:client:policeAlert', coords, Lang:t('info.police_alert_description'))
 
     local BreakBlip = AddBlipForCoord(coords.x, coords.y, coords.z)

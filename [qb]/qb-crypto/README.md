@@ -3,7 +3,7 @@ Crypto Currency For QB-Core
 
 This resource handles the cryptocurrency market for players to be able to buy/sell qbit. It also includes an item called a "cryptostick" that can be exchanged at a configured location for qbit. Some jobs have this item as a random reward already
 
-This resource only works with qb-phone. Without it, players will not be able to buy or sell qbit!
+This resource only works with prp-phone. Without it, players will not be able to buy or sell qbit!
 
 
 # Documentaiton
@@ -31,7 +31,7 @@ To setup live tracking of crypto prices you must register for an APIKey at [http
 Now you're all set! Restart the script for it to begin getting live cryto prices!
 
 # Dependencies
-- [qb-phone](https://github.com/qbcore-framework/qb-phone)
+- [prp-phone](https://github.com/qbcore-framework/prp-phone)
 - [qb-minigames](https://github.com/qbcore-framework/qb-minigames)
 
 # License

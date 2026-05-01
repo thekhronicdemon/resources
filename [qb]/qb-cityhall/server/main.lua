@@ -108,7 +108,7 @@ RegisterNetEvent('qb-cityhall:server:sendDriverTest', function(instructors)
                 message = 'Hello,<br><br>We have just received a message that someone wants to take driving lessons.<br>If you are willing to teach, please contact them:<br>Name: <strong>' .. Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname .. '<br />Phone Number: <strong>' .. Player.PlayerData.charinfo.phone .. '</strong><br><br>Kind regards,<br>Township Los Santos',
                 button = {}
             }
-            exports['qb-phone']:sendNewMailToOffline(citizenid, mailData)
+            exports['prp-phone']:sendNewMailToOffline(citizenid, mailData)
         end
     end
     TriggerClientEvent('QBCore:Notify', src, 'An email has been sent to driving schools, and you will be contacted automatically', 'success', 5000)

@@ -198,10 +198,10 @@ QBCore.Commands.Add('fine', Lang:t('commands.fine'), { { name = 'id', help = Lan
     else
         MySQL.Async.insert('INSERT INTO phone_invoices (citizenid, amount, society, sender, sendercitizenid) VALUES (?, ?, ?, ?, ?)', { billed.PlayerData.citizenid, amount, biller.PlayerData.job.name, biller.PlayerData.charinfo.firstname, biller.PlayerData.citizenid }, function(id)
             if id then
-                TriggerClientEvent('qb-phone:client:AcceptorDenyInvoice', billed.PlayerData.source, id, biller.PlayerData.charinfo.firstname, biller.PlayerData.job.name, biller.PlayerData.citizenid, amount, GetInvokingResource())
+                TriggerClientEvent('prp-phone:client:AcceptorDenyInvoice', billed.PlayerData.source, id, biller.PlayerData.charinfo.firstname, biller.PlayerData.job.name, biller.PlayerData.citizenid, amount, GetInvokingResource())
             end
         end)
-        TriggerClientEvent('qb-phone:RefreshPhone', billed.PlayerData.source)
+        TriggerClientEvent('prp-phone:RefreshPhone', billed.PlayerData.source)
     end
 end)
 
@@ -355,7 +355,7 @@ QBCore.Commands.Add('911p', Lang:t('commands.police_report'), { { name = 'messag
     for _, v in pairs(players) do
         if v and v.PlayerData.job.type == 'leo' and v.PlayerData.job.onduty then
             local alertData = { title = Lang:t('commands.emergency_call'), coords = { x = coords.x, y = coords.y, z = coords.z }, description = message }
-            TriggerClientEvent('qb-phone:client:addPoliceAlert', v.PlayerData.source, alertData)
+            TriggerClientEvent('prp-phone:client:addPoliceAlert', v.PlayerData.source, alertData)
             TriggerClientEvent('police:client:policeAlert', v.PlayerData.source, coords, message)
         end
     end

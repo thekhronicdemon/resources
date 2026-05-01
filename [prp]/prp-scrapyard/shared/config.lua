@@ -12,7 +12,7 @@ Config = {}
     - StealLocations = possible spawn locations for the mission vehicle
     - VehicleSets = categories of vehicles + the parts each category can lose
     - Parts = visual/carry settings for each removable part
-    - Mail = qb-phone email contents sent when a mission starts
+    - Mail = prp-phone email contents sent when a mission starts
     - Rewards = payout tuning
 ]]
 
@@ -140,7 +140,7 @@ Config.Progress = {
 Config.InteractDistance = 2.0
 Config.NpcDistance = 2.0
 
--- qb-phone mission email
+-- prp-phone mission email
 Config.Mail = {
     sender = 'PRP Scrapyard',
     subject = 'Vehicle Contract',

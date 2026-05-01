@@ -153,7 +153,7 @@ RegisterNetEvent('police:server:policeAlert', function(text)
     for _, v in pairs(players) do
         if v and v.PlayerData.job.type == 'leo' and v.PlayerData.job.onduty then
             local alertData = { title = Lang:t('info.new_call'), coords = { x = coords.x, y = coords.y, z = coords.z }, description = text }
-            TriggerClientEvent('qb-phone:client:addPoliceAlert', v.PlayerData.source, alertData)
+            TriggerClientEvent('prp-phone:client:addPoliceAlert', v.PlayerData.source, alertData)
             TriggerClientEvent('police:client:policeAlert', v.PlayerData.source, coords, text)
         end
     end
@@ -233,7 +233,7 @@ RegisterNetEvent('police:server:SendTrackerLocation', function(coords, requestId
         description = msg
     }
     TriggerClientEvent('police:client:TrackerMessage', requestId, msg, coords)
-    TriggerClientEvent('qb-phone:client:addPoliceAlert', requestId, alertData)
+    TriggerClientEvent('prp-phone:client:addPoliceAlert', requestId, alertData)
 end)
 
 -- Threads

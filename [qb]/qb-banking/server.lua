@@ -10,6 +10,39 @@ local function getPlayerAndCitizenId(playerId)
     return Player, Player.PlayerData.citizenid
 end
 
+local function getTransferTarget(identifier)
+    identifier = tostring(identifier or ''):gsub('%s+', '')
+    if identifier == '' then return nil, nil, nil end
+
+    local Player = QBCore.Functions.GetPlayerByCitizenId(identifier) or QBCore.Functions.GetPlayerByAccount(identifier)
+    if Player then
+        return Player.PlayerData.citizenid, Player, nil
+    end
+
+    local rows = MySQL.query.await('SELECT citizenid, money FROM players WHERE citizenid = ? OR JSON_UNQUOTE(JSON_EXTRACT(charinfo, "$.account")) = ? LIMIT 1', { identifier, identifier })
+    local row = rows and rows[1]
+    if row then
+        return row.citizenid, nil, row
+    end
+
+    return nil, nil, nil
+end
+
+local function addBankMoneyToCitizenId(citizenid, Player, row, amount, reason)
+    if Player then
+        Player.Functions.AddMoney('bank', amount, reason)
+        return true
+    end
+
+    row = row or (MySQL.query.await('SELECT money FROM players WHERE citizenid = ? LIMIT 1', { citizenid }) or {})[1]
+    if not row then return false end
+
+    local money = json.decode(row.money or '{}') or {}
+    money.bank = (tonumber(money.bank) or 0) + amount
+    local result = MySQL.update.await('UPDATE players SET money = ? WHERE citizenid = ?', { json.encode(money), citizenid })
+    return result == true or (tonumber(result) or 0) > 0
+end
+
 local function GetNumberOfAccounts(citizenid)
     local numberOfAccounts = 0
     for _, account in pairs(Accounts) do
@@ -65,10 +98,8 @@ local function CreateGangAccount(accountName, accountBalance)
 end
 exports('CreateGangAccount', CreateGangAccount)
 
-local function CreateBankStatement(playerId, account, amount, reason, statementType, accountType)
-    local Player, citizenid = getPlayerAndCitizenId(playerId)
-    if not Player or not citizenid then return false end
-
+local function CreateBankStatementForCitizenId(citizenid, account, amount, reason, statementType, accountType)
+    if not citizenid then return false end
     local newStatement = {
         citizenid = citizenid,
         amount = amount,
@@ -89,6 +120,13 @@ local function CreateBankStatement(playerId, account, amount, reason, statementT
     local insertSuccess = MySQL.insert.await('INSERT INTO bank_statements (citizenid, account_name, amount, reason, statement_type) VALUES (?, ?, ?, ?, ?)', { citizenid, account, amount, reason, statementType })
     if not insertSuccess then return false end
     return true
+end
+
+local function CreateBankStatement(playerId, account, amount, reason, statementType, accountType)
+    local Player, citizenid = getPlayerAndCitizenId(playerId)
+    if not Player or not citizenid then return false end
+
+    return CreateBankStatementForCitizenId(citizenid, account, amount, reason, statementType, accountType)
 end
 exports('CreateBankStatement', CreateBankStatement)
 
@@ -310,18 +348,18 @@ QBCore.Functions.CreateCallback('qb-banking:server:externalTransfer', function(s
     if not Player or not citizenid then return cb({ success = false, message = Lang:t('error.error') }) end
     local job = Player.PlayerData.job
     local gang = Player.PlayerData.gang
-    local toAccountName = data.toAccountNumber
-    local toPlayer = QBCore.Functions.GetPlayerByCitizenId(toAccountName)
-    if not toPlayer then return cb({ success = false, message = Lang:t('error.error') }) end
+    local toCitizenId, toPlayer, toPlayerRow = getTransferTarget(data.toAccountNumber)
+    if not toCitizenId or toCitizenId == citizenid then return cb({ success = false, message = Lang:t('error.error') }) end
     local fromAccountName = data.fromAccountName
     local transferAmount = tonumber(data.amount)
+    if not transferAmount or transferAmount <= 0 then return cb({ success = false, message = Lang:t('error.error') }) end
     local reason = (data.reason ~= '' and data.reason) or 'External transfer'
     if fromAccountName == 'checking' then
         if Player.PlayerData.money.bank < transferAmount then return cb({ success = false, message = Lang:t('error.money') }) end
         Player.Functions.RemoveMoney('bank', transferAmount, reason)
-        toPlayer.Functions.AddMoney('bank', transferAmount, reason)
+        if not addBankMoneyToCitizenId(toCitizenId, toPlayer, toPlayerRow, transferAmount, reason) then return cb({ success = false, message = Lang:t('error.error') }) end
         if not CreateBankStatement(src, 'checking', transferAmount, reason, 'withdraw', 'player') then return cb({ success = false, message = Lang:t('error.error') }) end
-        if not CreateBankStatement(toPlayer.PlayerData.source, 'checking', transferAmount, reason, 'deposit', 'player') then return cb({ success = false, message = Lang:t('error.error') }) end
+        if not CreateBankStatementForCitizenId(toCitizenId, 'checking', transferAmount, reason, 'deposit', 'player') then return cb({ success = false, message = Lang:t('error.error') }) end
         cb({ success = true, message = Lang:t('success.transfer') })
     else
         if Accounts[fromAccountName].account_type == 'job' and job.name ~= fromAccountName and not job.isboss then return cb({ success = false, message = Lang:t('error.access') }) end
@@ -329,8 +367,8 @@ QBCore.Functions.CreateCallback('qb-banking:server:externalTransfer', function(s
         local fromAccountBalance = GetAccountBalance(fromAccountName)
         if fromAccountBalance < transferAmount then return cb({ success = false, message = Lang:t('error.money') }) end
         if not RemoveMoney(fromAccountName, transferAmount) then return cb({ success = false, message = Lang:t('error.error') }) end
-        toPlayer.Functions.AddMoney('bank', transferAmount, reason)
-        if not CreateBankStatement(toPlayer.PlayerData.source, 'checking', transferAmount, reason, 'deposit', 'player') then return cb({ success = false, message = Lang:t('error.error') }) end
+        if not addBankMoneyToCitizenId(toCitizenId, toPlayer, toPlayerRow, transferAmount, reason) then return cb({ success = false, message = Lang:t('error.error') }) end
+        if not CreateBankStatementForCitizenId(toCitizenId, 'checking', transferAmount, reason, 'deposit', 'player') then return cb({ success = false, message = Lang:t('error.error') }) end
         cb({ success = true, message = Lang:t('success.transfer') })
     end
 end)
@@ -409,8 +447,8 @@ QBCore.Functions.CreateCallback('qb-banking:server:addUser', function(source, cb
     if Accounts[accountName].citizenid ~= citizenid then return cb({ success = false, message = Lang:t('error.access') }) end
     local account = Accounts[accountName]
     local users = json.decode(account.users)
-    for _, cid in ipairs(users) do
-        if cid == userToAdd then return cb({ success = false, message = Lang:t('error.user') }) end
+    for _, userCitizenId in ipairs(users) do
+        if userCitizenId == userToAdd then return cb({ success = false, message = Lang:t('error.user') }) end
     end
     users[#users + 1] = userToAdd
     local usersData = json.encode(users)
