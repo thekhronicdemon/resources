@@ -381,6 +381,7 @@
     }
 
     function bindEvents() {
+        hideApp();
         if ($("#closeBtn")) $("#closeBtn").addEventListener("click", function () { post("close"); });
         if ($("#searchInput")) $("#searchInput").addEventListener("input", function (event) {
             state.search = event.target.value;

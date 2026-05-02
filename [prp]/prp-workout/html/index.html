@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Workout Stats</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app" class="hidden">
+        <div class="panel">
+            <div class="top">
+                <div>
+                    <h1>Workout Stats</h1>
+                    <p>Train your body. Keep your stats active.</p>
+                </div>
+                <button id="closeBtn">×</button>
+            </div>
+
+            <div class="limit">
+                <span>Activities used</span>
+                <strong id="limitText">0 / 5</strong>
+            </div>
+
+            <div class="small" id="resetText">Limit reset in: --</div>
+
+            <div class="stat">
+                <div class="statHead">
+                    <span>Strength</span>
+                    <strong id="strengthText">0%</strong>
+                </div>
+                <div class="bar"><div id="strengthBar"></div></div>
+            </div>
+
+            <div class="stat">
+                <div class="statHead">
+                    <span>Stamina</span>
+                    <strong id="staminaText">0%</strong>
+                </div>
+                <div class="bar"><div id="staminaBar"></div></div>
+            </div>
+
+            <div class="stat">
+                <div class="statHead">
+                    <span>Endurance</span>
+                    <strong id="enduranceText">0%</strong>
+                </div>
+                <div class="bar"><div id="enduranceBar"></div></div>
+            </div>
+
+            <div class="footer">Press ESC or close to exit</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
