@@ -31,7 +31,7 @@ button:disabled { cursor: not-allowed; background: #303846; color: #8490a3; filt
 .cardStats span, .stat span { display: block; color: #93a1b4; font-size: 12px; margin-bottom: 4px; }
 .cardStats strong, .stat strong { font-size: 17px; }
 .skillGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 12px; }
-.skillNode { display: grid; grid-template-columns: 52px 1fr; grid-template-rows: auto auto; gap: 10px; align-items: center; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 12px; opacity: .72; }
+.skillNode { position: relative; display: grid; grid-template-columns: 52px 1fr; grid-template-rows: auto auto; gap: 10px; align-items: center; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 12px; opacity: .72; }
 .skillNode.canBuy { opacity: 1; border-color: rgba(125,184,255,.45); }
 .skillNode.unlocked { opacity: 1; border-color: rgba(83,225,147,.40); background: rgba(83,225,147,.07); }
 .skillNode img { width: 52px; height: 52px; object-fit: contain; border-radius: 12px; background: rgba(0,0,0,.24); padding: 7px; grid-row: span 2; }
@@ -44,7 +44,7 @@ button:disabled { cursor: not-allowed; background: #303846; color: #8490a3; filt
 input, select { width: 100%; background: rgba(255,255,255,.07); color: #f4f7fb; border: 1px solid rgba(255,255,255,.10); border-radius: 13px; padding: 12px; outline: none; }
 option { background: #101722; }
 .recipes { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 14px; overflow-y: auto; max-height: 48vh; padding-right: 6px; }
-.recipe { background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 14px; display: grid; grid-template-columns: 66px 1fr; gap: 14px; }
+.recipe { position: relative; overflow: visible; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 14px; display: grid; grid-template-columns: 66px 1fr; gap: 14px; }
 .recipe.locked { opacity: .58; }
 .recipe img { width: 66px; height: 66px; object-fit: contain; border-radius: 14px; background: rgba(0,0,0,.24); padding: 8px; }
 .recipe h3 { margin: 0 0 6px; }
@@ -54,7 +54,71 @@ option { background: #101722; }
 .tag.good { background: rgba(83,225,147,.12); color: #a9ffd1; }
 .requirements { display: grid; gap: 6px; margin: 10px 0; }
 .req { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #cfd8e7; font-size: 13px; }
+.req span { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.req img { width: 24px; height: 24px; object-fit: contain; border-radius: 7px; background: rgba(0,0,0,.25); padding: 3px; flex: 0 0 auto; }
 .req.missing { color: #ff9f9f; }
+.materialHover {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: min(285px, calc(100% - 24px));
+    max-height: calc(100% - 24px);
+    overflow-y: auto;
+    z-index: 30;
+    padding: 12px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(13,21,32,.98), rgba(7,10,16,.98));
+    border: 1px solid rgba(125,184,255,.36);
+    box-shadow: 0 18px 44px rgba(0,0,0,.48);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px) scale(.98);
+    transition: opacity .14s ease, transform .14s ease;
+}
+.skillNode .materialHover {
+    top: calc(100% - 8px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: none;
+}
+.recipe:hover .materialHover,
+.recipe:focus-within .materialHover,
+.skillNode:hover .materialHover,
+.skillNode:focus-within .materialHover {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+.materialTitle {
+    margin-bottom: 9px;
+    color: #a9d0ff;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.materialItem {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    padding: 7px;
+    border-radius: 11px;
+    background: rgba(255,255,255,.055);
+    color: #edf4ff;
+}
+.materialItem + .materialItem { margin-top: 6px; }
+.materialItem img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    border-radius: 9px;
+    background: rgba(0,0,0,.28);
+    padding: 5px;
+}
+.materialItem span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.materialItem strong { color: #8ff0bd; }
+.materialItem.missing strong { color: #ff9f9f; }
 .amountRow { display: flex; gap: 8px; margin-top: 12px; }
 .amountRow input { max-width: 86px; }
 .busy { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5,8,13,.82); font-size: 28px; font-weight: 800; }

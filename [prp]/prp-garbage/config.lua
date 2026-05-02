@@ -28,6 +28,23 @@ Config.GarbageTruckModels = {
     [`trash2`] = true,
 }
 
+-- Custom tray/trey bed vehicles can show loaded hard rubbish in exact slots.
+-- Add your custom vehicle model here and tune each offset/rotation until the
+-- prop sits perfectly in the tray. Vehicles without this config still work,
+-- they just do not show item block placement.
+Config.TrayVehicles = {
+    -- [`your_tray_vehicle`] = {
+    --     slots = {
+    --         { offset = vector3(-0.55, -1.65, 0.62), rotation = vector3(0.0, 0.0, 0.0) },
+    --         { offset = vector3(0.00, -1.65, 0.62), rotation = vector3(0.0, 0.0, 0.0) },
+    --         { offset = vector3(0.55, -1.65, 0.62), rotation = vector3(0.0, 0.0, 0.0) },
+    --         { offset = vector3(-0.55, -2.15, 0.62), rotation = vector3(0.0, 0.0, 0.0) },
+    --         { offset = vector3(0.00, -2.15, 0.62), rotation = vector3(0.0, 0.0, 0.0) },
+    --         { offset = vector3(0.55, -2.15, 0.62), rotation = vector3(0.0, 0.0, 0.0) },
+    --     }
+    -- }
+}
+
 Config.DrawDistance = 35.0
 Config.TruckDistance = 12.0
 Config.TargetDistance = 2.2
@@ -270,6 +287,8 @@ Config.Notifications = {
     ScrapStopped = 'Hard rubbish collection stopped.',
     CarryFull = 'Your truck is full of hard rubbish. Go to the scrapyard.',
     NothingCarried = 'You have no hard rubbish to break down.',
+    ScrapItemBroken = 'One hard rubbish item broken down.',
+    ScrapComplete = 'Scrap job complete.',
     PutItemInTruck = 'Take it to the back of the Trashmaster and place it in.',
     TruckLoaded = 'Loaded into truck.',
 }

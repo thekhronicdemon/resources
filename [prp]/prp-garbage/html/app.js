@@ -19,6 +19,17 @@ window.addEventListener('message', (event) => {
     const data = event.data;
     if (data.action === 'open') {
         jobs.innerHTML = '';
+        if (data.canStopScrap) {
+            const stopBtn = document.createElement('button');
+            stopBtn.className = 'job-card stop-card';
+            stopBtn.innerHTML = '<h2>Stop Scrap Job</h2><p>Cancel the active hard rubbish run and clear the truck load.</p>';
+            stopBtn.addEventListener('click', () => {
+                app.classList.add('hidden');
+                post('stopScrapJob');
+            });
+            jobs.appendChild(stopBtn);
+        }
+
         (data.areas || []).forEach(area => {
             const btn = document.createElement('button');
             btn.className = 'job-card';

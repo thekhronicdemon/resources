@@ -111,7 +111,7 @@ RegisterNetEvent('prp-garbage:server:breakdownScrap', function(items)
         TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[item], 'add', amount)
     end
 
-    TriggerClientEvent('QBCore:Notify', src, 'Hard rubbish broken down.', 'success')
+    TriggerClientEvent('QBCore:Notify', src, Config.Notifications.ScrapItemBroken or 'Hard rubbish broken down.', 'success')
 end)
 
 AddEventHandler('playerDropped', function()

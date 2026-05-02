@@ -11,9 +11,12 @@ local carriedObj = nil
 local carriedType = nil
 local carriedPropKey = nil
 local truckLoad = {}
+local truckLoadProps = {}
+local targetedTrucks = {}
 local rentedTruck = nil
 local rentedPlate = nil
 local nuiOpen = false
+local StopScrapRoute
 
 local function Debug(msg)
     if Config.Debug then print('[prp-garbage] ' .. tostring(msg)) end
@@ -47,7 +50,8 @@ end
 
 local function IsGarbageTruck(veh)
     if veh == 0 or not DoesEntityExist(veh) then return false end
-    return Config.GarbageTruckModels[GetEntityModel(veh)] == true
+    local model = GetEntityModel(veh)
+    return Config.GarbageTruckModels[model] == true or (Config.TrayVehicles and Config.TrayVehicles[model] ~= nil)
 end
 
 local function GetNearestGarbageTruck(maxDist)
@@ -92,6 +96,59 @@ local function DeleteEntitySafe(ent)
         SetEntityAsMissionEntity(ent, true, true)
         DeleteEntity(ent)
     end
+end
+
+local function GetTrayConfig(veh)
+    if not veh or veh == 0 or not DoesEntityExist(veh) then return nil end
+    return Config.TrayVehicles and Config.TrayVehicles[GetEntityModel(veh)] or nil
+end
+
+local function GetTruckLoadLimit(veh)
+    local tray = GetTrayConfig(veh)
+    if tray and tray.slots and #tray.slots > 0 then
+        return math.min(Config.HardRubbish.MaxCarry or #tray.slots, #tray.slots)
+    end
+    return Config.HardRubbish.MaxCarry or 12
+end
+
+local function ClearTruckLoadProps()
+    for _, obj in pairs(truckLoadProps) do DeleteEntitySafe(obj) end
+    truckLoadProps = {}
+end
+
+local function RemoveTruckLoadProp(slotIndex)
+    DeleteEntitySafe(truckLoadProps[slotIndex])
+    truckLoadProps[slotIndex] = nil
+end
+
+local function CreateTruckLoadProp(veh, propKey, slotIndex)
+    local tray = GetTrayConfig(veh)
+    if not tray or not tray.slots or not tray.slots[slotIndex] then return nil end
+
+    local propCfg = Config.HardRubbish.Props[propKey]
+    local slot = tray.slots[slotIndex]
+    if not propCfg or not slot.offset then return nil end
+
+    local hash = LoadModel(propCfg.loadModel or propCfg.model)
+    local coords = GetEntityCoords(veh)
+    local obj = CreateObject(hash, coords.x, coords.y, coords.z + 1.0, true, true, false)
+    local rot = slot.rotation or slot.rot or vector3(0.0, 0.0, 0.0)
+
+    SetEntityAsMissionEntity(obj, true, true)
+    SetEntityCollision(obj, false, false)
+    AttachEntityToEntity(obj, veh, 0, slot.offset.x, slot.offset.y, slot.offset.z, rot.x, rot.y, rot.z, false, false, false, false, 2, true)
+    truckLoadProps[slotIndex] = obj
+    return obj
+end
+
+local function PopTruckLoad()
+    local slotIndex = #truckLoad
+    if slotIndex <= 0 then return nil end
+
+    local propKey = truckLoad[slotIndex]
+    truckLoad[slotIndex] = nil
+    RemoveTruckLoadProp(slotIndex)
+    return propKey
 end
 
 local function ClearCarry()
@@ -190,6 +247,9 @@ end
 
 local function AddRearTruckTarget(veh)
     if not DoesEntityExist(veh) then return end
+    if targetedTrucks[veh] then return end
+    targetedTrucks[veh] = true
+
     exports['qb-target']:AddTargetEntity(veh, {
         options = {
             {
@@ -225,11 +285,15 @@ local function AddRearTruckTarget(veh)
                                 end
                             end
                         elseif carriedType == 'scrap' then
-                            if #truckLoad >= Config.HardRubbish.MaxCarry then
+                            local loadLimit = GetTruckLoadLimit(entity)
+                            if #truckLoad >= loadLimit then
                                 Notify(Config.Notifications.CarryFull, 'error')
                                 return
                             end
-                            truckLoad[#truckLoad + 1] = carriedPropKey
+                            local propKey = carriedPropKey
+                            local slotIndex = #truckLoad + 1
+                            truckLoad[slotIndex] = propKey
+                            CreateTruckLoadProp(entity, propKey, slotIndex)
                             ClearCarry()
                             Notify(Config.Notifications.TruckLoaded, 'success')
                             local allGone = true
@@ -280,6 +344,13 @@ RegisterNetEvent('prp-garbage:client:spawnTruck', function()
 end)
 
 RegisterNetEvent('prp-garbage:client:deleteReturnedTruck', function()
+    if activeMode == 'scrap' and StopScrapRoute then
+        StopScrapRoute(false)
+    else
+        ClearTruckLoadProps()
+        truckLoad = {}
+    end
+
     if rentedTruck and DoesEntityExist(rentedTruck) then
         DeleteEntitySafe(rentedTruck)
     else
@@ -288,6 +359,20 @@ RegisterNetEvent('prp-garbage:client:deleteReturnedTruck', function()
     end
     rentedTruck = nil
     rentedPlate = nil
+end)
+
+CreateThread(function()
+    while true do
+        Wait(2500)
+        if HasGarbageJob() then
+            local pcoords = GetEntityCoords(PlayerPedId())
+            for _, veh in ipairs(GetGamePool('CVehicle')) do
+                if IsGarbageTruck(veh) and #(GetEntityCoords(veh) - pcoords) <= (Config.TruckDistance + 15.0) then
+                    AddRearTruckTarget(veh)
+                end
+            end
+        end
+    end
 end)
 
 local function OpenJobMenu()
@@ -299,7 +384,8 @@ local function OpenJobMenu()
         areas = {
             { id = 'mirrorpark', label = Config.Areas.mirrorpark.label, description = Config.Areas.mirrorpark.description },
             { id = 'scrap', label = Config.HardRubbish.label, description = Config.HardRubbish.description },
-        }
+        },
+        canStopScrap = activeMode == 'scrap'
     })
 end
 
@@ -340,6 +426,13 @@ RegisterNUICallback('selectJob', function(data, cb)
         if data.id == 'mirrorpark' then StartBinRoute() end
         if data.id == 'scrap' then StartScrapRoute() end
     end)
+    cb('ok')
+end)
+
+RegisterNUICallback('stopScrapJob', function(_, cb)
+    SetNuiFocus(false, false)
+    nuiOpen = false
+    if StopScrapRoute then StopScrapRoute(true) end
     cb('ok')
 end)
 
@@ -403,6 +496,25 @@ function ClearScrapObjects()
     spawnedScrap = {}
 end
 
+StopScrapRoute = function(showNotify)
+    if activeMode ~= 'scrap' then
+        if showNotify then Notify('No scrap job is currently running.', 'error') end
+        return
+    end
+
+    activeMode = nil
+    currentClusterIndex = 1
+    truckLoad = {}
+    ClearTruckLoadProps()
+    ClearScrapObjects()
+    ClearCarry()
+    ClearRouteBlip()
+
+    if showNotify then
+        Notify(Config.Notifications.ScrapStopped, 'primary')
+    end
+end
+
 function SpawnScrapCluster(index)
     ClearScrapObjects()
     local cluster = Config.HardRubbish.Clusters[index]
@@ -453,6 +565,7 @@ function StartScrapRoute()
     activeMode = 'scrap'
     currentClusterIndex = 1
     truckLoad = {}
+    ClearTruckLoadProps()
     SpawnScrapCluster(1)
     Notify(Config.Notifications.ScrapStarted, 'success')
 end
@@ -483,14 +596,21 @@ local function SpawnScrapyard()
                     job = Config.JobName,
                     action = function()
                         if #truckLoad <= 0 then Notify(Config.Notifications.NothingCarried, 'error') return end
-                        Progress('Breaking down hard rubbish...', Config.Animations.Breakdown.time, Config.Animations.Breakdown, function(done)
+                        local label = 'Breaking down hard rubbish (' .. tostring(#truckLoad) .. ' left)...'
+                        Progress(label, Config.Animations.Breakdown.time, Config.Animations.Breakdown, function(done)
                             if not done then return end
-                            TriggerServerEvent('prp-garbage:server:breakdownScrap', truckLoad)
-                            truckLoad = {}
-                            if activeMode == 'scrap' and currentClusterIndex > #Config.HardRubbish.Clusters then
+                            local propKey = PopTruckLoad()
+                            if not propKey then
+                                Notify(Config.Notifications.NothingCarried, 'error')
+                                return
+                            end
+
+                            TriggerServerEvent('prp-garbage:server:breakdownScrap', { propKey })
+
+                            if activeMode == 'scrap' and currentClusterIndex > #Config.HardRubbish.Clusters and #truckLoad <= 0 then
                                 activeMode = nil
                                 ClearRouteBlip()
-                                Notify('Scrap job complete.', 'success')
+                                Notify(Config.Notifications.ScrapComplete, 'success')
                             end
                         end)
                     end
@@ -526,6 +646,7 @@ AddEventHandler('onResourceStop', function(res)
     if scrapyardBlip then RemoveBlip(scrapyardBlip) end
     ClearRouteBlip()
     ClearCarry()
+    ClearTruckLoadProps()
     for _, obj in pairs(spawnedBins) do DeleteEntitySafe(obj) end
     ClearScrapObjects()
 end)

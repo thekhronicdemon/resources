@@ -57,5 +57,13 @@ p { margin: 6px 0 0; color: rgba(255,255,255,0.68); }
     background: rgba(46, 160, 255, 0.13);
     border-color: rgba(46, 160, 255, 0.45);
 }
+.stop-card {
+    background: rgba(202, 48, 48, 0.12);
+    border-color: rgba(255, 95, 95, 0.38);
+}
+.stop-card:hover {
+    background: rgba(202, 48, 48, 0.22);
+    border-color: rgba(255, 95, 95, 0.68);
+}
 .job-card h2 { margin: 0 0 7px; font-size: 20px; }
 .job-card p { margin: 0; line-height: 1.45; }

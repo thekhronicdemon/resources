@@ -23,6 +23,26 @@ function progressPercent(xp, perLevel) {
     return Math.max(0, Math.min(100, (xp % perLevel) / perLevel * 100));
 }
 
+function renderMaterialOverlay(items = []) {
+    const list = (items || []).map(i => {
+        const owned = i.playerAmount === undefined ? '' : `${i.playerAmount}/`;
+        return `
+            <div class="materialItem ${i.hasEnough === false ? 'missing' : ''}">
+                <img src="${i.image}" onerror="this.style.display='none'" />
+                <span>${i.label}</span>
+                <strong>${owned}${i.amount}</strong>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="materialHover" aria-hidden="true">
+            <div class="materialTitle">Required Materials</div>
+            ${list || '<p class="muted">No materials required.</p>'}
+        </div>
+    `;
+}
+
 function renderDashboard(benches = []) {
     title.textContent = 'PRP Crafting Skill Tree';
     subtitle.textContent = 'Spend points here. Crafting is only available from physical benches.';
@@ -60,6 +80,7 @@ function renderDashboard(benches = []) {
                         ${node.unlocked
                             ? '<button disabled>Unlocked</button>'
                             : `<button ${node.canBuy ? '' : 'disabled'} data-unlock="${node.item}" data-bench="${b.benchType}">${node.canBuy ? 'Unlock' : 'Locked'}</button>`}
+                        ${renderMaterialOverlay(node.requiredItems)}
                     </div>
                 `).join('')}
             </div>
@@ -117,13 +138,14 @@ function renderRecipes() {
                     ${r.canCraft ? '<span class="tag good">Craftable</span>' : ''}
                 </div>
                 <div class="requirements">
-                    ${r.requiredItems.map(i => `<div class="req ${i.hasEnough ? '' : 'missing'}"><span>${i.label}</span><strong>${i.playerAmount}/${i.amount}</strong></div>`).join('')}
+                    ${r.requiredItems.map(i => `<div class="req ${i.hasEnough ? '' : 'missing'}"><span><img src="${i.image}" onerror="this.style.display='none'" />${i.label}</span><strong>${i.playerAmount}/${i.amount}</strong></div>`).join('')}
                 </div>
                 <div class="amountRow">
                     <input type="number" min="1" value="1" data-amount="${r.item}" ${r.unlocked ? '' : 'disabled'} />
                     <button ${r.canCraft ? '' : 'disabled'} data-craft="${r.item}">${r.unlocked ? 'Craft' : 'Unlock in /crafting'}</button>
                 </div>
             </div>
+            ${renderMaterialOverlay(r.requiredItems)}
         </article>
     `).join('') || '<p class="muted">No recipes found.</p>';
 

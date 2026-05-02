@@ -170,7 +170,7 @@ local function BuildRecipeData(benchType, inventory, skillData)
     }
 end
 
-local function BuildDashboardData(skillData)
+local function BuildDashboardData(skillData, inventory)
     local benches = {}
 
     for benchType, bench in pairs(Config.Benches or {}) do
@@ -185,6 +185,21 @@ local function BuildDashboardData(skillData)
             local item = GetItemData(recipe.item)
             local isUnlocked = IsUnlocked(recipe, unlocks)
             local cost = GetUnlockCost(recipe)
+            local required = {}
+
+            for _, req in pairs(recipe.requiredItems or {}) do
+                local reqItem = GetItemData(req.item)
+                local playerAmount = GetItemAmount(inventory, req.item)
+                required[#required + 1] = {
+                    name = req.item,
+                    label = reqItem.label,
+                    image = reqItem.image,
+                    amount = req.amount,
+                    playerAmount = playerAmount,
+                    hasEnough = playerAmount >= req.amount
+                }
+            end
+
             local node = {
                 item = recipe.item,
                 label = item.label,
@@ -193,7 +208,8 @@ local function BuildDashboardData(skillData)
                 unlockCost = cost,
                 xpGain = recipe.xpGain or 0,
                 unlocked = isUnlocked,
-                canBuy = (not isUnlocked) and xp >= (recipe.xpRequired or 0) and availablePoints >= cost
+                canBuy = (not isUnlocked) and xp >= (recipe.xpRequired or 0) and availablePoints >= cost,
+                requiredItems = required
             }
             tree[#tree + 1] = node
 
@@ -239,7 +255,7 @@ local function OpenNui(mode, benchType)
         QBCore.Functions.TriggerCallback('prp-crafting:server:getSkillData', function(skillData)
             local payload = {
                 mode = LastMode,
-                dashboard = BuildDashboardData(skillData or {}),
+                dashboard = BuildDashboardData(skillData or {}, inventory or {}),
                 bench = benchType and BuildRecipeData(benchType, inventory or {}, skillData or {}) or nil
             }
 
