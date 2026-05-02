@@ -13,7 +13,7 @@ function setUpGalleryData(Images){
 $(document).on('click', '.tumbnail', function(e){
     e.preventDefault();
     let source = $(this).attr('src')
-    // QB.Screen.popUp(source)
+    // PRP.Screen.popUp(source)
     $(".gallery-homescreen").animate({
         left: 30+"vh"
     }, 200);
@@ -26,7 +26,7 @@ $(document).on('click', '.tumbnail', function(e){
 $(document).on('click', '.image', function(e){
     e.preventDefault();
     let source = $(this).attr('src')
-    QB.Screen.popUp(source)
+    PRP.Screen.popUp(source)
 });
 
 
@@ -64,7 +64,7 @@ $(document).on('click', '#make-post-button', function(e){
     let source = $('#imagedata').attr('src')
     postImageUrl=source
 
-    // QB.Screen.popUp(source)
+    // PRP.Screen.popUp(source)
     $(".gallery-detailscreen").animate({
         left: 30+"vh"
     }, 200);
@@ -111,19 +111,19 @@ $(document).on('click', '#tweet-button', function(e){
         $.post('https://prp-phone/PostNewTweet', JSON.stringify({
             Message: TweetMessage,
             Date: CurrentDate,
-            Picture: QB.Phone.Data.MetaData.profilepicture,
+            Picture: PRP.Phone.Data.MetaData.profilepicture,
             url: imageURL
         }), function(Tweets){
-            QB.Phone.Notifications.LoadTweets(Tweets);
+            PRP.Phone.Notifications.LoadTweets(Tweets);
         });
         var TweetMessage = $("#new-textarea").val(' ');
         $.post('https://prp-phone/GetHashtags', JSON.stringify({}), function(Hashtags){
-            QB.Phone.Notifications.LoadHashtags(Hashtags)
+            PRP.Phone.Notifications.LoadHashtags(Hashtags)
         })
-        // QB.Phone.Animations.TopSlideUp(".twitter-new-tweet-tab", 450, -120);
+        // PRP.Phone.Animations.TopSlideUp(".twitter-new-tweet-tab", 450, -120);
         returnDetail()
     } else {
-        QB.Phone.Notifications.Add("fab fa-twitter", "Twitter", "Fill a message!", "#1DA1F2");
+        PRP.Phone.Notifications.Add("fab fa-twitter", "Twitter", "Fill a message!", "#1DA1F2");
     };
     $('#tweet-new-url').val("");
     $("#tweet-new-message").val("");
@@ -157,7 +157,7 @@ $(document).on('click', '#advert-button', function(e){
         }
         $("#new-textarea").val(' ');
     } else {
-        QB.Phone.Notifications.Add("fas fa-ad", "Advertisement", "You can\'t post an empty ad!", "#ff8f1a", 2000);
+        PRP.Phone.Notifications.Add("fas fa-ad", "Advertisement", "You can\'t post an empty ad!", "#ff8f1a", 2000);
     }
 });
 

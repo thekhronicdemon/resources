@@ -3,9 +3,9 @@ game 'gta5'
 lua54 'yes'
 author 'Kakarot'
 description 'Allows players to purchase vehicles and manage shops through a job'
-version '2.1.0'
+version '2.1.1'
 
-shared_script {
+shared_scripts {
     'config.lua',
     '@qb-core/shared/locale.lua',
     'locales/en.lua',

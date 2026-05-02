@@ -511,7 +511,14 @@ QBShared.Items = {
     printerdocument              = { name = 'printerdocument', label = 'Document', weight = 500, type = 'item', image = 'printerdocument.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A nice document' },
     stickynote                   = { name = 'stickynote', label = 'Sticky note', weight = 0, type = 'item', image = 'stickynote.png', unique = true, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Sometimes handy to remember something :)' },
     scratch_ticket               = { name = 'scratch_ticket', label = 'Scratch Ticket', weight = 10, type = 'item', image = 'scratch_ticket.png', unique = false, useable = true, shouldClose = true, rarity = 'rare', description = 'Goodluck.' },
-        
+   
+    -- MINING
+    pickaxe                      = { name = 'pickaxe', label = 'Pick Axe', weight = 100, type = 'item', image = 'pickaxe.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Mining tool.' },
+    iron_ore                     = { name = 'iron_ore', label = 'Iron Ore', weight = 10, type = 'item', image = 'ironOre.png', unique = false, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Iron Ore. Might be valuble' },
+    coal_ore                     = { name = 'coal_ore', label = 'Coal Ore', weight = 10, type = 'item', image = 'coalOre.png', unique = false, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Coal Ore. Might be valuble' },
+    copper_ore                   = { name = 'copper_ore', label = 'Copper Ore', weight = 10, type = 'item', image = 'copperOre.png', unique = false, useable = false, shouldClose = false, rarity = 'rare', description = 'Copper Ore. Might be valuble' },
+    gold_ore                     = { name = 'gold_ore', label = 'Gold Ore', weight = 10, type = 'item', image = 'goldOre.png', unique = false, useable = false, shouldClose = false, rarity = 'epic', description = 'Gold Ore. Might be valuble' },
+    diamond_ore                  = { name = 'diamond_ore', label = 'Diamond Ore', weight = 10, type = 'item', image = 'diamondOre.png', unique = false, useable = false, shouldClose = false, rarity = 'legendary', description = 'Diamond Ore. Might be valuble' },
 
     -- Crafting table's
     -- RARE

@@ -621,7 +621,7 @@ RegisterNUICallback('SaveAppLayout', function(data, cb)
         local appName = tostring(app)
         local appSlot = tonumber(slot)
 
-        if appName ~= '' and appSlot and appSlot >= 1 and appSlot <= 20 then
+        if appName ~= '' and appSlot and appSlot >= 1 and appSlot <= 28 then
             cleanLayout[appName] = appSlot
         end
     end

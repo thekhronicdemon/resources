@@ -152,42 +152,42 @@ $(document).on('click', '.lawyer-list-call', function(e){
 
     $.post('https://prp-phone/CallContact', JSON.stringify({
         ContactData: cData,
-        Anonymous: QB.Phone.Data.AnonymousCall,
+        Anonymous: PRP.Phone.Data.AnonymousCall,
     }), function(status){
-        if (cData.number !== QB.Phone.Data.PlayerData.charinfo.phone) {
+        if (cData.number !== PRP.Phone.Data.PlayerData.charinfo.phone) {
             if (status.IsOnline) {
                 if (status.CanCall) {
                     if (!status.InCall) {
-                        if (QB.Phone.Data.AnonymousCall) {
-                            QB.Phone.Notifications.Add("fas fa-phone", "Phone", "You started a anonymous call!");
+                        if (PRP.Phone.Data.AnonymousCall) {
+                            PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You started a anonymous call!");
                         }
                         $(".phone-call-outgoing").css({"display":"block"});
                         $(".phone-call-incoming").css({"display":"none"});
                         $(".phone-call-ongoing").css({"display":"none"});
                         $(".phone-call-outgoing-caller").html(cData.name);
-                        QB.Phone.Functions.HeaderTextColor("white", 400);
-                        QB.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
+                        PRP.Phone.Functions.HeaderTextColor("white", 400);
+                        PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
                         setTimeout(function(){
                             $(".lawyers-app").css({"display":"none"});
-                            QB.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
-                            QB.Phone.Functions.ToggleApp("phone-call", "block");
+                            PRP.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
+                            PRP.Phone.Functions.ToggleApp("phone-call", "block");
                         }, 450);
     
                         CallData.name = cData.name;
                         CallData.number = cData.number;
                     
-                        QB.Phone.Data.currentApplication = "phone-call";
+                        PRP.Phone.Data.currentApplication = "phone-call";
                     } else {
-                        QB.Phone.Notifications.Add("fas fa-phone", "Phone", "You are already connected to a call!");
+                        PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You are already connected to a call!");
                     }
                 } else {
-                    QB.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is already in a call");
+                    PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is already in a call");
                 }
             } else {
-                QB.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is not available!");
+                PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is not available!");
             }
         } else {
-            QB.Phone.Notifications.Add("fas fa-phone", "Phone", "You can't call your own number!");
+            PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You can't call your own number!");
         }
     });
 });

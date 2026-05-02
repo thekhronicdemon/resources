@@ -1,0 +1,447 @@
+:root {
+    --prp-ink: #101216;
+    --prp-panel: #171b20;
+    --prp-panel-soft: rgba(23, 27, 32, 0.94);
+    --prp-line: rgba(255, 255, 255, 0.12);
+    --prp-text: #f4f6f8;
+    --prp-muted: #a5afba;
+    --prp-blue: #3b82f6;
+    --prp-teal: #22c7a9;
+    --prp-coral: #ff6b57;
+    --prp-gold: #f2b84b;
+}
+
+body {
+    font-family: Inter, "Poppins", Arial, sans-serif;
+}
+
+.phone-frame {
+    display: none !important;
+}
+
+.container {
+    right: 4.2vh !important;
+}
+
+.phone-container,
+.phone-background {
+    width: 29.2vh !important;
+    height: 61.7vh !important;
+    border-radius: 3vh !important;
+    background-color: var(--prp-ink);
+    overflow: hidden;
+    box-shadow:
+        0 2.2vh 4vh rgba(0, 0, 0, 0.45),
+        inset 0 0 0 .25vh #050607,
+        inset 0 0 0 .7vh #17191f;
+}
+
+.phone-background::before {
+    content: "";
+    position: absolute;
+    inset: .8vh;
+    border-radius: 2.2vh;
+    pointer-events: none;
+    background:
+        linear-gradient(135deg, rgba(34, 199, 169, 0.18), transparent 32%),
+        linear-gradient(315deg, rgba(255, 107, 87, 0.16), transparent 38%),
+        rgba(7, 9, 12, 0.38);
+    z-index: 0;
+}
+
+.phone-applications {
+    z-index: 2;
+}
+
+.phone-application-container {
+    z-index: 20 !important;
+}
+
+.phone-header,
+.phone-footer,
+.phone-currentcall-container {
+    z-index: 40 !important;
+}
+
+.phone-notification-container,
+.screen-notifications-container,
+.call-notifications {
+    z-index: 3000 !important;
+    pointer-events: none;
+}
+
+.phone-header {
+    height: 5.2vh !important;
+    padding: 0 1.2vh;
+    color: var(--prp-text) !important;
+}
+
+#phone-server,
+#player-id,
+#phone-time,
+#phone-icons {
+    color: var(--prp-text) !important;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+#phone-server {
+    font-size: 1.05vh !important;
+}
+
+#phone-time {
+    padding-left: 4.5vh !important;
+}
+
+.phone-applications {
+    background:
+        linear-gradient(180deg, rgba(16, 18, 22, 0.08), rgba(16, 18, 22, 0.55)),
+        transparent !important;
+    overflow: hidden;
+    touch-action: none;
+}
+
+.phone-home-applications,
+.phone-footer-applications {
+    display: grid !important;
+    position: absolute !important;
+    grid-template-columns: repeat(4, 4.55vh);
+    gap: .85vh;
+    justify-content: center;
+    justify-items: center;
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto;
+}
+
+.phone-home-applications {
+    top: 7.25vh !important;
+    bottom: auto !important;
+    align-content: start;
+}
+
+.phone-footer-applications {
+    bottom: 5.8vh !important;
+    padding: .85vh 0;
+    background: rgba(8, 10, 13, 0.34);
+    border-top: .1vh solid rgba(255, 255, 255, 0.10);
+    border-bottom: .1vh solid rgba(255, 255, 255, 0.06);
+}
+
+.phone-application {
+    position: relative !important;
+    float: none !important;
+    left: auto !important;
+    width: 4.55vh !important;
+    height: 4.55vh !important;
+    margin: 0 !important;
+    border-radius: 1.05vh !important;
+    opacity: 1 !important;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.08) !important;
+    box-shadow:
+        inset 0 0 0 .1vh rgba(255, 255, 255, 0.16),
+        0 .65vh 1.4vh rgba(0, 0, 0, 0.24);
+    transform: translateZ(0);
+    transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease;
+}
+
+.phone-application.has-app:hover {
+    transform: translateY(-.18vh);
+    box-shadow:
+        inset 0 0 0 .1vh rgba(255, 255, 255, 0.22),
+        0 .85vh 1.7vh rgba(0, 0, 0, 0.32);
+}
+
+.phone-application > i,
+.phone-application .ApplicationIcon {
+    line-height: 4.55vh !important;
+    font-size: 1.8vh !important;
+    color: #fff !important;
+}
+
+.phone-application[data-app="phone"],
+.phone-application[data-app="whatsapp"] {
+    background: linear-gradient(135deg, #22c7a9, #147d8c) !important;
+}
+
+.phone-application[data-app="bank"],
+.phone-application[data-app="crypto"],
+.phone-application[data-app="cryptoshop"] {
+    background: linear-gradient(135deg, #f2b84b, #b86f1d) !important;
+}
+
+.phone-application[data-app="mail"],
+.phone-application[data-app="twitter"],
+.phone-application[data-app="advert"] {
+    background: linear-gradient(135deg, #3b82f6, #2851a3) !important;
+}
+
+.phone-application[data-app="garage"],
+.phone-application[data-app="houses"],
+.phone-application[data-app="racing"] {
+    background: linear-gradient(135deg, #ff6b57, #9f342c) !important;
+}
+
+.phone-application[data-app="settings"],
+.phone-application[data-app="gallery"],
+.phone-application[data-app="camera"],
+.phone-application[data-app="store"] {
+    background: linear-gradient(135deg, #8b5cf6, #3941a8) !important;
+}
+
+.phone-application[data-app="meos"],
+.phone-application[data-app="lawyers"],
+.phone-application[data-app="trucker"],
+.phone-application[data-app="gang"] {
+    background: linear-gradient(135deg, #394150, #101216) !important;
+}
+
+.phone-applications.editing-app-layout .phone-application.has-app {
+    animation: prpIconHold .18s alternate infinite;
+    box-shadow:
+        inset 0 0 0 .14vh rgba(255, 255, 255, 0.28),
+        0 .9vh 1.8vh rgba(0, 0, 0, 0.34);
+}
+
+.phone-application.app-dragging-source {
+    opacity: .35 !important;
+}
+
+.phone-application.app-drop-target {
+    outline: .28vh solid rgba(34, 199, 169, 0.85);
+    outline-offset: .22vh;
+}
+
+.prp-app-drag-ghost {
+    position: fixed !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: .92 !important;
+}
+
+@keyframes prpIconHold {
+    from { transform: rotate(-1deg); }
+    to { transform: rotate(1deg); }
+}
+
+.app-unread-alerts {
+    top: -.35vh !important;
+    right: -.35vh !important;
+    min-width: 1.55vh;
+    height: 1.55vh;
+    line-height: 1.55vh !important;
+    border-radius: 50% !important;
+    background: var(--prp-coral) !important;
+    color: #fff !important;
+    font-size: .9vh !important;
+    font-weight: 800;
+}
+
+.phone-application-container {
+    top: 5.65vh !important;
+    left: .65vh !important;
+    right: .65vh !important;
+    width: auto !important;
+    height: 50.05vh !important;
+    box-sizing: border-box;
+    background: var(--prp-panel-soft) !important;
+    border-top: .1vh solid var(--prp-line);
+    border-radius: 1.5vh 1.5vh 0 0;
+    overflow: hidden;
+}
+
+.phone-application-container > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+.settings-app,
+.phone-app,
+.houses-app,
+.garage-app,
+.gallery-app,
+.camera-app,
+.trucker-app,
+.lawyers-app,
+.crypto-app,
+.meos-app,
+.advert-app,
+.mail-app,
+.store-app,
+.racing-app,
+.twitter-app,
+.bank-app,
+.whatsapp-app,
+.gang-app,
+.cryptoshop-app,
+.calculator-app,
+.phone-call-app {
+    background: var(--prp-panel) !important;
+    color: var(--prp-text) !important;
+}
+
+.settings-app-header,
+.phone-app-header,
+.houses-app-header,
+.garage-app-header,
+.gallery-app-header,
+.lawyers-header,
+.crypto-header,
+.meos-app-header,
+.advert-header,
+.mail-header,
+.store-app-header,
+.racing-app-header,
+.twitter-header,
+.bank-app-header,
+.whatsapp-header {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-bottom: .1vh solid var(--prp-line) !important;
+    color: var(--prp-text) !important;
+}
+
+.settings-app-tab,
+.phone-contact,
+.phone-recent-call,
+.bank-app-account,
+.bank-app-invoice,
+.bank-app-my-contact,
+.whatsapp-chat,
+.mail,
+.advert,
+.garage-vehicle,
+.house,
+.mykeys-key,
+.crypto-transaction,
+.race,
+.storeapp,
+.lawyer-list,
+.meos-person-search-result,
+.meos-vehicle-search-result {
+    background: rgba(255, 255, 255, 0.055) !important;
+    border: .1vh solid var(--prp-line) !important;
+    border-radius: .75vh !important;
+    box-shadow: none !important;
+    color: var(--prp-text) !important;
+}
+
+input,
+textarea,
+.bank-app-transfer-input,
+.twitter-new-tweet-input,
+.advert-new-url,
+.advert-new-message,
+.whatsapp-openedchat-input {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: .1vh solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: .7vh !important;
+    color: var(--prp-text) !important;
+}
+
+button,
+.background-button,
+.profilepicture-button,
+.custom-background-button,
+.custom-profilepicture-button,
+.bank-app-transfer-button,
+.bank-app-my-contacts-list-back,
+.twitter-new-tweet-button,
+.advert-new-post,
+.storeapp-download {
+    border-radius: .7vh !important;
+    background: var(--prp-teal) !important;
+    color: #07100f !important;
+    font-weight: 800 !important;
+    box-shadow: none !important;
+}
+
+.phone-home-button {
+    height: .42vh !important;
+    width: 8.4vh !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+}
+
+.phone-call-app {
+    background:
+        linear-gradient(135deg, rgba(34, 199, 169, 0.32), transparent 42%),
+        linear-gradient(315deg, rgba(255, 107, 87, 0.28), transparent 46%),
+        #111419 !important;
+}
+
+.phone-app-footer {
+    bottom: 1.1vh !important;
+    height: 4.4vh !important;
+}
+
+#phone-keypad-input {
+    top: 8.4vh !important;
+    width: 20vh !important;
+    height: 3.8vh !important;
+    line-height: 3.7vh !important;
+    text-indent: 0 !important;
+    padding: 0 4vh 0 1.1vh;
+    box-sizing: border-box;
+}
+
+.phone-keypad-backspace {
+    position: absolute;
+    top: 8.4vh;
+    right: 4.25vh;
+    width: 3.8vh;
+    height: 3.8vh;
+    line-height: 3.8vh;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 1.35vh;
+    z-index: 3;
+    cursor: pointer;
+    transition: color .12s ease, transform .12s ease;
+}
+
+.phone-keypad-backspace:hover {
+    color: #fff;
+    transform: translateX(-.08vh);
+}
+
+.phone-keypad-keys {
+    top: 13.55vh !important;
+    left: 50% !important;
+    width: 22.2vh !important;
+    height: 24.4vh !important;
+    transform: translateX(-50%);
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    color: var(--prp-text) !important;
+}
+
+.phone-keypad-key {
+    float: none !important;
+    width: auto !important;
+    height: auto !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: normal !important;
+    font-size: 2.05vh !important;
+    border-bottom: 0 !important;
+}
+
+.phone-keypad-key:hover {
+    color: var(--prp-teal) !important;
+    border-bottom: 0 !important;
+}
+
+.phone-keypad-key-call {
+    left: 50% !important;
+    bottom: 5.55vh !important;
+    width: 5.25vh !important;
+    height: 5.25vh !important;
+    line-height: 5.45vh !important;
+    transform: translateX(-50%);
+    z-index: 3;
+}

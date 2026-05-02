@@ -197,7 +197,7 @@ Config.PhoneApplications = {
         Alerts = 0,
     },
 }
-Config.MaxSlots = 20
+Config.MaxSlots = 28
 
 Config.SimCards = {
     RequireSim = true,

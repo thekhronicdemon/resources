@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PRP PDM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main id="app">
+        <section class="titlebar">
+            <div>
+                <h1><span id="categoryTitle">CATALOG</span>, <strong id="vehicleName">Select Vehicle</strong></h1>
+                <p id="shopName">PDM Vehicle Shop</p>
+            </div>
+            <button id="closeBtn" class="ghost">Close</button>
+        </section>
+
+        <aside class="catalog">
+            <header>
+                <div class="brandmark">PRP</div>
+                <div>
+                    <h2 id="catalogShopName">Vehicle Shop</h2>
+                    <p id="catalogCount">0 vehicles</p>
+                </div>
+            </header>
+            <input id="searchInput" placeholder="Search vehicle, brand, model">
+            <nav id="categoryList"></nav>
+            <div id="vehicleList" class="vehicle-list"></div>
+        </aside>
+
+        <section class="colors">
+            <div class="segmented">
+                <button class="active" data-paint="primary">Primary</button>
+                <button data-paint="secondary">Secondary</button>
+            </div>
+            <div id="colorGrid" class="color-grid"></div>
+            <p id="colorLabel">Factory</p>
+        </section>
+
+        <section class="stats">
+            <h3 id="statVehicle">Vehicle Performance</h3>
+            <div class="metric">
+                <span>Handling</span>
+                <strong id="handlingValue">0.0</strong>
+                <div><i id="handlingBar"></i></div>
+            </div>
+            <div class="metric">
+                <span>Top Speed</span>
+                <strong id="speedValue">0 KM/H</strong>
+                <div><i id="speedBar"></i></div>
+            </div>
+            <div class="metric">
+                <span>Power</span>
+                <strong id="powerValue">0</strong>
+                <div><i id="powerBar"></i></div>
+            </div>
+            <div class="metric">
+                <span>Brake</span>
+                <strong id="brakeValue">0.0</strong>
+                <div><i id="brakeBar"></i></div>
+            </div>
+        </section>
+
+        <section class="purchase">
+            <div class="price">
+                <span>Value</span>
+                <strong id="priceValue">$0</strong>
+            </div>
+            <select id="paymentSelect"></select>
+            <div id="financeFields" class="finance-fields">
+                <input id="downPayment" type="number" min="0" placeholder="Down payment">
+                <input id="paymentCount" type="number" min="1" placeholder="Payments">
+                <select id="financeAccount">
+                    <option value="bank">Bank down payment</option>
+                    <option value="cash">Cash down payment</option>
+                    <option value="auto">Cash then bank</option>
+                </select>
+            </div>
+            <div class="actions">
+                <button id="testDriveBtn" class="secondary">Test Drive</button>
+                <button id="buyBtn">Purchase</button>
+                <button id="managementBtn" class="secondary">Management</button>
+            </div>
+        </section>
+
+        <section id="managementPanel" class="management hidden">
+            <header>
+                <div>
+                    <h2>PDM Management</h2>
+                    <p id="managementShop">Stock and price control</p>
+                </div>
+                <button id="closeManagement" class="ghost">Back</button>
+            </header>
+            <input id="managementSearch" placeholder="Search stock">
+            <div id="managementRows" class="management-rows"></div>
+        </section>
+
+        <section id="financePanel" class="finance-board hidden">
+            <header>
+                <div>
+                    <h2>Vehicle Finance</h2>
+                    <p>Balances and payment control</p>
+                </div>
+                <button id="closeFinance" class="ghost">Back</button>
+            </header>
+            <div id="financeRows" class="finance-rows"></div>
+        </section>
+    </main>
+    <script>
+        (function () {
+            function show() {
+                document.body.classList.remove("hidden");
+            }
+            function hide() {
+                document.body.classList.add("hidden");
+                document.body.classList.remove("panel-only");
+            }
+            function setText(id, text) {
+                var element = document.getElementById(id);
+                if (element) element.textContent = text;
+            }
+            window.addEventListener("message", function (event) {
+                var data = event.data || {};
+                if (data.action === "open") show();
+                if (data.action === "openFinanceShell" || data.action === "openManagementShell") {
+                    show();
+                    document.body.classList.add("panel-only");
+                }
+                if (data.action === "debugOpen") {
+                    show();
+                    document.body.classList.remove("panel-only");
+                    setText("categoryTitle", "NUI");
+                    setText("vehicleName", "Online");
+                    setText("shopName", "Debug Open");
+                    setText("catalogShopName", "NUI is rendering");
+                }
+                if (data.action === "close") hide();
+            });
+        })();
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

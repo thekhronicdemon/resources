@@ -6,7 +6,7 @@ SetupAppstore = function(data) {
     $(".store-apps").html("");
     $.each(data.StoreApps, function(i, app){
         if (data.PhoneData.InstalledApps[i] == null || data.PhoneData.InstalledApps[i] == undefined) {
-            if(app.blockedjobs != QB.Phone.Data.PlayerJob.name){
+            if(app.blockedjobs != PRP.Phone.Data.PlayerJob.name){
                 var elem = '<div class="storeapp" id="app-'+i+'" data-app="'+i+'"><div class="storeapp-icon"><i class="'+app.icon+'"></i></div><div class="storeapp-title">'+app.title+'</div> <div class="storeapp-creator">'+app.creator+'</div><div class="storeapp-download"><i class="fas fa-download"></i></div></div>'
                 $(".store-apps").append(elem);
                 app.app = i;
@@ -53,7 +53,7 @@ $(document).on('click', '.storeapp-remove', function(e){
 
     $(applicationSlot).tooltip("destroy");
 
-    QB.Phone.Data.Applications[AppData.app] = null;
+    PRP.Phone.Data.Applications[AppData.app] = null;
 
     $.post('https://prp-phone/RemoveApplication', JSON.stringify({
         app: AppData.app
@@ -89,8 +89,8 @@ $(document).on('click', '.download-password-accept', function(e){
             }), function(Installed){
                 if (Installed) {
                     var applicationSlot = $(".phone-applications").find('[data-appslot="'+Installed.data.slot+'"]');
-                    var blockedapp = IsAppJobBlocked(Installed.data.blockedjobs, QB.Phone.Data.PlayerJob.name)
-                    if ((!Installed.data.job || Installed.data.job === QB.Phone.Data.PlayerJob.name) && !blockedapp) {
+                    var blockedapp = IsAppJobBlocked(Installed.data.blockedjobs, PRP.Phone.Data.PlayerJob.name)
+                    if ((!Installed.data.job || Installed.data.job === PRP.Phone.Data.PlayerJob.name) && !blockedapp) {
                         $(applicationSlot).css({"background-color":Installed.data.color});
                         var icon = '<i class="ApplicationIcon '+Installed.data.icon+'" style="'+Installed.data.style+'"></i>';
                         if (Installed.data.app == "meos") {
@@ -114,7 +114,7 @@ $(document).on('click', '.download-password-accept', function(e){
                     } else {
                         $(AppObject).css({"display":"none"});
                     }
-                    QB.Phone.Data.Applications[Installed.data.app] = Installed.data;
+                    PRP.Phone.Data.Applications[Installed.data.app] = Installed.data;
 
                     setTimeout(function(){
                         $.post('https://prp-phone/SetupStoreApps', JSON.stringify({}), function(data){

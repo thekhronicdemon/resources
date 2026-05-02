@@ -1,10 +1,13 @@
-QB = {}
-QB.Phone = {}
-QB.Screen = {}
-QB.Phone.Functions = {}
-QB.Phone.Animations = {}
-QB.Phone.Notifications = {}
-QB.Phone.ContactColors = {
+var PRP = window.PRP || {};
+window.PRP = PRP;
+var QB = PRP;
+window.QB = QB;
+PRP.Phone = {}
+PRP.Screen = {}
+PRP.Phone.Functions = {}
+PRP.Phone.Animations = {}
+PRP.Phone.Notifications = {}
+PRP.Phone.ContactColors = {
     0: "#9b59b6",
     1: "#3498db",
     2: "#e67e22",
@@ -13,7 +16,7 @@ QB.Phone.ContactColors = {
     5: "#9c88ff",
 }
 
-QB.Phone.Data = {
+PRP.Phone.Data = {
     currentApplication: null,
     PlayerData: {},
     Applications: {},
@@ -25,10 +28,17 @@ QB.Phone.Data = {
     IsEditingApps: false,
 }
 
-QB.Phone.Data.MaxSlots = 20;
-QB.Phone.ApplicationDrag = {
+PRP.Phone.Data.MaxSlots = 28;
+PRP.Phone.ApplicationDrag = {
     fromSlot: null,
+    toSlot: null,
+    source: null,
+    ghost: null,
+    holdTimer: null,
+    startX: 0,
+    startY: 0,
     isDragging: false,
+    suppressClick: false,
 }
 
 OpenedChatData = {
@@ -38,19 +48,19 @@ OpenedChatData = {
 var CanOpenApp = true;
 var up = false
 
-QB.Phone.Functions.GetApplicationSlot = function(app) {
+PRP.Phone.Functions.GetApplicationSlot = function(app) {
     var defaultSlot = parseInt(app.slot);
-    var layout = ((QB.Phone.Data.MetaData || {}).applayout || {});
+    var layout = ((PRP.Phone.Data.MetaData || {}).applayout || {});
     var savedSlot = parseInt(layout[app.app]);
 
-    if (!isNaN(savedSlot) && savedSlot >= 1 && savedSlot <= QB.Phone.Data.MaxSlots) {
+    if (!isNaN(savedSlot) && savedSlot >= 1 && savedSlot <= PRP.Phone.Data.MaxSlots) {
         return savedSlot;
     }
 
     return defaultSlot;
 }
 
-QB.Phone.Functions.GetApplicationLayout = function() {
+PRP.Phone.Functions.GetApplicationLayout = function() {
     var layout = {};
 
     $(".phone-applications .phone-application").each(function() {
@@ -65,15 +75,15 @@ QB.Phone.Functions.GetApplicationLayout = function() {
     return layout;
 }
 
-QB.Phone.Functions.SetAppEditMode = function(enabled) {
-    QB.Phone.Data.IsEditingApps = !!enabled;
-    $(".phone-applications").toggleClass("editing-app-layout", QB.Phone.Data.IsEditingApps);
+PRP.Phone.Functions.SetAppEditMode = function(enabled) {
+    PRP.Phone.Data.IsEditingApps = !!enabled;
+    $(".phone-applications").toggleClass("editing-app-layout", PRP.Phone.Data.IsEditingApps);
 }
 
-QB.Phone.Functions.SaveApplicationLayout = function() {
-    var layout = QB.Phone.Functions.GetApplicationLayout();
-    QB.Phone.Data.MetaData = QB.Phone.Data.MetaData || {};
-    QB.Phone.Data.MetaData.applayout = layout;
+PRP.Phone.Functions.SaveApplicationLayout = function() {
+    var layout = PRP.Phone.Functions.GetApplicationLayout();
+    PRP.Phone.Data.MetaData = PRP.Phone.Data.MetaData || {};
+    PRP.Phone.Data.MetaData.applayout = layout;
 
     $.post('https://prp-phone/SaveAppLayout', JSON.stringify({
         layout: layout,
@@ -82,7 +92,7 @@ QB.Phone.Functions.SaveApplicationLayout = function() {
 
 function IsAppJobBlocked(joblist, myjob) {
     var retval = false;
-    var onDuty = !!((((QB.Phone.Data || {}).PlayerData || {}).job || {}).onduty);
+    var onDuty = !!((((PRP.Phone.Data || {}).PlayerData || {}).job || {}).onduty);
     if (Array.isArray(joblist) && joblist.length > 0) {
         $.each(joblist, function(i, job){
             if (job == myjob && onDuty) {
@@ -93,14 +103,14 @@ function IsAppJobBlocked(joblist, myjob) {
     return retval;
 }
 
-QB.Phone.Functions.SetupApplications = function(data) {
+PRP.Phone.Functions.SetupApplications = function(data) {
     data = data || {};
-    QB.Phone.Data.Applications = data.applications || {};
-    QB.Phone.Data.PlayerJob = data.PlayerJob || QB.Phone.Data.PlayerJob || {};
-    var currentJobName = ((QB.Phone.Data.PlayerJob || {}).name) || (((QB.Phone.Data.PlayerData || {}).job || {}).name) || "";
+    PRP.Phone.Data.Applications = data.applications || {};
+    PRP.Phone.Data.PlayerJob = data.PlayerJob || PRP.Phone.Data.PlayerJob || {};
+    var currentJobName = ((PRP.Phone.Data.PlayerJob || {}).name) || (((PRP.Phone.Data.PlayerData || {}).job || {}).name) || "";
 
     var i;
-    for (i = 1; i <= QB.Phone.Data.MaxSlots; i++) {
+    for (i = 1; i <= PRP.Phone.Data.MaxSlots; i++) {
         var applicationSlot = $(".phone-applications").find('[data-appslot="'+i+'"]');
         $(applicationSlot).html("");
         $(applicationSlot).css({
@@ -109,13 +119,14 @@ QB.Phone.Functions.SetupApplications = function(data) {
         $(applicationSlot).prop('title', "");
         $(applicationSlot).attr("draggable", false);
         $(applicationSlot).attr("data-has-app", "false");
+        $(applicationSlot).removeAttr("data-app");
         $(applicationSlot).removeClass("has-app");
         $(applicationSlot).removeData('app');
         $(applicationSlot).removeData('placement')
     }
 
     $.each(data.applications || [], function(i, app){
-        var appSlot = QB.Phone.Functions.GetApplicationSlot(app);
+        var appSlot = PRP.Phone.Functions.GetApplicationSlot(app);
         var applicationSlot = $(".phone-applications").find('[data-appslot="'+appSlot+'"]');
         var blockedapp = IsAppJobBlocked(app.blockedjobs || [], currentJobName)
 
@@ -128,7 +139,8 @@ QB.Phone.Functions.SetupApplications = function(data) {
             $(applicationSlot).html(icon+'<div class="app-unread-alerts">0</div>');
             $(applicationSlot).prop('title', app.tooltipText);
             $(applicationSlot).data('app', app.app);
-            $(applicationSlot).attr("draggable", true);
+            $(applicationSlot).attr("data-app", app.app);
+            $(applicationSlot).attr("draggable", false);
             $(applicationSlot).attr("data-has-app", "true");
             $(applicationSlot).addClass("has-app");
 
@@ -141,9 +153,9 @@ QB.Phone.Functions.SetupApplications = function(data) {
     $('[data-toggle="tooltip"]').tooltip();
 }
 
-QB.Phone.Functions.SetupAppWarnings = function(AppData) {
+PRP.Phone.Functions.SetupAppWarnings = function(AppData) {
     $.each(AppData, function(i, app){
-        var appSlot = QB.Phone.Functions.GetApplicationSlot(app);
+        var appSlot = PRP.Phone.Functions.GetApplicationSlot(app);
         var AppObject = $(".phone-applications").find("[data-appslot='"+appSlot+"']").find('.app-unread-alerts');
 
         if (app.Alerts > 0) {
@@ -155,7 +167,7 @@ QB.Phone.Functions.SetupAppWarnings = function(AppData) {
     });
 }
 
-QB.Phone.Functions.IsAppHeaderAllowed = function(app) {
+PRP.Phone.Functions.IsAppHeaderAllowed = function(app) {
     var retval = true;
     $.each(Config.HeaderDisabledApps, function(i, blocked){
         if (app == blocked) {
@@ -168,7 +180,8 @@ QB.Phone.Functions.IsAppHeaderAllowed = function(app) {
 $(document).on('click', '.phone-application', function(e){
     e.preventDefault();
 
-    if (QB.Phone.Data.IsEditingApps || QB.Phone.ApplicationDrag.isDragging) {
+    if (PRP.Phone.ApplicationDrag.isDragging || PRP.Phone.ApplicationDrag.suppressClick) {
+        PRP.Phone.ApplicationDrag.suppressClick = false;
         return;
     }
 
@@ -177,63 +190,63 @@ $(document).on('click', '.phone-application', function(e){
 
     if (AppObject.length !== 0) {
         if (CanOpenApp) {
-            if (QB.Phone.Data.currentApplication == null) {
-                QB.Phone.Animations.TopSlideDown('.phone-application-container', 300, 0);
-                QB.Phone.Functions.ToggleApp(PressedApplication, "block");
+            if (PRP.Phone.Data.currentApplication == null) {
+                PRP.Phone.Animations.TopSlideDown('.phone-application-container', 300, 0);
+                PRP.Phone.Functions.ToggleApp(PressedApplication, "block");
 
-                if (QB.Phone.Functions.IsAppHeaderAllowed(PressedApplication)) {
-                    QB.Phone.Functions.HeaderTextColor("black", 300);
+                if (PRP.Phone.Functions.IsAppHeaderAllowed(PressedApplication)) {
+                    PRP.Phone.Functions.HeaderTextColor("black", 300);
                 }
 
-                QB.Phone.Data.currentApplication = PressedApplication;
+                PRP.Phone.Data.currentApplication = PressedApplication;
 
                 if (PressedApplication == "settings") {
-                    $("#myPhoneNumber").text(QB.Phone.Data.PlayerData.charinfo.phone);
-                    $("#mySerialNumber").text("QB-" + QB.Phone.Data.PlayerData.metadata["phonedata"].SerialNumber);
+                    $("#myPhoneNumber").text(PRP.Phone.Data.PlayerData.charinfo.phone);
+                    $("#mySerialNumber").text("PRP-" + PRP.Phone.Data.PlayerData.metadata["phonedata"].SerialNumber);
                 } else if (PressedApplication == "twitter") {
                     $.post('https://prp-phone/GetMentionedTweets', JSON.stringify({}), function(MentionedTweets){
-                        QB.Phone.Notifications.LoadMentionedTweets(MentionedTweets)
+                        PRP.Phone.Notifications.LoadMentionedTweets(MentionedTweets)
                     })
                     $.post('https://prp-phone/GetHashtags', JSON.stringify({}), function(Hashtags){
-                        QB.Phone.Notifications.LoadHashtags(Hashtags)
+                        PRP.Phone.Notifications.LoadHashtags(Hashtags)
                     })
-                    if (QB.Phone.Data.IsOpen) {
+                    if (PRP.Phone.Data.IsOpen) {
                         $.post('https://prp-phone/GetTweets', JSON.stringify({}), function(Tweets){
-                            QB.Phone.Notifications.LoadTweets(Tweets);
+                            PRP.Phone.Notifications.LoadTweets(Tweets);
                         });
                     }
                 } else if (PressedApplication == "bank") {
-                    QB.Phone.Functions.DoBankOpen();
+                    PRP.Phone.Functions.DoBankOpen();
                     $.post('https://prp-phone/GetBankContacts', JSON.stringify({}), function(contacts){
-                        QB.Phone.Functions.LoadContactsWithNumber(contacts);
+                        PRP.Phone.Functions.LoadContactsWithNumber(contacts);
                     });
                     $.post('https://prp-phone/GetInvoices', JSON.stringify({}), function(invoices){
-                        QB.Phone.Functions.LoadBankInvoices(invoices);
+                        PRP.Phone.Functions.LoadBankInvoices(invoices);
                     });
                 } else if (PressedApplication == "whatsapp") {
                     $.post('https://prp-phone/GetWhatsappChats', JSON.stringify({}), function(chats){
-                        QB.Phone.Functions.LoadWhatsappChats(chats);
+                        PRP.Phone.Functions.LoadWhatsappChats(chats);
                     });
                 } else if (PressedApplication == "phone") {
                     $.post('https://prp-phone/GetMissedCalls', JSON.stringify({}), function(recent){
-                        QB.Phone.Functions.SetupRecentCalls(recent);
+                        PRP.Phone.Functions.SetupRecentCalls(recent);
                     });
                     $.post('https://prp-phone/GetSuggestedContacts', JSON.stringify({}), function(suggested){
-                        QB.Phone.Functions.SetupSuggestedContacts(suggested);
+                        PRP.Phone.Functions.SetupSuggestedContacts(suggested);
                     });
                     $.post('https://prp-phone/ClearGeneralAlerts', JSON.stringify({
                         app: "phone"
                     }));
                 } else if (PressedApplication == "mail") {
                     $.post('https://prp-phone/GetMails', JSON.stringify({}), function(mails){
-                        QB.Phone.Functions.SetupMails(mails);
+                        PRP.Phone.Functions.SetupMails(mails);
                     });
                     $.post('https://prp-phone/ClearGeneralAlerts', JSON.stringify({
                         app: "mail"
                     }));
                 } else if (PressedApplication == "advert") {
                     $.post('https://prp-phone/LoadAdverts', JSON.stringify({}), function(Adverts){
-                        QB.Phone.Functions.RefreshAdverts(Adverts);
+                        PRP.Phone.Functions.RefreshAdverts(Adverts);
                     })
                 } else if (PressedApplication == "garage") {
                     $.post('https://prp-phone/SetupGarageVehicles', JSON.stringify({}), function(Vehicles){
@@ -291,7 +304,7 @@ $(document).on('click', '.phone-application', function(e){
                     $.post('https://prp-phone/TakePhoto', JSON.stringify({}),function(url){
                         setUpCameraApp(url)
                     })
-                    QB.Phone.Functions.Close();
+                    PRP.Phone.Functions.Close();
                 }
 
                 
@@ -299,53 +312,48 @@ $(document).on('click', '.phone-application', function(e){
         }
     } else {
         if (PressedApplication != null){
-            QB.Phone.Notifications.Add("fas fa-exclamation-circle", "System", QB.Phone.Data.Applications[PressedApplication].tooltipText+" is not available!")
+            PRP.Phone.Notifications.Add("fas fa-exclamation-circle", "System", PRP.Phone.Data.Applications[PressedApplication].tooltipText+" is not available!")
         }
     }
 });
 
-$(document).on('dragstart', '.phone-application.has-app', function(e) {
-    if (!QB.Phone.Data.IsEditingApps) {
-        e.preventDefault();
-        return;
+PRP.Phone.Functions.GetPointerPosition = function(event) {
+    var original = event.originalEvent || event;
+    var pointer = (original.touches && original.touches[0]) || (original.changedTouches && original.changedTouches[0]) || original;
+
+    return {
+        x: pointer.clientX,
+        y: pointer.clientY,
+    };
+}
+
+PRP.Phone.Functions.GetDropSlotAt = function(pointer) {
+    if (!pointer || pointer.x === undefined || pointer.y === undefined) {
+        return $();
     }
 
-    QB.Phone.ApplicationDrag.fromSlot = parseInt($(this).data("appslot"));
-    QB.Phone.ApplicationDrag.isDragging = true;
-    e.originalEvent.dataTransfer.effectAllowed = "move";
-});
+    var element = document.elementFromPoint(pointer.x, pointer.y);
+    var slot = $(element).closest(".phone-application");
 
-$(document).on('dragend', '.phone-application', function() {
-    setTimeout(function() {
-        QB.Phone.ApplicationDrag.fromSlot = null;
-        QB.Phone.ApplicationDrag.isDragging = false;
-    }, 50);
-});
-
-$(document).on('dragover', '.phone-application', function(e) {
-    if (QB.Phone.Data.IsEditingApps) {
-        e.preventDefault();
-        e.originalEvent.dataTransfer.dropEffect = "move";
-    }
-});
-
-$(document).on('drop', '.phone-application', function(e) {
-    e.preventDefault();
-
-    if (!QB.Phone.Data.IsEditingApps) {
-        return;
+    if (slot.length > 0 && slot.closest(".phone-applications").length > 0) {
+        return slot;
     }
 
-    var fromSlot = QB.Phone.ApplicationDrag.fromSlot;
-    var toSlot = parseInt($(this).data("appslot"));
+    return $();
+}
 
+PRP.Phone.Functions.MoveApplicationSlot = function(fromSlot, toSlot) {
     if (!fromSlot || !toSlot || fromSlot === toSlot) {
         return;
     }
 
     var fromApp = $(".phone-applications").find('[data-appslot="'+fromSlot+'"]').data("app");
     var toApp = $(".phone-applications").find('[data-appslot="'+toSlot+'"]').data("app");
-    var layout = QB.Phone.Functions.GetApplicationLayout();
+    var layout = PRP.Phone.Functions.GetApplicationLayout();
+
+    if (!fromApp) {
+        return;
+    }
 
     if (fromApp) {
         layout[fromApp] = toSlot;
@@ -355,14 +363,152 @@ $(document).on('drop', '.phone-application', function(e) {
         layout[toApp] = fromSlot;
     }
 
-    QB.Phone.Data.MetaData = QB.Phone.Data.MetaData || {};
-    QB.Phone.Data.MetaData.applayout = layout;
-    QB.Phone.Functions.SetupApplications({
-        applications: QB.Phone.Data.Applications,
-        PlayerJob: QB.Phone.Data.PlayerJob,
+    PRP.Phone.Data.MetaData = PRP.Phone.Data.MetaData || {};
+    PRP.Phone.Data.MetaData.applayout = layout;
+    PRP.Phone.Functions.SetupApplications({
+        applications: PRP.Phone.Data.Applications,
+        PlayerJob: PRP.Phone.Data.PlayerJob,
     });
-    QB.Phone.Functions.SetupAppWarnings(QB.Phone.Data.Applications);
-    QB.Phone.Functions.SaveApplicationLayout();
+    PRP.Phone.Functions.SetupAppWarnings(PRP.Phone.Data.Applications);
+    PRP.Phone.Functions.SaveApplicationLayout();
+}
+
+PRP.Phone.Functions.UpdateApplicationDrag = function(event) {
+    var drag = PRP.Phone.ApplicationDrag;
+    var pointer = PRP.Phone.Functions.GetPointerPosition(event);
+
+    if (!pointer || pointer.x === undefined || pointer.y === undefined) {
+        return;
+    }
+
+    if (drag.ghost) {
+        drag.ghost.css({
+            left: pointer.x + "px",
+            top: pointer.y + "px",
+        });
+    }
+
+    $(".phone-application").removeClass("app-drop-target");
+
+    var targetSlot = PRP.Phone.Functions.GetDropSlotAt(pointer);
+    if (targetSlot.length > 0) {
+        drag.toSlot = parseInt(targetSlot.data("appslot"));
+        targetSlot.addClass("app-drop-target");
+    } else {
+        drag.toSlot = null;
+    }
+}
+
+PRP.Phone.Functions.BeginApplicationDrag = function(source, event) {
+    var drag = PRP.Phone.ApplicationDrag;
+
+    if (!source || drag.isDragging) {
+        return;
+    }
+
+    drag.source = $(source);
+    drag.fromSlot = parseInt(drag.source.data("appslot"));
+    drag.toSlot = drag.fromSlot;
+    drag.isDragging = true;
+    drag.suppressClick = true;
+
+    drag.source.addClass("app-dragging-source");
+    drag.ghost = drag.source.clone();
+    drag.ghost
+        .removeAttr("data-toggle")
+        .removeAttr("title")
+        .addClass("prp-app-drag-ghost");
+    $("body").append(drag.ghost);
+
+    PRP.Phone.Functions.SetAppEditMode(true);
+    PRP.Phone.Functions.UpdateApplicationDrag(event);
+}
+
+PRP.Phone.Functions.EndApplicationDrag = function(event) {
+    var drag = PRP.Phone.ApplicationDrag;
+
+    if (drag.holdTimer) {
+        clearTimeout(drag.holdTimer);
+        drag.holdTimer = null;
+    }
+
+    if (drag.isDragging) {
+        PRP.Phone.Functions.UpdateApplicationDrag(event);
+        PRP.Phone.Functions.MoveApplicationSlot(drag.fromSlot, drag.toSlot);
+    }
+
+    if (drag.ghost) {
+        drag.ghost.remove();
+    }
+
+    $(".phone-application").removeClass("app-dragging-source app-drop-target");
+    PRP.Phone.Functions.SetAppEditMode(false);
+
+    drag.fromSlot = null;
+    drag.toSlot = null;
+    drag.source = null;
+    drag.ghost = null;
+    drag.isDragging = false;
+    drag.suppressClick = true;
+
+    setTimeout(function() {
+        PRP.Phone.ApplicationDrag.suppressClick = false;
+    }, 180);
+}
+
+$(document).on('mousedown touchstart', '.phone-application.has-app', function(e) {
+    var original = e.originalEvent || e;
+    if (original.button !== undefined && original.button !== 0) {
+        return;
+    }
+
+    var drag = PRP.Phone.ApplicationDrag;
+    var pointer = PRP.Phone.Functions.GetPointerPosition(e);
+
+    if (drag.holdTimer) {
+        clearTimeout(drag.holdTimer);
+    }
+
+    drag.startX = pointer.x;
+    drag.startY = pointer.y;
+    drag.source = $(this);
+    drag.holdTimer = setTimeout(function() {
+        drag.holdTimer = null;
+        PRP.Phone.Functions.BeginApplicationDrag(drag.source, e);
+    }, 450);
+});
+
+$(document).on('mousemove touchmove', function(e) {
+    var drag = PRP.Phone.ApplicationDrag;
+
+    if (drag.holdTimer && !drag.isDragging) {
+        var pointer = PRP.Phone.Functions.GetPointerPosition(e);
+        if (Math.abs(pointer.x - drag.startX) > 8 || Math.abs(pointer.y - drag.startY) > 8) {
+            clearTimeout(drag.holdTimer);
+            drag.holdTimer = null;
+        }
+        return;
+    }
+
+    if (drag.isDragging) {
+        e.preventDefault();
+        PRP.Phone.Functions.UpdateApplicationDrag(e);
+    }
+});
+
+$(document).on('mouseup touchend touchcancel', function(e) {
+    var drag = PRP.Phone.ApplicationDrag;
+
+    if (drag.holdTimer) {
+        clearTimeout(drag.holdTimer);
+        drag.holdTimer = null;
+        return;
+    }
+
+    if (drag.isDragging) {
+        e.preventDefault();
+        PRP.Phone.Functions.EndApplicationDrag(e);
+    }
 });
 
 $(document).on('click', '.mykeys-key', function(e){
@@ -378,19 +524,19 @@ $(document).on('click', '.mykeys-key', function(e){
 $(document).on('click', '.phone-home-container', function(event){
     event.preventDefault();
 
-    if (QB.Phone.Data.currentApplication === null) {
-        QB.Phone.Functions.Close();
+    if (PRP.Phone.Data.currentApplication === null) {
+        PRP.Phone.Functions.Close();
     } else {
-        QB.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
-        QB.Phone.Animations.TopSlideUp('.'+QB.Phone.Data.currentApplication+"-app", 400, -160);
+        PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
+        PRP.Phone.Animations.TopSlideUp('.'+PRP.Phone.Data.currentApplication+"-app", 400, -160);
         CanOpenApp = false;
         setTimeout(function(){
-            QB.Phone.Functions.ToggleApp(QB.Phone.Data.currentApplication, "none");
+            PRP.Phone.Functions.ToggleApp(PRP.Phone.Data.currentApplication, "none");
             CanOpenApp = true;
         }, 400)
-        QB.Phone.Functions.HeaderTextColor("white", 300);
+        PRP.Phone.Functions.HeaderTextColor("white", 300);
 
-        if (QB.Phone.Data.currentApplication == "whatsapp") {
+        if (PRP.Phone.Data.currentApplication == "whatsapp") {
             if (OpenedChatData.number !== null) {
                 setTimeout(function(){
                     $(".whatsapp-chats").css({"display":"block"});
@@ -406,7 +552,7 @@ $(document).on('click', '.phone-home-container', function(event){
                     OpenedChatData.number = null;
                 }, 450);
             }
-        } else if (QB.Phone.Data.currentApplication == "bank") {
+        } else if (PRP.Phone.Data.currentApplication == "bank") {
             if (CurrentTab == "invoices") {
                 setTimeout(function(){
                     $(".bank-app-invoices").animate({"left": "30vh"});
@@ -423,7 +569,7 @@ $(document).on('click', '.phone-home-container', function(event){
                     CurrentTab = "accounts";
                 }, 400)
             }
-        } else if (QB.Phone.Data.currentApplication == "meos") {
+        } else if (PRP.Phone.Data.currentApplication == "meos") {
             $(".meos-alert-new").remove();
             setTimeout(function(){
                 $(".meos-recent-alert").removeClass("noodknop");
@@ -431,28 +577,28 @@ $(document).on('click', '.phone-home-container', function(event){
             }, 400)
         }
 
-        QB.Phone.Data.currentApplication = null;
+        PRP.Phone.Data.currentApplication = null;
     }
 });
 
-QB.Phone.Functions.Open = function(data) {
-    QB.Phone.Animations.BottomSlideUp('.container', 300, 0);
-    QB.Phone.Notifications.LoadTweets(data.Tweets);
-    QB.Phone.Data.IsOpen = true;
+PRP.Phone.Functions.Open = function(data) {
+    PRP.Phone.Animations.BottomSlideUp('.container', 300, 0);
+    PRP.Phone.Notifications.LoadTweets(data.Tweets);
+    PRP.Phone.Data.IsOpen = true;
 }
 
-QB.Phone.Functions.ToggleApp = function(app, show) {
+PRP.Phone.Functions.ToggleApp = function(app, show) {
     $("."+app+"-app").css({"display":show});
 }
 
-QB.Phone.Functions.Close = function() {
+PRP.Phone.Functions.Close = function() {
 
-    if (QB.Phone.Data.currentApplication == "whatsapp") {
+    if (PRP.Phone.Data.currentApplication == "whatsapp") {
         setTimeout(function(){
-            QB.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
-            QB.Phone.Animations.TopSlideUp('.'+QB.Phone.Data.currentApplication+"-app", 400, -160);
+            PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
+            PRP.Phone.Animations.TopSlideUp('.'+PRP.Phone.Data.currentApplication+"-app", 400, -160);
             $(".whatsapp-app").css({"display":"none"});
-            QB.Phone.Functions.HeaderTextColor("white", 300);
+            PRP.Phone.Functions.HeaderTextColor("white", 300);
 
             if (OpenedChatData.number !== null) {
                 setTimeout(function(){
@@ -469,30 +615,30 @@ QB.Phone.Functions.Close = function() {
                 }, 450);
             }
             OpenedChatPicture = null;
-            QB.Phone.Data.currentApplication = null;
+            PRP.Phone.Data.currentApplication = null;
         }, 500)
-    } else if (QB.Phone.Data.currentApplication == "meos") {
+    } else if (PRP.Phone.Data.currentApplication == "meos") {
         $(".meos-alert-new").remove();
         $(".meos-recent-alert").removeClass("noodknop");
         $(".meos-recent-alert").css({"background-color":"#004682"});
     }
 
-    QB.Phone.Animations.BottomSlideDown('.container', 300, -70);
+    PRP.Phone.Animations.BottomSlideDown('.container', 300, -70);
     $.post('https://prp-phone/Close');
-    QB.Phone.Data.IsOpen = false;
+    PRP.Phone.Data.IsOpen = false;
 }
 
-QB.Phone.Functions.HeaderTextColor = function(newColor, Timeout) {
+PRP.Phone.Functions.HeaderTextColor = function(newColor, Timeout) {
     $(".phone-header").animate({color: newColor}, Timeout);
 }
 
-QB.Phone.Animations.BottomSlideUp = function(Object, Timeout, Percentage) {
+PRP.Phone.Animations.BottomSlideUp = function(Object, Timeout, Percentage) {
     $(Object).css({'display':'block'}).animate({
         bottom: Percentage+"%",
     }, Timeout);
 }
 
-QB.Phone.Animations.BottomSlideDown = function(Object, Timeout, Percentage) {
+PRP.Phone.Animations.BottomSlideDown = function(Object, Timeout, Percentage) {
     $(Object).css({'display':'block'}).animate({
         bottom: Percentage+"%",
     }, Timeout, function(){
@@ -500,13 +646,13 @@ QB.Phone.Animations.BottomSlideDown = function(Object, Timeout, Percentage) {
     });
 }
 
-QB.Phone.Animations.TopSlideDown = function(Object, Timeout, Percentage) {
+PRP.Phone.Animations.TopSlideDown = function(Object, Timeout, Percentage) {
     $(Object).css({'display':'block'}).animate({
         top: Percentage+"%",
     }, Timeout);
 }
 
-QB.Phone.Animations.TopSlideUp = function(Object, Timeout, Percentage, cb) {
+PRP.Phone.Animations.TopSlideUp = function(Object, Timeout, Percentage, cb) {
     $(Object).css({'display':'block'}).animate({
         top: Percentage+"%",
     }, Timeout, function(){
@@ -514,13 +660,13 @@ QB.Phone.Animations.TopSlideUp = function(Object, Timeout, Percentage, cb) {
     });
 }
 
-QB.Phone.Notifications.Add = function(icon, title, text, color, timeout) {
+PRP.Phone.Notifications.Add = function(icon, title, text, color, timeout) {
     $.post('https://prp-phone/HasPhone', JSON.stringify({}), function(HasPhone){
         if (HasPhone) {
             if (timeout == null && timeout == undefined) {
                 timeout = 1500;
             }
-            if (QB.Phone.Notifications.Timeout == undefined || QB.Phone.Notifications.Timeout == null) {
+            if (PRP.Phone.Notifications.Timeout == undefined || PRP.Phone.Notifications.Timeout == null) {
                 if (color != null || color != undefined) {
                     $(".notification-icon").css({"color":color});
                     $(".notification-title").css({"color":color});
@@ -528,10 +674,10 @@ QB.Phone.Notifications.Add = function(icon, title, text, color, timeout) {
                     $(".notification-icon").css({"color":"#e74c3c"});
                     $(".notification-title").css({"color":"#e74c3c"});
                 }
-                if (!QB.Phone.Data.IsOpen) {
-                    QB.Phone.Animations.BottomSlideUp('.container', 300, -52);
+                if (!PRP.Phone.Data.IsOpen) {
+                    PRP.Phone.Animations.BottomSlideUp('.container', 300, -52);
                 }
-                QB.Phone.Animations.TopSlideDown(".phone-notification-container", 200, 8);
+                PRP.Phone.Animations.TopSlideDown(".phone-notification-container", 200, 8);
                 if (icon !== "politie") {
                     $(".notification-icon").html('<i class="'+icon+'"></i>');
                 } else {
@@ -539,15 +685,15 @@ QB.Phone.Notifications.Add = function(icon, title, text, color, timeout) {
                 }
                 $(".notification-title").html(title);
                 $(".notification-text").html(text);
-                if (QB.Phone.Notifications.Timeout !== undefined || QB.Phone.Notifications.Timeout !== null) {
-                    clearTimeout(QB.Phone.Notifications.Timeout);
+                if (PRP.Phone.Notifications.Timeout !== undefined || PRP.Phone.Notifications.Timeout !== null) {
+                    clearTimeout(PRP.Phone.Notifications.Timeout);
                 }
-                QB.Phone.Notifications.Timeout = setTimeout(function(){
-                    QB.Phone.Animations.TopSlideUp(".phone-notification-container", 200, -8);
-                    if (!QB.Phone.Data.IsOpen) {
-                        QB.Phone.Animations.BottomSlideUp('.container', 300, -100);
+                PRP.Phone.Notifications.Timeout = setTimeout(function(){
+                    PRP.Phone.Animations.TopSlideUp(".phone-notification-container", 200, -8);
+                    if (!PRP.Phone.Data.IsOpen) {
+                        PRP.Phone.Animations.BottomSlideUp('.container', 300, -100);
                     }
-                    QB.Phone.Notifications.Timeout = null;
+                    PRP.Phone.Notifications.Timeout = null;
                 }, timeout);
             } else {
                 if (color != null || color != undefined) {
@@ -557,39 +703,39 @@ QB.Phone.Notifications.Add = function(icon, title, text, color, timeout) {
                     $(".notification-icon").css({"color":"#e74c3c"});
                     $(".notification-title").css({"color":"#e74c3c"});
                 }
-                if (!QB.Phone.Data.IsOpen) {
-                    QB.Phone.Animations.BottomSlideUp('.container', 300, -52);
+                if (!PRP.Phone.Data.IsOpen) {
+                    PRP.Phone.Animations.BottomSlideUp('.container', 300, -52);
                 }
                 $(".notification-icon").html('<i class="'+icon+'"></i>');
                 $(".notification-title").html(title);
                 $(".notification-text").html(text);
-                if (QB.Phone.Notifications.Timeout !== undefined || QB.Phone.Notifications.Timeout !== null) {
-                    clearTimeout(QB.Phone.Notifications.Timeout);
+                if (PRP.Phone.Notifications.Timeout !== undefined || PRP.Phone.Notifications.Timeout !== null) {
+                    clearTimeout(PRP.Phone.Notifications.Timeout);
                 }
-                QB.Phone.Notifications.Timeout = setTimeout(function(){
-                    QB.Phone.Animations.TopSlideUp(".phone-notification-container", 200, -8);
-                    if (!QB.Phone.Data.IsOpen) {
-                        QB.Phone.Animations.BottomSlideUp('.container', 300, -100);
+                PRP.Phone.Notifications.Timeout = setTimeout(function(){
+                    PRP.Phone.Animations.TopSlideUp(".phone-notification-container", 200, -8);
+                    if (!PRP.Phone.Data.IsOpen) {
+                        PRP.Phone.Animations.BottomSlideUp('.container', 300, -100);
                     }
-                    QB.Phone.Notifications.Timeout = null;
+                    PRP.Phone.Notifications.Timeout = null;
                 }, timeout);
             }
         }
     });
 }
 
-QB.Phone.Functions.LoadPhoneData = function(data) {
-    QB.Phone.Data.PlayerData = data.PlayerData;
-    QB.Phone.Data.PlayerJob = data.PlayerJob;
-    QB.Phone.Data.MetaData = data.PhoneData.MetaData || {};
-    QB.Phone.Functions.LoadMetaData(QB.Phone.Data.MetaData);
-    QB.Phone.Functions.LoadContacts(data.PhoneData.Contacts);
-    QB.Phone.Functions.SetupApplications(data);
+PRP.Phone.Functions.LoadPhoneData = function(data) {
+    PRP.Phone.Data.PlayerData = data.PlayerData;
+    PRP.Phone.Data.PlayerJob = data.PlayerJob;
+    PRP.Phone.Data.MetaData = data.PhoneData.MetaData || {};
+    PRP.Phone.Functions.LoadMetaData(PRP.Phone.Data.MetaData);
+    PRP.Phone.Functions.LoadContacts(data.PhoneData.Contacts);
+    PRP.Phone.Functions.SetupApplications(data);
 
     $("#player-id").html("<span>" + "ID: " + data.PlayerId + "</span>")
 }
 
-QB.Phone.Functions.UpdateTime = function(data) {
+PRP.Phone.Functions.UpdateTime = function(data) {
     var NewDate = new Date();
     var NewHour = NewDate.getHours();
     var NewMinute = NewDate.getMinutes();
@@ -608,7 +754,7 @@ QB.Phone.Functions.UpdateTime = function(data) {
 
 var NotificationTimeout = null;
 
-QB.Screen.Notification = function(title, content, icon, timeout, color) {
+PRP.Screen.Notification = function(title, content, icon, timeout, color) {
     $.post('https://prp-phone/HasPhone', JSON.stringify({}), function(HasPhone){
         if (HasPhone) {
             if (color != null && color != undefined) {
@@ -647,13 +793,13 @@ $(document).on('keydown', function(event) {
             $('.popupclass').html("");
             up = false
         } else {
-            QB.Phone.Functions.Close();
+            PRP.Phone.Functions.Close();
             break;
         }
     }
 });
 
-QB.Screen.popUp = function(source){
+PRP.Screen.popUp = function(source){
     if(!up){
         $('#popup').fadeIn('slow');
         $('.popupclass').fadeIn('slow');
@@ -662,7 +808,7 @@ QB.Screen.popUp = function(source){
     }
 }
 
-QB.Screen.popDown = function(){
+PRP.Screen.popDown = function(){
     if(up){
         $('#popup').fadeOut('slow');
         $('.popupclass').fadeOut('slow');
@@ -675,48 +821,48 @@ $(document).ready(function(){
     window.addEventListener('message', function(event) {
         switch(event.data.action) {
             case "open":
-                QB.Phone.Functions.Open(event.data);
-                QB.Phone.Functions.SetupAppWarnings(event.data.AppData);
-                QB.Phone.Functions.SetupCurrentCall(event.data.CallData);
-                QB.Phone.Data.IsOpen = true;
-                QB.Phone.Data.PlayerData = event.data.PlayerData;
+                PRP.Phone.Functions.Open(event.data);
+                PRP.Phone.Functions.SetupAppWarnings(event.data.AppData);
+                PRP.Phone.Functions.SetupCurrentCall(event.data.CallData);
+                PRP.Phone.Data.IsOpen = true;
+                PRP.Phone.Data.PlayerData = event.data.PlayerData;
                 break;
             case "LoadPhoneData":
-                QB.Phone.Functions.LoadPhoneData(event.data);
+                PRP.Phone.Functions.LoadPhoneData(event.data);
                 break;
             case "UpdateTime":
-                QB.Phone.Functions.UpdateTime(event.data);
+                PRP.Phone.Functions.UpdateTime(event.data);
                 break;
             case "Notification":
-                QB.Screen.Notification(event.data.NotifyData.title, event.data.NotifyData.content, event.data.NotifyData.icon, event.data.NotifyData.timeout, event.data.NotifyData.color);
+                PRP.Screen.Notification(event.data.NotifyData.title, event.data.NotifyData.content, event.data.NotifyData.icon, event.data.NotifyData.timeout, event.data.NotifyData.color);
                 break;
             case "PhoneNotification":
-                QB.Phone.Notifications.Add(event.data.PhoneNotify.icon, event.data.PhoneNotify.title, event.data.PhoneNotify.text, event.data.PhoneNotify.color, event.data.PhoneNotify.timeout);
+                PRP.Phone.Notifications.Add(event.data.PhoneNotify.icon, event.data.PhoneNotify.title, event.data.PhoneNotify.text, event.data.PhoneNotify.color, event.data.PhoneNotify.timeout);
                 break;
             case "RefreshAppAlerts":
-                QB.Phone.Functions.SetupAppWarnings(event.data.AppData);
+                PRP.Phone.Functions.SetupAppWarnings(event.data.AppData);
                 break;
             case "UpdateMentionedTweets":
-                QB.Phone.Notifications.LoadMentionedTweets(event.data.Tweets);
+                PRP.Phone.Notifications.LoadMentionedTweets(event.data.Tweets);
                 break;
             case "UpdateBank":
                 $(".bank-app-account-balance").html("&#36; "+event.data.NewBalance);
                 $(".bank-app-account-balance").data('balance', event.data.NewBalance);
                 break;
             case "UpdateChat":
-                if (QB.Phone.Data.currentApplication == "whatsapp") {
+                if (PRP.Phone.Data.currentApplication == "whatsapp") {
                     if (OpenedChatData.number !== null && OpenedChatData.number == event.data.chatNumber) {
-                        QB.Phone.Functions.SetupChatMessages(event.data.chatData);
+                        PRP.Phone.Functions.SetupChatMessages(event.data.chatData);
                     } else {
-                        QB.Phone.Functions.LoadWhatsappChats(event.data.Chats);
+                        PRP.Phone.Functions.LoadWhatsappChats(event.data.Chats);
                     }
                 }
                 break;
             case "UpdateHashtags":
-                QB.Phone.Notifications.LoadHashtags(event.data.Hashtags);
+                PRP.Phone.Notifications.LoadHashtags(event.data.Hashtags);
                 break;
             case "RefreshWhatsappAlerts":
-                QB.Phone.Functions.ReloadWhatsappAlerts(event.data.Chats);
+                PRP.Phone.Functions.ReloadWhatsappAlerts(event.data.Chats);
                 break;
             case "CancelOutgoingCall":
                 $.post('https://prp-phone/HasPhone', JSON.stringify({}), function(HasPhone){
@@ -733,22 +879,22 @@ $(document).ready(function(){
                 });
                 break;
             case "SetupHomeCall":
-                QB.Phone.Functions.SetupCurrentCall(event.data.CallData);
+                PRP.Phone.Functions.SetupCurrentCall(event.data.CallData);
                 break;
             case "SetSpeakerPhone":
-                if (QB.Phone.Functions.SetSpeakerPhone !== undefined) {
-                    QB.Phone.Functions.SetSpeakerPhone(event.data.enabled);
+                if (PRP.Phone.Functions.SetSpeakerPhone !== undefined) {
+                    PRP.Phone.Functions.SetSpeakerPhone(event.data.enabled);
                 }
                 break;
             case "AnswerCall":
-                QB.Phone.Functions.AnswerCall(event.data.CallData);
+                PRP.Phone.Functions.AnswerCall(event.data.CallData);
                 break;
             case "UpdateCallTime":
                 var CallTime = event.data.Time;
                 var date = new Date(null);
                 date.setSeconds(CallTime);
                 var timeString = date.toISOString().substr(11, 8);
-                if (!QB.Phone.Data.IsOpen) {
+                if (!PRP.Phone.Data.IsOpen) {
                     if ($(".call-notifications").css("right") !== "52.1px") {
                         $(".call-notifications").css({"display":"block"});
                         $(".call-notifications").animate({right: 5+"vh"});
@@ -767,44 +913,44 @@ $(document).ready(function(){
                 $(".phone-currentcall-title").html("In conversation ("+timeString+")");
                 break;
             case "CancelOngoingCall":
-                if (QB.Phone.Functions.SetSpeakerPhone !== undefined) {
-                    QB.Phone.Functions.SetSpeakerPhone(false);
+                if (PRP.Phone.Functions.SetSpeakerPhone !== undefined) {
+                    PRP.Phone.Functions.SetSpeakerPhone(false);
                 }
                 $(".call-notifications").animate({right: -35+"vh"}, function(){
                     $(".call-notifications").css({"display":"none"});
                 });
-                QB.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
+                PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
                 setTimeout(function(){
-                    QB.Phone.Functions.ToggleApp("phone-call", "none");
+                    PRP.Phone.Functions.ToggleApp("phone-call", "none");
                     $(".phone-application-container").css({"display":"none"});
                 }, 400)
-                QB.Phone.Functions.HeaderTextColor("white", 300);
+                PRP.Phone.Functions.HeaderTextColor("white", 300);
 
-                QB.Phone.Data.CallActive = false;
-                QB.Phone.Data.currentApplication = null;
+                PRP.Phone.Data.CallActive = false;
+                PRP.Phone.Data.currentApplication = null;
                 break;
             case "RefreshContacts":
-                QB.Phone.Functions.LoadContacts(event.data.Contacts);
+                PRP.Phone.Functions.LoadContacts(event.data.Contacts);
                 break;
             case "UpdateMails":
-                QB.Phone.Functions.SetupMails(event.data.Mails);
+                PRP.Phone.Functions.SetupMails(event.data.Mails);
                 break;
             case "RefreshAdverts":
-                if (QB.Phone.Data.currentApplication == "advert") {
-                    QB.Phone.Functions.RefreshAdverts(event.data.Adverts);
+                if (PRP.Phone.Data.currentApplication == "advert") {
+                    PRP.Phone.Functions.RefreshAdverts(event.data.Adverts);
                 }
                 break;
             case "UpdateTweets":
-                if (QB.Phone.Data.currentApplication == "twitter") {
-                    QB.Phone.Notifications.LoadTweets(event.data.Tweets);
+                if (PRP.Phone.Data.currentApplication == "twitter") {
+                    PRP.Phone.Notifications.LoadTweets(event.data.Tweets);
                 }
                 break;
             case "AddPoliceAlert":
                 AddPoliceAlert(event.data)
                 break;
             case "UpdateApplications":
-                QB.Phone.Data.PlayerJob = event.data.JobData;
-                QB.Phone.Functions.SetupApplications(event.data);
+                PRP.Phone.Data.PlayerJob = event.data.JobData;
+                PRP.Phone.Functions.SetupApplications(event.data);
                 break;
             case "UpdateTransactions":
                 RefreshCryptoTransactions(event.data);
@@ -815,7 +961,7 @@ $(document).ready(function(){
                 });
                 break;
             case "RefreshAlerts":
-                QB.Phone.Functions.SetupAppWarnings(event.data.AppData);
+                PRP.Phone.Functions.SetupAppWarnings(event.data.AppData);
                 break;
         }
     })

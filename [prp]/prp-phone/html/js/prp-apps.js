@@ -6,7 +6,7 @@ let RacingOriginalParent = null;
 let RacingPlaceholder = null;
 
 function PrpPhoneNotify(title, text, icon, color) {
-    QB.Phone.Notifications.Add(icon || "fas fa-info-circle", title, text, color || "#111827", 3000);
+    PRP.Phone.Notifications.Add(icon || "fas fa-info-circle", title, text, color || "#111827", 3000);
 }
 
 function UpdateCalculatorDisplay() {
@@ -139,8 +139,8 @@ function UpdateTabletCryptoStatus(data) {
 
 function OpenTablet(data) {
     TabletPlayerData = data.PlayerData || {};
-    if (QB && QB.Phone && QB.Phone.Data && data.PlayerData) {
-        QB.Phone.Data.PlayerData = data.PlayerData;
+    if (window.PRP && PRP.Phone && PRP.Phone.Data && data.PlayerData) {
+        PRP.Phone.Data.PlayerData = data.PlayerData;
     }
 
     $(".tablet-container").fadeIn(120);
@@ -406,8 +406,8 @@ $(document).ready(function() {
                 HideTablet();
                 break;
             case "forceClosePhone":
-                if (QB.Phone && QB.Phone.Functions && QB.Phone.Functions.Close) {
-                    QB.Phone.Functions.Close();
+                if (PRP.Phone && PRP.Phone.Functions && PRP.Phone.Functions.Close) {
+                    PRP.Phone.Functions.Close();
                 }
                 break;
             case "openPhoneApplication": {
