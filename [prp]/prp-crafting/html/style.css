@@ -34,6 +34,7 @@ button:disabled { cursor: not-allowed; background: #303846; color: #8490a3; filt
 .skillNode { position: relative; display: grid; grid-template-columns: 52px 1fr; grid-template-rows: auto auto; gap: 10px; align-items: center; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 12px; opacity: .72; }
 .skillNode.canBuy { opacity: 1; border-color: rgba(125,184,255,.45); }
 .skillNode.unlocked { opacity: 1; border-color: rgba(83,225,147,.40); background: rgba(83,225,147,.07); }
+.skillNode:hover { opacity: 1; }
 .skillNode img { width: 52px; height: 52px; object-fit: contain; border-radius: 12px; background: rgba(0,0,0,.24); padding: 7px; grid-row: span 2; }
 .nodeInfo h3 { margin: 0 0 4px; font-size: 16px; }
 .nodeInfo p { margin: 0; color: #96a6bb; font-size: 12px; }
