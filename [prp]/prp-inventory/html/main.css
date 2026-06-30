@@ -1,0 +1,2272 @@
+@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap");
+
+:root {
+    --panel: rgba(8, 18, 34, 0.58);
+    --panel-dark: rgba(4, 10, 18, 0.42);
+    --panel-border: rgba(75, 160, 255, 0.28);
+    --slot: rgba(13, 24, 40, 0.58);
+    --slot-dark: rgba(7, 13, 22, 0.38);
+    --slot-border: rgba(75, 160, 255, 0.24);
+    --slot-border-strong: rgba(75, 160, 255, 0.82);
+    --text: #eef5ff;
+    --muted: #8fa4bb;
+    --blue: #4ba0ff;
+    --danger: #ff5f5f;
+}
+
+/* ROOT TRANSPARENT */
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: "Exo 2", sans-serif;
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    background-image: none !important;
+}
+
+html::before,
+html::after,
+body::before,
+body::after,
+#app::before,
+#app::after {
+    display: none !important;
+    content: none !important;
+    background: transparent !important;
+}
+
+/* DO NOT USE A FULLSCREEN OVERLAY */
+.prp-overlay {
+    display: none !important;
+    background: transparent !important;
+}
+
+/* MAIN CONTAINER - NO BLACK BACKING */
+.inventory-container,
+.inventory-container.crafting-open,
+.inventory-container.storage-open,
+.inventory-container.storage-open.crafting-open {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    display: grid;
+    align-items: stretch;
+    justify-content: center;
+    gap: 18px;
+    z-index: 2;
+
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.inventory-container,
+.inventory-container.crafting-open {
+    grid-template-columns: 520px 560px 500px;
+    width: min(1640px, 98vw);
+    height: min(800px, 90vh);
+}
+
+.inventory-container.storage-open,
+.inventory-container.storage-open.crafting-open {
+    grid-template-columns: 520px 48px 500px;
+    width: min(1120px, 98vw);
+    height: min(800px, 90vh);
+}
+
+.inventory-container::before,
+.inventory-container::after {
+    display: none !important;
+    content: none !important;
+    background: transparent !important;
+}
+
+/* PANELS - BLUE GLASS */
+.prp-panel {
+    background:
+        linear-gradient(
+            180deg,
+            var(--panel),
+            var(--panel-dark)
+        ) !important;
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    box-shadow:
+        inset 0 0 0 1px rgba(75, 160, 255, 0.04),
+        0 0 24px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
+}
+
+.inventory-panel,
+.character-panel,
+.center-crafting-panel,
+.crafting-panel,
+.right-panel {
+    height: 100%;
+}
+
+/* INVENTORY PANEL */
+.inventory-panel {
+    width: 520px;
+    padding: 18px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+}
+
+.panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.panel-head.compact {
+    margin-bottom: 6px;
+}
+
+.panel-kicker {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+}
+
+.panel-title {
+    color: var(--text);
+    font-size: 26px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.panel-meta {
+    color: var(--muted);
+    font-weight: 600;
+    padding-top: 8px;
+}
+
+.panel-actions,
+.inventory-panel-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.inventory-body {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.panel-weight-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.weight-bar.prp,
+.weight-bar {
+    height: 6px;
+    width: 100%;
+    border-radius: 999px;
+    background: rgba(28, 39, 53, 0.72);
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+
+.weight-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2d7fff, #60c3ff);
+    box-shadow: 0 0 18px rgba(75, 160, 255, 0.55);
+}
+
+.inventory-grid {
+    min-height: 0;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.item-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(96px, 1fr));
+    gap: 8px;
+    align-content: start;
+}
+
+/* ITEM SLOTS */
+.prp-slot,
+.item-slot,
+.crafting-grid-slot,
+.ground-slot,
+.equipment-slot,
+.hotbar-slot,
+.attachment-slot {
+    position: relative;
+    background:
+        linear-gradient(
+            180deg,
+            var(--slot),
+            var(--slot-dark)
+        ) !important;
+    border: 1px solid var(--slot-border);
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.item-slot {
+    width: 100%;
+    min-height: 104px;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.item-slot:hover,
+.crafting-grid-slot:hover,
+.ground-slot:hover,
+.equipment-slot:hover,
+.hotbar-slot:hover,
+.attachment-slot:hover {
+    border-color: var(--slot-border-strong);
+    box-shadow:
+        0 0 16px rgba(75, 160, 255, 0.16),
+        inset 0 0 0 1px rgba(75, 160, 255, 0.08);
+}
+
+.slot-number {
+    position: absolute;
+    top: 7px;
+    left: 9px;
+    color: rgba(168, 188, 211, 0.75);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.item-slot-img {
+    width: 82%;
+    height: 82%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.item-slot-img img {
+    width: 72%;
+    height: 72%;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+}
+
+.item-slot-amount {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+}
+
+.item-slot-amount p,
+.item-slot-key p,
+.item-slot-label p {
+    margin: 0;
+}
+
+.item-slot-durability {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 6px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.item-slot-durability-fill {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.item-slot-durability-fill.high {
+    background: linear-gradient(90deg, #48db73, #84f3a1);
+}
+
+.item-slot-durability-fill.medium {
+    background: linear-gradient(90deg, #ffb03b, #ffd15c);
+}
+
+.item-slot-durability-fill.low {
+    background: linear-gradient(90deg, #ff6666, #ff8b5c);
+}
+
+.item-slot-label {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 10px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* CENTER NAV */
+.center-nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 42px;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.center-nav button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+}
+
+.center-nav button.active {
+    color: #9df56d;
+    text-shadow: 0 0 12px rgba(157, 245, 109, 0.45);
+}
+
+.close-button,
+.center-nav .close-button.mini {
+    border: 1px solid var(--panel-border);
+    background: rgba(16, 24, 35, 0.76);
+    color: var(--text);
+    border-radius: 10px;
+    height: 36px;
+    min-width: 58px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.center-nav .close-button.mini {
+    position: absolute;
+    right: 0;
+    top: 6px;
+}
+
+/* CRAFTING PANEL */
+.crafting-panel,
+.center-crafting-panel {
+    padding: 14px;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.crafting-board {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, auto) auto;
+    align-content: center;
+    justify-content: center;
+    gap: 18px;
+}
+
+.crafting-grid {
+    width: min(100%, 420px);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(108px, 1fr));
+    gap: 10px;
+}
+
+.crafting-grid-slot {
+    min-height: 108px;
+    aspect-ratio: 1 / 1;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+}
+
+.crafting-grid-slot img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.crafting-grid-slot span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.craft-slot-amount {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    color: var(--text);
+    font-size: 12px;
+}
+
+.crafting-button-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 86px;
+}
+
+.craft-center-button {
+    min-width: 150px;
+    height: 44px;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    border-radius: 10px;
+    border: 1px solid rgba(75, 160, 255, 0.44);
+    background: linear-gradient(180deg, rgba(41, 103, 210, 0.96), rgba(20, 73, 159, 0.96)) !important;
+    color: white;
+    font-weight: 800;
+    letter-spacing: .05em;
+    cursor: pointer;
+}
+
+.compact-status {
+    min-height: 18px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* CHARACTER EQUIPMENT */
+.character-panel {
+    padding: 14px;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.equipment-stage {
+    position: relative;
+    width: 100%;
+    min-height: 610px;
+    height: min(610px, 68vh);
+    margin-top: 4px;
+}
+
+.equipment-slot {
+    position: absolute;
+    width: 86px;
+    height: 86px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.equipment-slot::after {
+    content: attr(data-label);
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(228, 241, 255, 0.78);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.empty-equipment {
+    color: rgba(173, 194, 218, 0.55);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+}
+
+.equipment-slot.equipped {
+    border-color: rgba(72, 219, 115, 0.58);
+    cursor: pointer;
+}
+
+.equipment-slot.hat {
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.equipment-slot.jacket {
+    top: 100px;
+    left: 18px;
+}
+
+.equipment-slot.shirt {
+    top: 240px;
+    left: 18px;
+}
+
+.equipment-slot.armour {
+    top: 380px;
+    left: 18px;
+}
+
+.equipment-slot.backpack {
+    top: 100px;
+    right: 18px;
+}
+
+.equipment-slot.phone {
+    top: 240px;
+    right: 18px;
+}
+
+.equipment-slot.gadget {
+    top: 242px !important;
+    right: 28px !important;
+}
+
+.equipment-slot.pants {
+    top: 530px;
+    left: 18px;
+}
+
+.equipment-slot.shoes {
+    top: 530px;
+    right: 18px;
+}
+
+.character-outline {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 480px;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: .86;
+    filter: drop-shadow(0 0 26px rgba(157, 245, 109, .18));
+}
+
+.character-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.35;
+    filter: drop-shadow(0 0 8px rgba(120, 160, 220, 0.2));
+}
+
+.equipment-stage.ped-preview-active .character-outline {
+    opacity: 0 !important;
+}
+
+.equipment-stage.ped-preview-active .character-img {
+    display: none !important;
+}
+
+.inventory-container.live-ped-preview .character-panel,
+.inventory-container.live-ped-preview .right-panel.utility-panel {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(8, 18, 34, 0.34),
+            rgba(4, 10, 18, 0.22)
+        ) !important;
+}
+
+.equipment-armor-readout {
+    position: absolute;
+    left: 8px;
+    bottom: 12px;
+    color: #d4e7ff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.equipment-armor-bar {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 6px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.equipment-armor-bar div {
+    height: 100%;
+    background: linear-gradient(90deg, #5db8ff, #8ed2ff);
+    border-radius: 4px;
+}
+
+/* RIGHT PANEL / CATALOGUE / GROUND */
+.right-panel {
+    width: 500px;
+    min-width: 500px;
+    height: 100%;
+    padding: 18px;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
+}
+
+.right-panel.storage-panel,
+.right-panel.ground-panel,
+.right-panel.recipe-panel {
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+
+.right-panel .panel-title {
+    font-size: 18px;
+    letter-spacing: .06em;
+}
+
+.crafting-filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.craft-filter {
+    border: 1px solid rgba(75, 160, 255, 0.38);
+    background: rgba(16, 24, 35, 0.78);
+    color: var(--text);
+    border-radius: 8px;
+    height: 32px;
+    padding: 0 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.craft-filter.active {
+    border-color: rgba(75, 160, 255, 0.74);
+    box-shadow: 0 0 18px rgba(75, 160, 255, 0.12);
+}
+
+.recipe-list {
+    min-height: 0;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+    padding-right: 5px;
+}
+
+.recipe-card {
+    min-height: 74px;
+    border: 1px solid rgba(75, 160, 255, 0.24);
+    background: linear-gradient(180deg, rgba(18, 31, 45, 0.70), rgba(9, 15, 23, 0.72));
+    border-radius: 9px;
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 11px;
+    align-items: center;
+    padding: 9px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.recipe-card img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.recipe-card strong,
+.recipe-card span,
+.recipe-card small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recipe-card span {
+    color: #9df56d;
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.recipe-card small {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.prp-grid.right-grid .item-grid {
+    grid-template-columns: repeat(4, minmax(92px, 1fr));
+    gap: 8px;
+}
+
+.ground-slot {
+    border-style: dashed !important;
+}
+
+.ground-hint {
+    display: none;
+}
+
+/* HOTBAR */
+.inline-hotbar {
+    margin-top: 14px;
+}
+
+.inline-hotbar-title {
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    margin-bottom: 8px;
+}
+
+.prp-hotbar {
+    display: grid;
+    grid-template-columns: repeat(4, 82px);
+    justify-content: center;
+    gap: 8px;
+}
+
+.hotbar-container {
+    position: fixed;
+    left: 50%;
+    bottom: 4.5vh;
+    transform: translateX(-50%);
+    z-index: 7;
+    pointer-events: auto;
+}
+
+.hotbar-container .prp-hotbar {
+    padding: 10px;
+    border: 1px solid rgba(75, 160, 255, 0.24);
+    border-radius: 14px;
+    background: rgba(8, 16, 27, 0.58);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(10px);
+}
+
+.hotbar-slot {
+    width: 82px;
+    min-height: 82px;
+    aspect-ratio: 1 / 1;
+}
+
+.item-slot-key {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 6px;
+    background: rgba(75, 160, 255, 0.14);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(75, 160, 255, 0.35);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* CONTEXT MENU / TOOLTIP / NOTIFICATIONS */
+.context-menu,
+.submenu {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    background: rgba(10, 15, 22, 0.98);
+    border: 1px solid rgba(75, 160, 255, 0.28);
+    border-radius: 12px;
+    min-width: 170px;
+    box-shadow: 0 16px 32px rgba(0,0,0,.35);
+}
+
+.context-menu {
+    position: fixed;
+    z-index: 10;
+}
+
+.context-menu li,
+.submenu li {
+    position: relative;
+    padding: 10px 12px;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.context-menu li:hover,
+.submenu li:hover {
+    background: rgba(75, 160, 255, 0.14);
+}
+
+.submenu {
+    position: absolute;
+    left: calc(100% + 6px);
+    top: 0;
+}
+
+.custom-tooltip {
+    min-width: 220px;
+}
+
+.tooltip-header {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.tooltip-divider {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 8px 0;
+}
+
+.tooltip-info {
+    margin-bottom: 4px;
+    color: #d8e8fb;
+}
+
+.tooltip-info-key {
+    color: #7bb4ff;
+    font-weight: 700;
+}
+
+.tooltip-description {
+    margin-top: 8px;
+    color: #c6d3e0;
+    line-height: 1.35;
+}
+
+.tooltip-weight {
+    margin-top: 10px;
+    color: #8fd8a6;
+    font-weight: 700;
+}
+
+.notification-container,
+.required-item-container,
+.weapon-attachments {
+    position: fixed;
+    z-index: 6;
+}
+
+.notification-container {
+    right: 2vw;
+    bottom: 2vw;
+}
+
+.notification-slot {
+    width: 108px;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(8, 18, 34, 0.72);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+}
+
+.notification-title {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+
+.required-item-container {
+    top: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.required-item {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(8, 18, 34, 0.72);
+    border: 1px solid var(--panel-border);
+}
+
+.weapon-attachments {
+    right: 2vw;
+    top: 12vh;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(8, 18, 34, 0.72);
+    border: 1px solid var(--panel-border);
+}
+
+/* RARITIES */
+.rarity-common {
+    border-color: rgba(180, 180, 180, 0.30) !important;
+}
+
+.rarity-uncommon {
+    border-color: #4cff88 !important;
+    box-shadow: 0 0 8px rgba(76, 255, 136, 0.25) !important;
+}
+
+.rarity-rare {
+    border-color: #4ba0ff !important;
+    box-shadow: 0 0 10px rgba(75, 160, 255, 0.35) !important;
+}
+
+.rarity-epic {
+    border-color: #b84cff !important;
+    box-shadow: 0 0 12px rgba(184, 76, 255, 0.45) !important;
+}
+
+.rarity-legendary {
+    border-color: #ffaa28 !important;
+    box-shadow: 0 0 14px rgba(255, 170, 40, 0.55) !important;
+}
+
+/* REMOVE UNWANTED UI */
+.craft-qty-row,
+.inventory-panel-actions .utility-button,
+.inventory-panel .utility-button,
+.crafting-output,
+.crafting-output-empty {
+    display: none !important;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(75, 160, 255, 0.45);
+    border-radius: 999px;
+}
+
+/* =========================================================
+   PRP CEF BLACK SLAB FIX
+   FiveM CEF can render backdrop-filter as a black rectangle.
+   This keeps the UI style but removes that compositor issue.
+   ========================================================= */
+
+html,
+body,
+#app,
+.inventory-container,
+.inventory-container.crafting-open,
+.inventory-container.storage-open,
+.inventory-container.storage-open.crafting-open {
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    background-image: none !important;
+}
+
+/* Absolutely no full-size wrapper/pseudo background */
+html::before,
+html::after,
+body::before,
+body::after,
+#app::before,
+#app::after,
+.inventory-container::before,
+.inventory-container::after,
+.prp-overlay,
+.prp-overlay::before,
+.prp-overlay::after {
+    display: none !important;
+    content: none !important;
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* IMPORTANT: no backdrop-filter on FiveM CEF, it causes the black slab */
+* {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Keep the same blue glass look without using blur */
+.prp-panel {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(75, 160, 255, 0.16), rgba(75, 160, 255, 0.02) 42%, rgba(0, 0, 0, 0) 72%),
+        linear-gradient(180deg, rgba(8, 18, 34, 0.58), rgba(4, 10, 18, 0.42)) !important;
+    border: 1px solid rgba(75, 160, 255, 0.28) !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(75, 160, 255, 0.04),
+        0 0 24px rgba(0, 0, 0, 0.16) !important;
+}
+
+.inventory-container,
+.inventory-container.crafting-open,
+.inventory-container.storage-open,
+.inventory-container.storage-open.crafting-open {
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+}
+
+/* =========================================================
+   PRP GROUND + SHOP CLEANUP FIX
+   Keeps the working no-black-slab CEF fix.
+   Fixes ground/storage layout and cleans shop panel.
+   ========================================================= */
+
+/* ROOT stays transparent */
+html,
+body,
+#app {
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    background-image: none !important;
+}
+
+/* IMPORTANT: no backdrop-filter in FiveM CEF */
+* {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* No fullscreen overlay / slab */
+.prp-overlay,
+.prp-overlay::before,
+.prp-overlay::after,
+.inventory-container::before,
+.inventory-container::after,
+#app::before,
+#app::after,
+body::before,
+body::after {
+    display: none !important;
+    content: none !important;
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* Main layout: 3 real panels only.
+   The old middle amount column caused ground/shop panels to wrap/drop. */
+.inventory-container,
+.inventory-container.crafting-open,
+.inventory-container.storage-open,
+.inventory-container.storage-open.crafting-open {
+    position: fixed !important;
+    inset: 0 !important;
+    margin: auto !important;
+
+    display: grid !important;
+    grid-template-columns: 520px 560px 500px !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 18px !important;
+
+    width: min(1640px, 98vw) !important;
+    height: min(800px, 90vh) !important;
+
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    background-image: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Hide the old amount box/clear button column completely.
+   Right click / drag all still works, shop has its own amount box. */
+.mid-controls,
+.input-wrapper,
+.input-wrapper input,
+.clear-button:not(.shop-amount-control .clear-button) {
+    display: none !important;
+}
+
+/* Keep actual panels as blue PRP glass without CEF blur bug */
+.prp-panel,
+.inventory-panel,
+.character-panel,
+.center-crafting-panel,
+.crafting-panel,
+.right-panel {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(75, 160, 255, 0.14), rgba(75, 160, 255, 0.025) 40%, rgba(0,0,0,0) 70%),
+        linear-gradient(180deg, rgba(8, 18, 34, 0.58), rgba(4, 10, 18, 0.42)) !important;
+
+    border: 1px solid rgba(75, 160, 255, 0.28) !important;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(75, 160, 255, 0.04),
+        0 0 24px rgba(0, 0, 0, 0.16) !important;
+}
+
+/* Panel widths stay consistent */
+.inventory-panel {
+    width: 520px !important;
+}
+
+.character-panel,
+.center-crafting-panel,
+.crafting-panel {
+    width: 560px !important;
+}
+
+.right-panel {
+    width: 500px !important;
+    min-width: 500px !important;
+}
+
+/* Ground/storage panel should not drop under inventory */
+.right-panel.storage-panel,
+.right-panel.ground-panel,
+.right-panel.recipe-panel,
+.right-panel.shop-panel {
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Ground and shop grids */
+.right-panel .inventory-grid {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.prp-grid.right-grid .item-grid,
+.right-panel .item-grid {
+    grid-template-columns: repeat(4, minmax(92px, 1fr)) !important;
+    gap: 8px !important;
+    align-content: start !important;
+}
+
+/* Ground slots stay clean */
+.ground-grid .ground-slot,
+.ground-slot {
+    min-height: 96px !important;
+    border-style: dashed !important;
+}
+
+/* Shop clean-up */
+.right-panel.shop-panel .panel-head {
+    margin-bottom: 8px !important;
+}
+
+.shop-action-panel {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 128px !important;
+    align-items: center !important;
+    gap: 10px !important;
+
+    padding: 9px 10px !important;
+    margin-bottom: 10px !important;
+
+    border-radius: 12px !important;
+    border: 1px solid rgba(75, 160, 255, 0.22) !important;
+
+    background:
+        linear-gradient(180deg, rgba(13, 24, 40, 0.52), rgba(7, 13, 22, 0.34)) !important;
+}
+
+.shop-action-label {
+    color: var(--text) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+}
+
+.shop-action-rate {
+    margin-top: 3px !important;
+    color: #8fd8a6 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+}
+
+.shop-amount-control {
+    width: 128px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 30px !important;
+    gap: 6px !important;
+}
+
+.shop-amount-control input {
+    width: 100% !important;
+    height: 32px !important;
+
+    border: 1px solid rgba(75, 160, 255, 0.32) !important;
+    border-radius: 8px !important;
+
+    background: rgba(7, 13, 22, 0.62) !important;
+    color: var(--text) !important;
+
+    text-align: center !important;
+    font-weight: 800 !important;
+    outline: none !important;
+}
+
+.shop-amount-control .clear-button {
+    display: flex !important;
+    width: 30px !important;
+    height: 32px !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    border: 1px solid rgba(75, 160, 255, 0.28) !important;
+    border-radius: 8px !important;
+
+    background: rgba(16, 24, 35, 0.72) !important;
+    color: var(--text) !important;
+    cursor: pointer !important;
+}
+
+/* Shop item price badge */
+.item-price {
+    position: absolute !important;
+    left: 8px !important;
+    bottom: 8px !important;
+
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+
+    background: rgba(0, 0, 0, 0.40) !important;
+    color: #8fd8a6 !important;
+
+    font-size: 11px !important;
+    font-weight: 800 !important;
+}
+
+.item-price p {
+    margin: 0 !important;
+}
+
+/* Hide old inventory craft toggle and drag amount */
+.craft-qty-row,
+.inventory-panel-actions .utility-button,
+.inventory-panel .utility-button {
+    display: none !important;
+}
+
+/* Mobile/smaller screens */
+@media (max-width: 1500px) {
+    .inventory-container,
+    .inventory-container.crafting-open,
+    .inventory-container.storage-open,
+    .inventory-container.storage-open.crafting-open {
+        grid-template-columns: 430px 500px 430px !important;
+        width: min(1395px, 98vw) !important;
+    }
+
+    .inventory-panel {
+        width: 430px !important;
+    }
+
+    .character-panel,
+    .center-crafting-panel,
+    .crafting-panel {
+        width: 500px !important;
+    }
+
+    .right-panel {
+        width: 430px !important;
+        min-width: 430px !important;
+    }
+
+    .inventory-panel .item-grid {
+        grid-template-columns: repeat(4, minmax(76px, 1fr)) !important;
+    }
+}
+
+
+/* =========================================================
+   PRP CRAFTING CATEGORIES / BLUEPRINT CATALOGUE
+   ========================================================= */
+.category-row {
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+
+.category-row .craft-filter {
+    min-width: 74px !important;
+    margin-bottom: 4px !important;
+}
+
+.category-row span {
+    margin-left: auto !important;
+    white-space: nowrap !important;
+}
+
+.recipe-card small {
+    color: rgba(143, 164, 187, 0.95) !important;
+}
+
+/* =========================================================
+   PRP CRAFTING SIZE LOCK + CLEAN STATUS TEXT
+   Keeps crafting panel/default card size stable when selecting recipes.
+   ========================================================= */
+
+.center-crafting-panel,
+.crafting-panel {
+    width: 560px !important;
+    min-width: 560px !important;
+    max-width: 560px !important;
+}
+
+.crafting-board {
+    width: 100% !important;
+    min-height: 620px !important;
+    height: 620px !important;
+    max-height: 620px !important;
+    display: grid !important;
+    grid-template-rows: 390px 76px !important;
+    align-content: center !important;
+    justify-content: center !important;
+    gap: 18px !important;
+    overflow: hidden !important;
+}
+
+.crafting-grid {
+    width: 420px !important;
+    min-width: 420px !important;
+    max-width: 420px !important;
+    height: 390px !important;
+    min-height: 390px !important;
+    max-height: 390px !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 130px) !important;
+    grid-auto-rows: 120px !important;
+    gap: 10px !important;
+    margin: 0 auto !important;
+}
+
+.crafting-grid-slot {
+    width: 130px !important;
+    height: 120px !important;
+    min-width: 130px !important;
+    min-height: 120px !important;
+    max-width: 130px !important;
+    max-height: 120px !important;
+    overflow: hidden !important;
+}
+
+.crafting-grid-slot span {
+    max-width: 108px !important;
+    display: block !important;
+    text-align: center !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.crafting-button-center {
+    width: 420px !important;
+    min-height: 76px !important;
+    height: 76px !important;
+    max-height: 76px !important;
+}
+
+.crafting-status,
+.compact-status,
+.crafting-output,
+.crafting-output-empty,
+.crafting-materials,
+.selected-recipe,
+.crafting-selected,
+.selected-craft {
+    display: none !important;
+}
+
+/* Stable recipe card sizes on the right */
+.recipe-list {
+    grid-auto-rows: 82px !important;
+}
+
+.recipe-card {
+    height: 82px !important;
+    min-height: 82px !important;
+    max-height: 82px !important;
+    overflow: hidden !important;
+}
+
+
+
+.recipe-card.selected,
+.recipe-card.active {
+    border-color: rgba(75, 160, 255, 0.78) !important;
+    box-shadow: 0 0 18px rgba(75, 160, 255, 0.16) !important;
+}
+
+/* Smaller screens keep size stable, just scaled panels */
+@media (max-width: 1500px) {
+    .center-crafting-panel,
+    .crafting-panel {
+        width: 500px !important;
+        min-width: 500px !important;
+        max-width: 500px !important;
+    }
+
+    .crafting-grid,
+    .crafting-button-center {
+        width: 390px !important;
+        min-width: 390px !important;
+        max-width: 390px !important;
+    }
+
+    .crafting-grid {
+        grid-template-columns: repeat(3, 120px) !important;
+        grid-auto-rows: 112px !important;
+        height: 366px !important;
+        min-height: 366px !important;
+        max-height: 366px !important;
+    }
+
+    .crafting-grid-slot {
+        width: 120px !important;
+        height: 112px !important;
+        min-width: 120px !important;
+        min-height: 112px !important;
+        max-width: 120px !important;
+        max-height: 112px !important;
+    }
+}
+
+/* =========================================================
+   PRP RECIPE REQUIREMENTS DISPLAY
+   Shows known recipe ingredients in the catalogue.
+   ========================================================= */
+
+.recipe-list {
+    grid-auto-rows: 96px !important;
+}
+
+.recipe-card {
+    height: 96px !important;
+    min-height: 96px !important;
+    max-height: 96px !important;
+    overflow: hidden !important;
+}
+
+.recipe-card small,
+.recipe-card .recipe-requirements {
+    display: block !important;
+    color: var(--muted) !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    margin-top: 4px !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-height: 30px !important;
+}
+
+
+
+
+
+/* =========================================================
+   PRP EMBEDDED BACKPACK INVENTORY - BIGGER + COLLAPSIBLE
+   ========================================================= */
+
+.inventory-panel {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    min-height: 0 !important;
+}
+
+.inventory-body {
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+    gap: 0 !important;
+}
+
+.inventory-grid.prp-grid {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-bottom: 6px !important;
+}
+
+.section-toggle-button {
+    height: 30px !important;
+    min-width: 34px !important;
+    padding: 0 10px !important;
+
+    border: 1px solid rgba(75, 160, 255, 0.42) !important;
+    border-radius: 8px !important;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(41, 103, 210, 0.78),
+            rgba(20, 73, 159, 0.78)
+        ) !important;
+
+    color: #ffffff !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+}
+
+.section-toggle-button:hover {
+    border-color: rgba(75, 160, 255, 0.82) !important;
+    box-shadow: 0 0 12px rgba(75, 160, 255, 0.16) !important;
+}
+
+.embedded-backpack-panel {
+    margin-top: 10px !important;
+    height: 330px !important;
+    min-height: 330px !important;
+    max-height: 330px !important;
+
+    padding: 12px !important;
+    overflow: hidden !important;
+
+    border: 1px solid rgba(75, 160, 255, 0.28) !important;
+    border-radius: 14px !important;
+
+    background:
+        radial-gradient(circle at 50% 0%, rgba(75, 160, 255, 0.12), rgba(75, 160, 255, 0.02) 42%, rgba(0,0,0,0) 72%),
+        linear-gradient(180deg, rgba(13, 24, 40, 0.52), rgba(7, 13, 22, 0.34)) !important;
+}
+
+/* collapsed backpack */
+.embedded-backpack-panel:has(.embedded-backpack-grid[style*="display: none"]),
+.embedded-backpack-panel:has(.embedded-backpack-grid[v-show="false"]) {
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+}
+
+.embedded-backpack-head {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    margin-bottom: 8px !important;
+}
+
+.embedded-backpack-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+}
+
+.embedded-backpack-title {
+    color: var(--text) !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.1 !important;
+}
+
+.embedded-backpack-weight,
+.embedded-backpack-meta {
+    color: var(--muted) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+
+.backpack-weight-bar {
+    margin-bottom: 10px !important;
+}
+
+.embedded-backpack-grid {
+    height: 258px !important;
+    min-height: 258px !important;
+    max-height: 258px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 4px !important;
+}
+
+.backpack-item-grid {
+    grid-template-columns: repeat(4, minmax(96px, 1fr)) !important;
+    gap: 8px !important;
+}
+
+.backpack-slot {
+    min-height: 100px !important;
+    height: 100px !important;
+    max-height: 100px !important;
+}
+
+/* Hide old button style if cached */
+.backpack-storage-strip {
+    display: none !important;
+}
+
+/* Keep layout 3 panels while embedded backpack is open */
+.inventory-container.storage-open,
+.inventory-container.storage-open.crafting-open {
+    grid-template-columns: 520px 560px 500px !important;
+    width: min(1640px, 98vw) !important;
+}
+
+/* Make backpack drag target clear */
+.embedded-backpack-grid .item-slot:hover {
+    border-color: rgba(157, 245, 109, 0.82) !important;
+    box-shadow:
+        0 0 16px rgba(157, 245, 109, 0.16),
+        inset 0 0 0 1px rgba(157, 245, 109, 0.10) !important;
+}
+
+@media (max-width: 1500px) {
+    .embedded-backpack-panel {
+        height: 285px !important;
+        min-height: 285px !important;
+        max-height: 285px !important;
+    }
+
+    .embedded-backpack-grid {
+        height: 215px !important;
+        min-height: 215px !important;
+        max-height: 215px !important;
+    }
+
+    .backpack-item-grid {
+        grid-template-columns: repeat(4, minmax(76px, 1fr)) !important;
+    }
+
+    .backpack-slot {
+        min-height: 88px !important;
+        height: 88px !important;
+        max-height: 88px !important;
+    }
+}
+
+/* Crafting catalogue button click safety */
+.crafting-filter-row,
+.craft-filter {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+.craft-filter {
+    cursor: pointer !important;
+}
+
+.embedded-backpack-panel.collapsed {
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+}
+
+/* =========================================================
+   PRP COLLAPSE HEIGHT FIX
+   Closing Inventory no longer makes Backpack grow.
+   Backpack only changes size when its own ↑ / ↓ button is pressed.
+   ========================================================= */
+
+/* Body rows:
+   1 = weight row
+   2 = weight bar
+   3 = inventory area, can shrink/grow
+   4 = backpack, fixed height
+*/
+.inventory-body {
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr) max-content !important;
+    min-height: 0 !important;
+}
+
+/* Main inventory scroll area only owns the flexible space */
+.inventory-grid.prp-grid {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* When inventory is closed, hide its grid but do not donate height to backpack */
+.inventory-grid.prp-grid[style*="display: none"] {
+    display: none !important;
+}
+
+/* Backpack open size is locked */
+.embedded-backpack-panel {
+    height: 330px !important;
+    min-height: 330px !important;
+    max-height: 330px !important;
+    flex: 0 0 330px !important;
+    align-self: end !important;
+}
+
+/* Backpack closed size is locked */
+.embedded-backpack-panel.collapsed {
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+    flex: 0 0 64px !important;
+}
+
+/* Backpack internal grid is also locked */
+.embedded-backpack-panel:not(.collapsed) .embedded-backpack-grid {
+    height: 258px !important;
+    min-height: 258px !important;
+    max-height: 258px !important;
+}
+
+/* Collapsed backpack should only show header */
+.embedded-backpack-panel.collapsed .backpack-weight-bar,
+.embedded-backpack-panel.collapsed .embedded-backpack-grid {
+    display: none !important;
+}
+
+/* Inventory panel itself should not reflow backpack bigger */
+.inventory-panel {
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    overflow: hidden !important;
+}
+
+@media (max-width: 1500px) {
+    .embedded-backpack-panel {
+        height: 285px !important;
+        min-height: 285px !important;
+        max-height: 285px !important;
+        flex-basis: 285px !important;
+    }
+
+    .embedded-backpack-panel.collapsed {
+        height: 64px !important;
+        min-height: 64px !important;
+        max-height: 64px !important;
+        flex-basis: 64px !important;
+    }
+
+    .embedded-backpack-panel:not(.collapsed) .embedded-backpack-grid {
+        height: 215px !important;
+        min-height: 215px !important;
+        max-height: 215px !important;
+    }
+}
+
+
+/* =========================================================
+   PRP SIMPLIFIED EQUIPMENT LAYOUT
+   Only Phone + SIM, Backpack, Gadget 1, Gadget 2, Armour.
+   Removes clothing slots and attachment UI.
+   ========================================================= */
+
+/* Hide old clothing slots */
+.equipment-slot.hat,
+.equipment-slot.jacket,
+.equipment-slot.shirt,
+.equipment-slot.pants,
+.equipment-slot.shoes {
+    display: none !important;
+}
+
+/* Hide old floating attachment UI/buttons, but keep the right-panel workbench. */
+.weapon-attachments,
+button[onclick*="Attachment"],
+button[onclick*="attachment"],
+.attachments-button,
+.attachment-button {
+    display: none !important;
+}
+
+.weapon-mod-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.weapon-mod-hero {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid rgba(75, 160, 255, 0.24);
+    border-radius: 8px;
+    background: rgba(4, 10, 18, 0.34);
+}
+
+.weapon-mod-hero img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.weapon-mod-name {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.weapon-mod-note {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.weapon-mod-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+}
+
+.weapon-mod-grid,
+.device-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    min-height: 82px;
+}
+
+.weapon-mod-slot {
+    width: 100%;
+    min-height: 82px;
+    cursor: pointer;
+}
+
+.device-module-slot {
+    min-height: 96px;
+}
+
+.weapon-mod-empty,
+.device-slot-empty {
+    min-height: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    border: 1px dashed rgba(75, 160, 255, 0.28);
+    border-radius: 8px;
+    background: rgba(4, 10, 18, 0.22);
+}
+
+.weapon-mod-empty {
+    grid-column: 1 / -1;
+}
+
+.device-slot-empty {
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px;
+    text-transform: uppercase;
+}
+
+.device-slot-empty strong {
+    color: var(--text);
+    font-size: 11px;
+}
+
+.device-slot-empty span,
+.device-mod-detail {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+/* Make equipment stage compact and centered */
+.character-panel .equipment-stage,
+.equipment-stage {
+    position: relative !important;
+    height: 560px !important;
+    min-height: 560px !important;
+    max-height: 560px !important;
+    margin-top: 22px !important;
+}
+
+/* Slightly stronger character silhouette */
+.character-outline {
+    top: 88px !important;
+    width: 155px !important;
+    height: 390px !important;
+    opacity: 0.42 !important;
+}
+
+/* Base equipment slot */
+.equipment-slot {
+    width: 96px !important;
+    height: 96px !important;
+    border-radius: 14px !important;
+}
+
+/* Phone + SIM aligned with gadgets */
+.equipment-slot.phone {
+    top: 80px !important;
+    right: 28px !important;
+}
+
+.equipment-slot.simcard {
+    top: 99px !important;
+    right: 134px !important;
+
+    width: 54px !important;
+    height: 54px !important;
+
+    border-radius: 12px !important;
+}
+
+.equipment-slot.simcard::after {
+    content: "SIM" !important;
+    top: 60px !important;
+    bottom: auto !important;
+    font-size: 10px !important;
+}
+
+/* Backpack left side */
+.equipment-slot.backpack {
+    top: 80px !important;
+    left: 28px !important;
+}
+
+/* Armour lower left */
+.equipment-slot.armour {
+    top: 260px !important;
+    left: 28px !important;
+}
+
+/* Gadgets lower right */
+.equipment-slot.gadget {
+    top: 242px !important;
+    right: 28px !important;
+}
+
+.equipment-slot.gadget::after {
+    content: "GADGET 1" !important;
+}
+
+.equipment-slot.gadget2 {
+    top: 388px !important;
+    right: 28px !important;
+}
+
+.equipment-slot.gadget2::after {
+    content: "GADGET 2" !important;
+}
+
+/* Keep labels clean */
+.equipment-slot::after {
+    color: rgba(228, 241, 255, 0.88) !important;
+    text-shadow: 0 0 8px rgba(75, 160, 255, 0.22) !important;
+}
+
+/* Small SIM image fitting */
+.equipment-slot.simcard .item-slot-img,
+.equipment-slot.simcard.equipped .item-slot-img {
+    width: 92% !important;
+    height: 92% !important;
+}
+
+.equipment-slot.simcard .item-slot-img img {
+    width: 82% !important;
+    height: 82% !important;
+}
+
+/* Empty SIM text smaller */
+.equipment-slot.simcard .empty-equipment {
+    font-size: 9px !important;
+}
+
+/* Right hotbar still sits nicely */
+.right-hotbar {
+    margin-top: 4px !important;
+}
+
+
+/* =========================================================
+   PRP DRAG GHOST FIX
+   Keeps dragged item attached to mouse instead of sliding across top.
+   ========================================================= */
+
+.drag-ghost {
+    position: fixed !important;
+    pointer-events: none !important;
+    z-index: 999999 !important;
+    margin: 0 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    overflow: hidden !important;
+}
+
+.drag-ghost,
+.drag-ghost * {
+    pointer-events: none !important;
+}
+
+
+/* =========================================================
+   PRP BACKPACK PERSIST + EXPAND FIX
+   Inventory collapse gives backpack more visible rows.
+   ========================================================= */
+
+.inventory-panel.inventory-collapsed .inventory-body {
+    grid-template-rows: auto auto 0px minmax(0, 1fr) !important;
+}
+
+.inventory-panel.inventory-collapsed .inventory-grid.prp-grid {
+    display: none !important;
+}
+
+.inventory-panel.inventory-collapsed .embedded-backpack-panel:not(.collapsed) {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    align-self: stretch !important;
+}
+
+.inventory-panel.inventory-collapsed .embedded-backpack-panel:not(.collapsed) .embedded-backpack-grid {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+
+/* Open backpack gets more room, closed backpack stays closed */
+.inventory-panel.inventory-collapsed .embedded-backpack-panel.collapsed {
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+}
+
+/* Keep backpack weight bar live */
+.embedded-backpack-weight,
+.embedded-backpack-meta {
+    min-width: max-content !important;
+}
+
+
+/* =========================================================
+   PRP BACKPACK SPACING + SIM HITBOX FIX
+   ========================================================= */
+
+/* Move backpack section down so it does not cover inventory weight/bar */
+.embedded-backpack-panel {
+    margin-top: 24px !important;
+}
+
+/* Give inventory header/weight breathing room */
+.inventory-body {
+    row-gap: 4px !important;
+}
+
+/* SIM square sits left of phone and has a clean hitbox */
+.equipment-slot.phone {
+    top: 80px !important;
+    right: 28px !important;
+    z-index: 2 !important;
+}
+
+.equipment-slot.simcard {
+    top: 101px !important;
+    right: 132px !important;
+    width: 54px !important;
+    height: 54px !important;
+    z-index: 6 !important;
+    pointer-events: auto !important;
+}
+
+.equipment-slot.simcard * {
+    pointer-events: none !important;
+}
+
+.equipment-slot.simcard::after {
+    content: "SIM" !important;
+    top: 60px !important;
+    bottom: auto !important;
+    font-size: 10px !important;
+}
+
+/* Keep backpack expanded area lower when inventory is collapsed too */
+.inventory-panel.inventory-collapsed .embedded-backpack-panel:not(.collapsed) {
+    margin-top: 24px !important;
+}
+
+
+/* =========================================================
+   PRP EQUIPMENT DRAG GHOST FIX
+   Stops equipment items sliding across the top of the screen.
+   ========================================================= */
+
+.drag-ghost {
+    position: fixed !important;
+    left: auto;
+    right: auto !important;
+    top: auto;
+    bottom: auto !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    pointer-events: none !important;
+    z-index: 999999 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Equipment slot ghosts must not inherit absolute equipment layout positions */
+.drag-ghost.equipment-slot,
+.drag-ghost.equipment-slot.phone,
+.drag-ghost.equipment-slot.simcard,
+.drag-ghost.equipment-slot.backpack,
+.drag-ghost.equipment-slot.armour,
+.drag-ghost.equipment-slot.gadget,
+.drag-ghost.equipment-slot.gadget2 {
+    position: fixed !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+}
+
+.drag-ghost::after {
+    display: none !important;
+}
+
+.drag-ghost,
+.drag-ghost * {
+    pointer-events: none !important;
+}
+
+/* =========================================================
+   PRP INVENTORY BUBBLE COLLAPSE
+   Inventory becomes a header bubble like backpack when closed.
+   The inventory grid is a panel inside this header when open.
+   ========================================================= */
+
+.inventory-bubble-panel {
+    overflow: hidden !important;
+}
+
+/* Normal/open inventory: header + inside panel + backpack */
+.inventory-bubble-panel:not(.inventory-collapsed) {
+    height: 100% !important;
+}
+
+/* Closed inventory bubble: small header only, backpack moves down naturally */
+.inventory-bubble-panel.inventory-collapsed {
+    display: grid !important;
+    grid-template-rows: auto auto !important;
+}
+
+/* The title/weight area becomes the bubble */
+.inventory-bubble-panel.inventory-collapsed .panel-head {
+    margin-bottom: 6px !important;
+}
+
+.inventory-bubble-panel.inventory-collapsed .panel-title {
+    font-size: 22px !important;
+}
+
+.inventory-bubble-panel.inventory-collapsed .inventory-body {
+    display: grid !important;
+    grid-template-rows: auto auto 0px max-content !important;
+}
+
+/* Hide only the actual item grid when inventory is closed */
+.inventory-bubble-panel.inventory-collapsed .inventory-grid.prp-grid {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+}
+
+/* Keep weight text/bar in the bubble */
+.inventory-bubble-panel.inventory-collapsed .panel-weight-row,
+.inventory-bubble-panel.inventory-collapsed .weight-bar.prp:not(.backpack-weight-bar) {
+    display: flex !important;
+}
+
+/* The backpack should sit lower, below the collapsed inventory bubble */
+.inventory-bubble-panel.inventory-collapsed .embedded-backpack-panel {
+    margin-top: 28px !important;
+}
+
+/* When inventory is closed and backpack is open, backpack gets the space */
+.inventory-bubble-panel.inventory-collapsed .embedded-backpack-panel:not(.collapsed) {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    align-self: stretch !important;
+}
+
+.inventory-bubble-panel.inventory-collapsed .embedded-backpack-panel:not(.collapsed) .embedded-backpack-grid {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+
+/* Closed backpack stays a bubble */
+.inventory-bubble-panel.inventory-collapsed .embedded-backpack-panel.collapsed {
+    height: 64px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
+}
+
+/* Add a subtle inside-panel look to the open inventory grid */
+.inventory-bubble-panel:not(.inventory-collapsed) .inventory-grid.prp-grid {
+    margin-top: 8px !important;
+    padding: 10px 4px 6px 0 !important;
+    border-top: 1px solid rgba(75, 160, 255, 0.16) !important;
+}
+
+/* Make the collapse/expand arrow sit like the backpack bubble button */
+.inventory-bubble-panel .section-toggle-button {
+    align-self: flex-start !important;
+}

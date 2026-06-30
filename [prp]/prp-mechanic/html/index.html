@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRP Mechanic</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app" class="hidden">
+    <div class="tablet">
+      <aside>
+        <div class="brand">PRP<br><span>Mechanic OS</span></div>
+        <button class="nav active" data-page="dashboard">Dashboard</button>
+        <button class="nav" data-page="diagnostics">Diagnostics</button>
+        <button class="nav" data-page="repairs">Repairs</button>
+        <button class="nav" data-page="skills">Skill Tree</button>
+        <button class="nav" data-page="tow">Tow Dispatch</button>
+        <button id="close">Close</button>
+      </aside>
+      <main>
+        <section id="dashboard" class="page active">
+          <h1>Mechanic Dashboard</h1>
+          <div class="cards">
+            <div class="card"><label>Level</label><strong id="level">1</strong></div>
+            <div class="card"><label>EXP</label><strong id="xp">0 / 250</strong></div>
+            <div class="card"><label>Skill Points</label><strong id="points">0</strong></div>
+            <div class="card"><label>Reputation</label><strong id="rep">0</strong></div>
+          </div>
+          <div class="panel">
+            <h2>Current Work</h2>
+            <p id="currentWork">No active tow contract.</p>
+            <button class="primary" id="refreshBtn">Refresh Tablet</button>
+          </div>
+        </section>
+
+        <section id="diagnostics" class="page">
+          <h1>Vehicle Diagnostics</h1>
+          <p class="muted">Stand near a vehicle and scan it. Hidden issues are saved by plate.</p>
+          <button class="primary" id="inspectBtn">Inspect Nearby Vehicle</button>
+          <div id="diagnosticResults" class="issueGrid"></div>
+        </section>
+
+        <section id="repairs" class="page">
+          <h1>Quick Repairs</h1>
+          <div class="cards">
+            <button class="action" data-basic="engine">Repair Engine</button>
+            <button class="action" data-basic="body">Repair Body</button>
+            <button class="action" data-basic="clean">Clean Vehicle</button>
+          </div>
+          <h2>Hidden Issue Repairs</h2>
+          <div id="repairList" class="issueGrid"></div>
+        </section>
+
+        <section id="skills" class="page">
+          <h1>Skill Tree</h1>
+          <div id="skillsList" class="skillGrid"></div>
+        </section>
+
+        <section id="tow" class="page">
+          <h1>Tow Dispatch</h1>
+          <p class="muted">Accept a contract, retrieve a tow truck at the depot, attach the vehicle, and deliver it to the drop-off.</p>
+          <div id="activeTow" class="activeTow hidden"></div>
+          <div id="towJobs" class="jobGrid"></div>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast hidden"></div>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRP Inventory</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="https://unpkg.com/floating-vue@5.2.2/dist/style.css" />
+    <script src="https://kit.fontawesome.com/d37231be1f.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@floating-ui/core@1.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.1"></script>
+    <script src="https://unpkg.com/floating-vue@5.2.2/dist/floating-vue.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <script src="app.js" defer></script>
+</head>
+
+<body>
+    <div id="app">
+<div class="inventory-container" :class="{ 'crafting-open': isCraftingPanelOpen, 'storage-open': hasExternalStorageInventory && !isShopInventory, 'live-ped-preview': characterPreviewActive }" v-if="isInventoryOpen" @mousemove="drag" @mouseup="endDrag" @contextmenu.prevent
+            @mousedown="containerMouseDownAction">
+
+            <section class="prp-panel inventory-panel inventory-bubble-panel" :class="{ 'inventory-collapsed': !inventorySectionOpen }">
+                <div class="panel-head">
+                    <div>
+                        <div class="panel-kicker">Progression RP</div>
+                        <div class="panel-title">Inventory</div>
+                    </div>
+                    <div class="panel-actions inventory-panel-actions">
+<button class="section-toggle-button" @click.stop="toggleInventorySection">
+                            {{ inventorySectionOpen ? '↓' : '↑' }}
+                        </button>
+                        <div class="panel-meta">{{ usedPlayerSlots }} / {{ totalSlots }} slots</div>
+                    </div>
+                </div>
+
+                <div class="inventory-body">
+                    <div class="panel-weight-row">
+                        <span>{{ (playerWeight / 1000).toFixed(1) }} / {{ (maxWeight / 1000).toFixed(1) }} KG</span>
+                        <span>{{ Math.min(Math.floor((playerWeight / maxWeight) * 100) || 0, 100) }}%</span>
+                    </div>
+
+                    <div class="weight-bar prp">
+                        <div class="weight-bar-fill"
+                            :style="{ width: Math.min((playerWeight / maxWeight) * 100, 100) + '%' }"
+                            :class="weightBarClass"></div>
+                    </div>
+<div class="inventory-grid prp-grid" v-show="inventorySectionOpen">
+                        <div class="item-grid">
+                            <div v-for="slot in visibleInventorySlots" :key="slot" class="item-slot prp-slot"
+                                :data-slot="slot" :class="[
+                                'rarity-' + getRarity(getItemInSlot(slot, 'player')),
+                                { 'invalid-slot-highlight': errorSlot === slot }
+                                ]"
+                                @dblclick="getItemInSlot(slot, 'player') && getItemInSlot(slot, 'player').type !== 'weapon' && useItem(getItemInSlot(slot, 'player'))"
+                                @mousedown="event => handleMouseDown(event, slot, 'player')">
+
+                                <div class="slot-number">{{ slot }}</div>
+
+                                <div class="item-slot-img" v-if="getItemInSlot(slot, 'player')"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getItemInSlot(slot, 'player')), html: true}">
+                                    <img :src="'images/' + getItemInSlot(slot, 'player').image" alt="" />
+                                </div>
+
+                                <div class="item-slot-amount" v-if="getItemInSlot(slot, 'player')">
+                                    <p>x{{ getItemInSlot(slot, 'player').amount }}</p>
+                                </div>
+
+                                <div class="item-slot-durability" v-if="getItemInSlot(slot, 'player')">
+                                    <div class="item-slot-durability-fill"
+                                        v-if="getItemInSlot(slot, 'player').info && 'quality' in getItemInSlot(slot, 'player').info"
+                                        :style="{ width: getItemInSlot(slot, 'player').info.quality + '%' }" :class="{
+                                        'high': getItemInSlot(slot, 'player').info.quality > 75,
+                                        'medium': getItemInSlot(slot, 'player').info.quality <= 75 && getItemInSlot(slot, 'player').info.quality > 25,
+                                        'low': getItemInSlot(slot, 'player').info.quality <= 25
+                                    }"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <div class="embedded-backpack-panel" :class="{ collapsed: !backpackSectionOpen }" v-if="getEquipmentPreview('backpack')">
+                        <div class="embedded-backpack-head">
+                            <div>
+                                <div class="embedded-backpack-title">Backpack</div>
+                                <div class="embedded-backpack-weight">
+                                    {{ (backpackWeight / 1000).toFixed(1) }} / {{ (backpackMaxWeight / 1000).toFixed(0) }} KG
+                                </div>
+                            </div>
+                            <div class="embedded-backpack-actions">
+                                <button class="section-toggle-button" @click.stop="toggleBackpackSection">
+                                    {{ backpackSectionOpen ? '↓' : '↑' }}
+                                </button>
+                                <div class="embedded-backpack-meta">
+                                    {{ usedBackpackSlots }} / {{ backpackSlots }} slots
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="weight-bar prp backpack-weight-bar" v-show="backpackSectionOpen">
+                            <div class="weight-bar-fill"
+                                :style="{ width: Math.min((backpackWeight / backpackMaxWeight) * 100, 100) + '%' }"></div>
+                        </div>
+
+                        <div class="embedded-backpack-grid" v-show="backpackSectionOpen">
+                            <div class="item-grid backpack-item-grid">
+                                <div v-for="slot in visibleBackpackSlots" :key="'backpack-' + slot"
+                                    class="item-slot prp-slot backpack-slot"
+                                    :data-slot="slot"
+                                    @mousedown="event => handleMouseDown(event, slot, 'backpack')">
+                                    <div class="slot-number">{{ slot }}</div>
+
+                                    <div class="item-slot-img" v-if="getItemInSlot(slot, 'backpack')"
+                                        v-tooltip.right-end="{content: generateTooltipContent(getItemInSlot(slot, 'backpack')), html: true}">
+                                        <img :src="'images/' + getItemInSlot(slot, 'backpack').image" alt="" />
+                                    </div>
+
+                                    <div class="item-slot-amount" v-if="getItemInSlot(slot, 'backpack')">
+                                        <p>x{{ getItemInSlot(slot, 'backpack').amount }}</p>
+                                    </div>
+
+                                    <div class="item-slot-durability" v-if="getItemInSlot(slot, 'backpack')">
+                                        <div class="item-slot-durability-fill"
+                                            v-if="getItemInSlot(slot, 'backpack').info && 'quality' in getItemInSlot(slot, 'backpack').info"
+                                            :style="{ width: getItemInSlot(slot, 'backpack').info.quality + '%' }"
+                                            :class="{
+                                                'high': getItemInSlot(slot, 'backpack').info.quality > 75,
+                                                'medium': getItemInSlot(slot, 'backpack').info.quality <= 75 && getItemInSlot(slot, 'backpack').info.quality > 25,
+                                                'low': getItemInSlot(slot, 'backpack').info.quality <= 25
+                                            }"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+            </section>
+
+            <section class="prp-panel crafting-panel center-crafting-panel" v-if="isCraftingPanelOpen">
+                <div class="center-nav">
+                    <button @click="toggleCraftingPanel">Equipment</button>
+                    <button class="active">Crafting</button>
+                    <button class="close-button mini" @click="closeInventory">ESC</button>
+                </div>
+
+                <div class="crafting-board">
+                        <div class="crafting-grid">
+                            <button v-for="(item, index) in craftingGrid" :key="'craft-slot-' + index"
+                                class="crafting-grid-slot" :data-crafting-index="index" @click="item ? clearCraftingSlot(index) : null">
+                                <template v-if="item">
+                                    <img :src="'images/' + item.image" alt="" />
+                                    <span>{{ item.label || item.name }}</span>
+                                    <strong class="craft-slot-amount">x{{ item.amount || 1 }}</strong>
+                                </template>
+                            </button>
+                        </div>
+
+                        <div class="crafting-button-center">
+                            <button class="primary craft-center-button" @click="craftMatchedRecipe">
+                                {{ craftingBusy ? '' : 'Craft' }}
+                            </button>
+</div>
+                </div>
+            </section>
+
+            <section class="prp-panel character-panel" v-if="!isCraftingPanelOpen">
+
+                    <div class="center-nav">
+                        <button class="active">Equipment</button>
+                            <button v-if="canShowCraftingPanel" @click="toggleCraftingPanel">Crafting</button>
+                        <button class="close-button mini" @click="closeInventory">ESC</button>
+                    </div>
+
+                    <div class="equipment-stage" :class="{ 'ped-preview-active': characterPreviewActive }">
+                        <div class="equipment-slot hat" data-label="Hat">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot jacket" data-label="Jacket">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot shirt" data-label="Shirt">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot armour" data-label="Armour" data-equipment-slot="armour"
+                            :class="{ equipped: getEquipmentPreview('armour') }"
+                            @dblclick="unequipEquipmentItem('armour')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'armour')">
+                            <template v-if="getEquipmentPreview('armour')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('armour')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('armour').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('armour').amount || 1 }}</p>
+                                </div>
+                                <div class="equipment-armor-readout">
+                                    {{ getEquipmentArmorPercent(getEquipmentPreview('armour')) }}%
+                                </div>
+                                <div class="equipment-armor-bar">
+                                    <div :style="{ width: getEquipmentArmorPercent(getEquipmentPreview('armour')) + '%' }"></div>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot backpack" data-label="Backpack" data-equipment-slot="backpack"
+                            :class="{ equipped: getEquipmentPreview('backpack') }"
+                            @dblclick="unequipEquipmentItem('backpack')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'backpack')">
+                            <template v-if="getEquipmentPreview('backpack')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('backpack')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('backpack').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('backpack').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot phone" data-label="Phone" data-equipment-slot="phone"
+                            :class="{ equipped: getEquipmentPreview('phone') }"
+                            @dblclick="unequipEquipmentItem('phone')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'phone')">
+                            <template v-if="getEquipmentPreview('phone')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('phone')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('phone').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('phone').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        
+                        <div class="equipment-slot simcard" data-label="SIM" data-equipment-slot="simcard"
+                            :class="{ equipped: getEquipmentPreview('simcard') }"
+                            @dblclick="unequipEquipmentItem('simcard')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'simcard')">
+                            <template v-if="getEquipmentPreview('simcard')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('simcard')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('simcard').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('simcard').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot gadget" data-label="Gadget" data-equipment-slot="gadget"
+                            :class="{ equipped: getEquipmentPreview('gadget') }"
+                            @dblclick="unequipEquipmentItem('gadget')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'gadget')">
+                            <template v-if="getEquipmentPreview('gadget')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('gadget')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('gadget').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('gadget').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        
+                        <div class="equipment-slot gadget2" data-label="Gadget 2" data-equipment-slot="gadget2"
+                            :class="{ equipped: getEquipmentPreview('gadget2') }"
+                            @dblclick="unequipEquipmentItem('gadget2')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'gadget2')">
+                            <template v-if="getEquipmentPreview('gadget2')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('gadget2')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('gadget2').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('gadget2').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot pants" data-label="Pants">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot shoes" data-label="Shoes">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="character-outline">
+                            <img v-if="!characterPreviewActive" src="images/stockman_placeholder.png" class="character-img">
+                        </div>
+                    </div>
+
+                    <div class="inline-hotbar right-hotbar">
+                        <div class="inline-hotbar-title">Quick Slots</div>
+                        <div class="hotbar prp-hotbar vertical">
+                            <div v-for="slot in quickSlotCount" :key="slot" class="item-slot prp-slot hotbar-slot" :data-slot="slot"
+                                :class="'rarity-' + getRarity(getHotbarItemInSlot(slot))"
+                                @dblclick="getHotbarItemInSlot(slot) && useItem(getHotbarItemInSlot(slot))"
+                                @mousedown="event => handleQuickSlotMouseDown(event, slot)">
+
+                                <div class="item-slot-key">
+                                    <p>{{ slot }}</p>
+                                </div>
+
+                                <div class="item-slot-img" v-if="getHotbarItemInSlot(slot)">
+                                    <img :src="'images/' + getHotbarItemInSlot(slot).image" alt="" />
+                                </div>
+
+                                <div class="item-slot-amount" v-if="getHotbarItemInSlot(slot)">
+                                    <p>x{{ getHotbarItemInSlot(slot).amount }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                            </section>
+
+            <div class="mid-controls" v-if="hasExternalStorageInventory && !isShopInventory">
+                <div class="input-wrapper" v-if="!isUtilityViewActive">
+                    <input type="number" v-model="transferAmount" min="1" placeholder="amount" />
+                    <button @click="clearTransferAmount" class="clear-button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <aside class="prp-panel right-panel"
+                :class="{ 'storage-panel': hasExternalStorageInventory && !isUtilityViewActive, 'shop-panel': isShopInventory, 'utility-panel': isUtilityViewActive, 'ground-panel': !hasExternalStorageInventory && !isCraftingPanelOpen && !showDeviceAttachments && !showWeaponAttachments, 'recipe-panel': isCraftingPanelOpen && !hasExternalStorageInventory && !showDeviceAttachments && !showWeaponAttachments }">
+                <template v-if="isCraftingPanelOpen && !hasExternalStorageInventory && !showDeviceAttachments && !showWeaponAttachments">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-title">Crafting Catalogue</div>
+                        </div>
+                    </div>
+
+                    <div class="crafting-filter-row category-row">
+                        <button v-for="category in craftingCategories" :key="'craft-cat-' + category"
+                            class="craft-filter" :class="{ active: activeCraftingCategory === category }"
+                            @click="setCraftingCategory(category)">
+                            {{ category }}
+                        </button>
+                        <span>{{ visibleCatalogueRecipes.length }} known</span>
+                    </div>
+
+                    <div class="recipe-list">
+                        <button v-for="recipe in visibleCatalogueRecipes" :key="'recipe-' + recipe.id" class="recipe-card" @click="selectCraftingRecipe(recipe)">
+                            <img :src="'images/' + recipe.output.image" alt="" />
+                            <div>
+                                <strong>{{ recipe.output.label }}</strong>
+                                <span>{{ recipe.category || 'General' }}</span>
+                                <small class="recipe-requirements">{{ formatRecipeIngredients(recipe) }}</small>
+                            </div>
+                        </button>
+                    </div>
+                </template>
+
+                <template v-else-if="!hasExternalStorageInventory && showDeviceAttachments && selectedDevice">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">Device</div>
+                            <div class="panel-title">Attachments</div>
+                        </div>
+                        
+                    </div>
+
+                    <div class="weapon-mod-panel">
+                        <div class="weapon-mod-hero">
+                            <img :src="'images/' + selectedDevice.image" alt="" />
+                            <div>
+                                <div class="weapon-mod-name">{{ selectedDevice.label || selectedDevice.name }}</div>
+                                <div class="weapon-mod-note">{{ selectedDeviceModMessage || 'Drag compatible items from your inventory into the device bay. Drag installed modules back into an empty inventory slot to remove them.' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Available Modules</div>
+                            <div class="weapon-mod-grid">
+                                <div v-for="attachment in selectedDeviceAvailableAttachments"
+                                    :key="attachment.attachment + '-' + attachment.slot"
+                                    class="item-slot prp-slot weapon-mod-slot"
+                                    @click="applyDeviceAttachment(attachment)">
+                                    <div class="slot-number">{{ attachment.slot }}</div>
+                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
+                                    <div class="item-slot-amount">
+                                        <p>x{{ attachment.amount }}</p>
+                                    </div>
+                                    <div class="item-slot-label">
+                                        <p>{{ attachment.label }}</p>
+                                        <p class="device-mod-detail" v-if="attachment.detail">{{ attachment.detail }}</p>
+                                    </div>
+                                </div>
+                                <div class="weapon-mod-empty" v-if="selectedDeviceAvailableAttachments.length === 0">
+                                    No compatible modules in your inventory.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Device Bay</div>
+                            <div class="device-slot-grid">
+                                <div v-for="slot in getDeviceModuleSlots()"
+                                    :key="slot.key"
+                                    class="item-slot prp-slot weapon-mod-slot device-module-slot"
+                                    :class="{ installed: !!slot.attachment, 'device-installed': !!slot.attachment }"
+                                    :data-device-slot="slot.slotId"
+                                    @mousedown="event => slot.attachment && handleDeviceAttachmentMouseDown(event, slot.attachment)">
+
+                                    <div class="slot-number">{{ slot.shortLabel }}</div>
+
+                                    <template v-if="slot.attachment">
+                                        <div class="item-slot-img"><img :src="'images/' + slot.attachment.image" alt="" /></div>
+                                        <div class="item-slot-label">
+                                            <p>{{ slot.attachment.label }}</p>
+                                            <p class="device-mod-detail" v-if="slot.attachment.detail">{{ slot.attachment.detail }}</p>
+                                        </div>
+                                    </template>
+
+                                    <div v-else class="device-slot-empty">
+                                        <strong>{{ slot.label }}</strong>
+                                        <span>Compatible item slot</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else-if="!hasExternalStorageInventory && showWeaponAttachments && selectedWeapon">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">Weapon</div>
+                            <div class="panel-title">Mods</div>
+                        </div>
+                        
+                    </div>
+
+                    <div class="weapon-mod-panel">
+                        <div class="weapon-mod-hero">
+                            <img :src="'images/' + selectedWeapon.image" alt="" />
+                            <div>
+                                <div class="weapon-mod-name">{{ selectedWeapon.label || selectedWeapon.name }}</div>
+                                <div class="weapon-mod-note">{{ selectedWeaponModMessage || 'Choose a compatible mod from your inventory.' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Available Mods</div>
+                            <div class="weapon-mod-grid">
+                                <div v-for="attachment in selectedWeaponAvailableAttachments"
+                                    :key="attachment.attachment + '-' + attachment.slot"
+                                    class="item-slot prp-slot weapon-mod-slot" @click="applyAttachment(attachment)">
+                                    <div class="slot-number">{{ attachment.slot }}</div>
+                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
+                                    <div class="item-slot-amount">
+                                        <p>x{{ attachment.amount }}</p>
+                                    </div>
+                                    <div class="item-slot-label">
+                                        <p>{{ attachment.label }}</p>
+                                    </div>
+                                </div>
+                                <div class="weapon-mod-empty" v-if="selectedWeaponAvailableAttachments.length === 0">
+                                    No compatible mods in your inventory.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="weapon-mod-section">
+                            <div class="inline-hotbar-title">Installed Mods</div>
+                            <div class="weapon-mod-grid">
+                                <div v-for="attachment in selectedWeaponAttachments" :key="attachment.attachment"
+                                    class="item-slot prp-slot weapon-mod-slot installed"
+                                    @click="removeAttachment(attachment)">
+                                    <div class="item-slot-img"><img :src="'images/' + attachment.image" alt="" /></div>
+                                    <div class="item-slot-label">
+                                        <p>{{ attachment.label }}</p>
+                                    </div>
+                                </div>
+                                <div class="weapon-mod-empty" v-if="selectedWeaponAttachments.length === 0">
+                                    No mods installed.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else-if="isUtilityViewActive">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">{{ isUtilityViewActive ? utilityReturnLabel : 'Character' }}</div>
+                            <div class="panel-title">{{ isUtilityViewActive ? 'Utility' : 'Equipment' }}</div>
+                        </div>
+                        <div class="panel-actions">
+                            <button v-if="isUtilityViewActive" class="utility-button" @click="setUtilityPanel(false)">{{ utilityReturnLabel }}</button>
+                            <button class="close-button" @click="closeInventory">ESC</button>
+                        </div>
+                    </div>
+
+                    <div class="equipment-stage" :class="{ 'ped-preview-active': characterPreviewActive }">
+                        <div class="equipment-slot hat" data-label="Hat">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot jacket" data-label="Jacket">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot shirt" data-label="Shirt">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot armour" data-label="Armour" data-equipment-slot="armour"
+                            :class="{ equipped: getEquipmentPreview('armour') }"
+                            @dblclick="unequipEquipmentItem('armour')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'armour')">
+                            <template v-if="getEquipmentPreview('armour')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('armour')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('armour').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('armour').amount || 1 }}</p>
+                                </div>
+                                <div class="equipment-armor-readout">
+                                    {{ getEquipmentArmorPercent(getEquipmentPreview('armour')) }}%
+                                </div>
+                                <div class="equipment-armor-bar">
+                                    <div :style="{ width: getEquipmentArmorPercent(getEquipmentPreview('armour')) + '%' }"></div>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot backpack" data-label="Backpack" data-equipment-slot="backpack"
+                            :class="{ equipped: getEquipmentPreview('backpack') }"
+                            @dblclick="unequipEquipmentItem('backpack')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'backpack')">
+                            <template v-if="getEquipmentPreview('backpack')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('backpack')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('backpack').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('backpack').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot phone" data-label="Phone" data-equipment-slot="phone"
+                            :class="{ equipped: getEquipmentPreview('phone') }"
+                            @dblclick="unequipEquipmentItem('phone')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'phone')">
+                            <template v-if="getEquipmentPreview('phone')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('phone')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('phone').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('phone').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot gadget" data-label="Gadget" data-equipment-slot="gadget"
+                            :class="{ equipped: getEquipmentPreview('gadget') }"
+                            @dblclick="unequipEquipmentItem('gadget')"
+                            @mousedown="event => handleEquipmentMouseDown(event, 'gadget')">
+                            <template v-if="getEquipmentPreview('gadget')">
+                                <div class="item-slot-img"
+                                    v-tooltip.right-end="{content: generateTooltipContent(getEquipmentPreview('gadget')), html: true}">
+                                    <img :src="'images/' + getEquipmentPreview('gadget').image" alt="" />
+                                </div>
+                                <div class="item-slot-amount">
+                                    <p>x{{ getEquipmentPreview('gadget').amount || 1 }}</p>
+                                </div>
+                            </template>
+                            <div v-else class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot pants" data-label="Pants">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="equipment-slot shoes" data-label="Shoes">
+                            <div class="empty-equipment">Empty</div>
+                        </div>
+
+                        <div class="character-outline">
+                            <img v-if="!characterPreviewActive" src="images/stockman_placeholder.png" class="character-img">
+                        </div>
+                    </div>
+
+                    <div class="inline-hotbar right-hotbar">
+                        <div class="inline-hotbar-title">Quick Slots</div>
+                        <div class="hotbar prp-hotbar vertical">
+                            <div v-for="slot in quickSlotCount" :key="slot" class="item-slot prp-slot hotbar-slot" :data-slot="slot"
+                                :class="'rarity-' + getRarity(getHotbarItemInSlot(slot))"
+                                @dblclick="getHotbarItemInSlot(slot) && useItem(getHotbarItemInSlot(slot))"
+                                @mousedown="event => handleQuickSlotMouseDown(event, slot)">
+
+                                <div class="item-slot-key">
+                                    <p>{{ slot }}</p>
+                                </div>
+
+                                <div class="item-slot-img" v-if="getHotbarItemInSlot(slot)">
+                                    <img :src="'images/' + getHotbarItemInSlot(slot).image" alt="" />
+                                </div>
+
+                                <div class="item-slot-amount" v-if="getHotbarItemInSlot(slot)">
+                                    <p>x{{ getHotbarItemInSlot(slot).amount }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else-if="hasExternalStorageInventory || isShopInventory">
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">{{ isShopInventory ? 'Shop' : 'Storage' }}</div>
+                            <div class="panel-title">{{ (otherInventoryLabel || '').toLowerCase() === 'drop' ? 'Ground' : otherInventoryLabel }}</div>
+                        </div>
+                        <div class="panel-actions">
+                            <button class="close-button" @click="closeInventory">ESC</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-weight-row">
+                        <span>{{ (otherInventoryWeight / 1000).toFixed(1) }} / {{ (otherInventoryMaxWeight /
+                            1000).toFixed(1) }} KG</span>
+                        <span>{{ Math.min(Math.floor((otherInventoryWeight / otherInventoryMaxWeight) * 100) || 0, 100)
+                            }}%</span>
+                    </div>
+
+                    <div class="weight-bar prp">
+                        <div class="weight-bar-fill"
+                            :style="{ width: Math.min((otherInventoryWeight / otherInventoryMaxWeight) * 100, 100) + '%' }"
+                            :class="otherWeightBarClass"></div>
+                    </div>
+
+                    <div class="shop-action-panel" v-if="isShopInventory">
+                        <div>
+                            <div class="shop-action-label">Buy amount</div>
+                            <div class="shop-action-rate">Sell back {{ Math.round(shopSellBackRate * 100) }}%</div>
+                        </div>
+                        <div class="shop-amount-control">
+                            <input type="number" v-model="shopAmount" min="1" />
+                            <button @click="shopAmount = 1" class="clear-button">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="inventory-grid prp-grid right-grid">
+                        <div class="item-grid">
+                            <div v-for="slot in otherInventorySlots" :key="slot" class="item-slot prp-slot"
+                                :data-slot="slot" :class="[
+                                'rarity-' + getRarity(getItemInSlot(slot, 'other')),
+                                { 'invalid-slot-highlight': errorSlot === slot }
+                                ]" @mousedown="event => handleMouseDown(event, slot, 'other')">
+
+                                <div class="slot-number">{{ slot }}</div>
+
+                                <div class="item-slot-img" v-if="getItemInSlot(slot, 'other')"
+                                    v-tooltip.left-end="{content: generateTooltipContent(getItemInSlot(slot, 'other')), html: true}">
+                                    <img :src="'images/' + getItemInSlot(slot, 'other').image" alt="" />
+                                </div>
+
+                                <div class="item-slot-amount" v-if="getItemInSlot(slot, 'other')">
+                                    <p>x{{ getItemInSlot(slot, 'other').amount }}</p>
+                                </div>
+
+                                <div class="item-price"
+                                    v-if="isShopInventory && getItemInSlot(slot, 'other') && getItemInSlot(slot, 'other').price !== undefined">
+                                    <p>${{ getItemInSlot(slot, 'other').price }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template v-else>
+                    <div class="panel-head compact">
+                        <div>
+                            <div class="panel-kicker">Drop on ground</div>
+                            <div class="panel-title">Ground</div>
+                        </div>
+                        <button class="close-button" @click="closeInventory">ESC</button>
+                    </div>
+
+                    <div class="panel-weight-row">
+                        <span>Drag items here to drop them for other players</span>
+                        <span>Drop Zone</span>
+                    </div>
+
+                    <div class="weight-bar prp">
+                        <div class="weight-bar-fill low" style="width: 0%"></div>
+                    </div>
+
+                    <div class="inventory-grid prp-grid right-grid ground-grid">
+                        <div class="item-grid">
+                            <div v-for="slot in groundSlots" :key="'ground-' + slot" class="item-slot prp-slot ground-slot" :data-ground-slot="slot">
+                                <div class="slot-number">{{ slot }}</div>
+                                <div class="ground-hint"></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </aside>
+
+            <ul v-if="showContextMenu" class="context-menu"
+                :style="{ top: contextMenuPosition.top, left: contextMenuPosition.left }" @mousedown.stop @mouseup.stop
+                @click.stop>
+                <template v-if="isShopInventory && contextMenuInventory === 'other'">
+                    <li v-if="contextMenuItem && getShopAmount(contextMenuItem) > 0"
+                        @click="buyContextItem(contextMenuItem)">Buy x{{ getShopAmount(contextMenuItem) }}</li>
+                    <li v-else class="disabled">Out of stock</li>
+                </template>
+
+                <template v-else>
+                    <li v-if="contextMenuItem && normalizeItemAmount(contextMenuItem) > 1"
+                        @click="splitAndPlaceItem(contextMenuItem, contextMenuInventory)">Split</li>
+                    <li v-if="isShopInventory && canSellShopItem(contextMenuItem)" @click="sellItem(contextMenuItem)">
+                        Sell x{{ getShopAmount(contextMenuItem) }} (${{ getShopSellTotal(contextMenuItem) }})
+                    </li>
+                    <li v-else-if="isShopInventory" class="disabled">Shop won't buy this</li>
+                    <li v-if="contextMenuInventory === 'player'" @mouseover="activeSubmenu = 'give'" @mouseleave="activeSubmenu = null">
+                        Give
+                        <ul v-if="activeSubmenu === 'give'" class="submenu">
+                            <li @click="giveItem(contextMenuItem, 1)">Single</li>
+                            <li @click="giveItem(contextMenuItem, 'half')">Half</li>
+                            <li @click="giveItem(contextMenuItem, 'all')">All</li>
+                        </ul>
+                    </li>
+                    <li v-if="contextMenuInventory === 'player'" @mouseover="activeSubmenu = 'drop'" @mouseleave="activeSubmenu = null">
+                        Drop
+                        <ul v-if="activeSubmenu === 'drop'" class="submenu">
+                            <li @click="dropItem(contextMenuItem, 1)">Single</li>
+                            <li @click="dropItem(contextMenuItem, 'half')">Half</li>
+                            <li @click="dropItem(contextMenuItem, 'all')">All</li>
+                        </ul>
+                    </li>
+                    <li v-if="contextMenuInventory === 'player' && contextMenuItem && isDeviceAttachmentItem(contextMenuItem)"
+                        @click="openDeviceAttachments(contextMenuItem)">Attachments</li>
+                    <li v-if="contextMenuInventory === 'player' && contextMenuItem && contextMenuItem.type === 'weapon'"
+                        @click="openWeaponAttachments(contextMenuItem)">Attachments</li>
+                    <li v-if="contextMenuItem && contextMenuItem.info && contextMenuItem.info.serie"
+                        @click="copySerial(contextMenuItem)">Copy Serial</li>
+                </template>
+            </ul>
+        </div>
+
+        <div class="hotbar-container" v-if="showHotbar && !isInventoryOpen">
+            <div class="hotbar prp-hotbar">
+                <div v-for="slot in quickSlotCount" :key="slot" class="item-slot prp-slot hotbar-slot"
+                    :data-slot="slot" :class="'rarity-' + getRarity(getStandaloneHotbarItem(slot))">
+                    <div class="item-slot-key">
+                        <p>{{ slot }}</p>
+                    </div>
+
+                    <template v-if="getStandaloneHotbarItem(slot)">
+                        <div class="item-slot-img">
+                            <img :src="'images/' + getStandaloneHotbarItem(slot).image" alt="" />
+                        </div>
+                        <div class="item-slot-amount">
+                            <p>x{{ getStandaloneHotbarItem(slot).amount }}</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="notification-container" :class="{ 'use-notification': notificationType === 'use' }" v-if="showNotification">
+            <div class="notification-slot">
+                <div class="notification-title">
+                    <p>{{ notificationType }}</p>
+                </div>
+                <div class="item-slot-img"><img :src="notificationImage" alt="" /></div>
+                <div class="item-slot-amount">
+                    <p>x{{ notificationAmount }}</p>
+                </div>
+                <div class="item-slot-label">
+                    <p>{{ notificationText }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="required-item-container" v-if="showRequiredItems">
+            <div class="required-item">
+                <div v-for="(item, index) in requiredItems" :key="index" class="item-slot prp-slot">
+                    <div class="item-slot-img"><img :src="'images/' + item.image" alt="" /></div>
+                    <div class="item-slot-label">
+                        <p>{{ item.label }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
