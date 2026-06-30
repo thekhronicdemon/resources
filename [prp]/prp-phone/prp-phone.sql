@@ -31,6 +31,19 @@ CREATE TABLE IF NOT EXISTS `phone_messages` (
   KEY `number` (`number`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `phone_recent_calls` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `citizenid` varchar(80) DEFAULT NULL,
+  `name` varchar(80) DEFAULT NULL,
+  `number` varchar(50) DEFAULT NULL,
+  `type` varchar(20) DEFAULT NULL,
+  `anonymous` tinyint(1) NOT NULL DEFAULT 0,
+  `time` varchar(20) DEFAULT NULL,
+  `date` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `citizenid` (`citizenid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `player_mails` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `citizenid` varchar(50) DEFAULT NULL,

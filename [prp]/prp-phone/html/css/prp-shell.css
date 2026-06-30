@@ -154,11 +154,17 @@ body {
         0 .85vh 1.7vh rgba(0, 0, 0, 0.32);
 }
 
-.phone-application > i,
+.phone-application-icon > i,
 .phone-application .ApplicationIcon {
     line-height: 4.55vh !important;
     font-size: 1.8vh !important;
     color: #fff !important;
+}
+
+.phone-application-icon .police-icon {
+    width: 2.45vh !important;
+    height: 2.45vh !important;
+    object-fit: contain;
 }
 
 .phone-application[data-app="phone"],
@@ -168,7 +174,8 @@ body {
 
 .phone-application[data-app="bank"],
 .phone-application[data-app="crypto"],
-.phone-application[data-app="cryptoshop"] {
+.phone-application[data-app="cryptoshop"],
+.phone-application[data-app="finances"] {
     background: linear-gradient(135deg, #f2b84b, #b86f1d) !important;
 }
 
@@ -180,7 +187,8 @@ body {
 
 .phone-application[data-app="garage"],
 .phone-application[data-app="houses"],
-.phone-application[data-app="racing"] {
+.phone-application[data-app="racing"],
+.phone-application[data-app="tablet"] {
     background: linear-gradient(135deg, #ff6b57, #9f342c) !important;
 }
 

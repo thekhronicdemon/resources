@@ -458,14 +458,13 @@ if not Config.DisableStress then
                 local ped = PlayerPedId()
                 if IsPedInAnyVehicle(ped, false) then
                     local veh = GetVehiclePedIsIn(ped, false)
-                    if isUsableVehicle(veh) then
+                    if isUsableVehicle(veh) and GetPedInVehicleSeat(veh, -1) == ped then
                         local vehClass = GetVehicleClass(veh)
                         local speed = GetEntitySpeed(veh) * speedMultiplier
                         local vehHash = GetEntityModel(veh)
 
-                        if Config.VehClassStress[tostring(vehClass)] and not Config.WhitelistedVehicles[vehHash] then
-                            local stressSpeed = seatbeltOn and Config.MinimumSpeed or Config.MinimumSpeedUnbuckled
-                            if vehClass == 8 then stressSpeed = Config.MinimumSpeed end
+                        if Config.VehClassStress[tostring(vehClass)] and not Config.WhitelistedVehicles[vehHash] and not seatbeltOn then
+                            local stressSpeed = Config.MinimumSpeedUnbuckled
                             if speed >= stressSpeed then
                                 local now = GetGameTimer()
                                 if now - lastSpeedStressAt >= Config.SpeedStressInterval then

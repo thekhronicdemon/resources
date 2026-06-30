@@ -69,6 +69,9 @@ PRP.Phone.Functions.SetupRecentCalls = function(recentcalls) {
         if (recentCall.type === "outgoing") {
             TypeIcon = 'fas fa-phone-volume';
             var IconStyle = "color: #2ecc71; font-size: 1.4vh;";
+        } else if (recentCall.type === "incoming") {
+            TypeIcon = 'fas fa-phone-alt';
+            var IconStyle = "color: #3498db; font-size: 1.4vh;";
         }
         if (recentCall.anonymous) {
             FirstLetter = "A";
@@ -97,36 +100,34 @@ $(document).on('click', '.phone-recent-call', function(e){
         Anonymous: PRP.Phone.Data.AnonymousCall,
     }), function(status){
         if (cData.number !== PRP.Phone.Data.PlayerData.charinfo.phone) {
-            if (status.IsOnline) {
-                if (status.CanCall) {
-                    if (!status.InCall) {
-                        if (PRP.Phone.Data.AnonymousCall) {
-                            PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You started a anonymous call!");
-                        }
-                        $(".phone-call-outgoing").css({"display":"block"});
-                        $(".phone-call-incoming").css({"display":"none"});
-                        $(".phone-call-ongoing").css({"display":"none"});
-                        $(".phone-call-outgoing-caller").html(cData.name);
-                        PRP.Phone.Functions.HeaderTextColor("white", 400);
-                        PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
-                        setTimeout(function(){
-                            $(".phone-app").css({"display":"none"});
-                            PRP.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
-                            PRP.Phone.Functions.ToggleApp("phone-call", "block");
-                        }, 450);
-
-                        CallData.name = cData.name;
-                        CallData.number = cData.number;
-
-                        PRP.Phone.Data.currentApplication = "phone-call";
-                    } else {
-                        PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You're already in a call!");
+            if (status.CanCall) {
+                if (!status.InCall) {
+                    if (PRP.Phone.Data.AnonymousCall) {
+                        PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You started a anonymous call!");
                     }
+                    $(".phone-call-outgoing").css({"display":"block"});
+                    $(".phone-call-incoming").css({"display":"none"});
+                    $(".phone-call-ongoing").css({"display":"none"});
+                    $(".phone-call-outgoing-caller").html(cData.name);
+                    PRP.Phone.Functions.HeaderTextColor("white", 400);
+                    PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
+                    setTimeout(function(){
+                        $(".phone-app").css({"display":"none"});
+                        PRP.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
+                        PRP.Phone.Functions.ToggleApp("phone-call", "block");
+                    }, 450);
+
+                    CallData.name = cData.name;
+                    CallData.number = cData.number;
+
+                    PRP.Phone.Data.currentApplication = "phone-call";
                 } else {
-                    PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is busy!");
+                    PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You're already in a call!");
                 }
-            } else {
+            } else if (status.IsOnline === false) {
                 PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is not available!");
+            } else {
+                PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is busy!");
             }
         } else {
             PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You can't call yourself!");
@@ -150,33 +151,31 @@ $(document).on('click', ".phone-keypad-key-call", function(e){
         Anonymous: PRP.Phone.Data.AnonymousCall,
     }), function(status){
         if (cData.number !== PRP.Phone.Data.PlayerData.charinfo.phone) {
-            if (status.IsOnline) {
-                if (status.CanCall) {
-                    if (!status.InCall) {
-                        $(".phone-call-outgoing").css({"display":"block"});
-                        $(".phone-call-incoming").css({"display":"none"});
-                        $(".phone-call-ongoing").css({"display":"none"});
-                        $(".phone-call-outgoing-caller").html(cData.name);
-                        PRP.Phone.Functions.HeaderTextColor("white", 400);
-                        PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
-                        setTimeout(function(){
-                            $(".phone-app").css({"display":"none"});
-                            PRP.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
-                            PRP.Phone.Functions.ToggleApp("phone-call", "block");
-                        }, 450);
+            if (status.CanCall) {
+                if (!status.InCall) {
+                    $(".phone-call-outgoing").css({"display":"block"});
+                    $(".phone-call-incoming").css({"display":"none"});
+                    $(".phone-call-ongoing").css({"display":"none"});
+                    $(".phone-call-outgoing-caller").html(cData.name);
+                    PRP.Phone.Functions.HeaderTextColor("white", 400);
+                    PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
+                    setTimeout(function(){
+                        $(".phone-app").css({"display":"none"});
+                        PRP.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
+                        PRP.Phone.Functions.ToggleApp("phone-call", "block");
+                    }, 450);
 
-                        CallData.name = cData.name;
-                        CallData.number = cData.number;
+                    CallData.name = cData.name;
+                    CallData.number = cData.number;
 
-                        PRP.Phone.Data.currentApplication = "phone-call";
-                    } else {
-                        PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You're already in a call!");
-                    }
+                    PRP.Phone.Data.currentApplication = "phone-call";
                 } else {
-                    PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is busy!");
+                    PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You're already in a call!");
                 }
-            } else {
+            } else if (status.IsOnline === false) {
                 PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is not available!");
+            } else {
+                PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is busy!");
             }
         } else {
             PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You can't call yourself!");
@@ -490,33 +489,31 @@ SetupCall = function(cData) {
         Anonymous: PRP.Phone.Data.AnonymousCall,
     }), function(status){
         if (cData.number !== PRP.Phone.Data.PlayerData.charinfo.phone) {
-            if (status.IsOnline) {
-                if (status.CanCall) {
-                    if (!status.InCall) {
-                        $(".phone-call-outgoing").css({"display":"block"});
-                        $(".phone-call-incoming").css({"display":"none"});
-                        $(".phone-call-ongoing").css({"display":"none"});
-                        $(".phone-call-outgoing-caller").html(cData.name);
-                        PRP.Phone.Functions.HeaderTextColor("white", 400);
-                        PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
-                        setTimeout(function(){
-                            $(".phone-app").css({"display":"none"});
-                            PRP.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
-                            PRP.Phone.Functions.ToggleApp("phone-call", "block");
-                        }, 450);
+            if (status.CanCall) {
+                if (!status.InCall) {
+                    $(".phone-call-outgoing").css({"display":"block"});
+                    $(".phone-call-incoming").css({"display":"none"});
+                    $(".phone-call-ongoing").css({"display":"none"});
+                    $(".phone-call-outgoing-caller").html(cData.name);
+                    PRP.Phone.Functions.HeaderTextColor("white", 400);
+                    PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
+                    setTimeout(function(){
+                        $(".phone-app").css({"display":"none"});
+                        PRP.Phone.Animations.TopSlideDown('.phone-application-container', 400, 0);
+                        PRP.Phone.Functions.ToggleApp("phone-call", "block");
+                    }, 450);
 
-                        CallData.name = cData.name;
-                        CallData.number = cData.number;
+                    CallData.name = cData.name;
+                    CallData.number = cData.number;
 
-                        PRP.Phone.Data.currentApplication = "phone-call";
-                    } else {
-                        PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You're already in a call!");
-                    }
+                    PRP.Phone.Data.currentApplication = "phone-call";
                 } else {
-                    PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is in a call!");
+                    PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You're already in a call!");
                 }
-            } else {
+            } else if (status.IsOnline === false) {
                 PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is not available!");
+            } else {
+                PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "This person is in a call!");
             }
         } else {
             PRP.Phone.Notifications.Add("fas fa-phone", "Phone", "You can't call your own number!");

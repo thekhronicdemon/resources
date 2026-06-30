@@ -44,6 +44,7 @@ files {
     'html/index.html',
     'html/css/style.css',
     'html/css/drawtext.css',
+    'html/img/*.png',
     'html/js/*.js'
 }
 

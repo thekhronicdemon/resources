@@ -33,7 +33,7 @@ RegisterNetEvent('qb-pawnshop:server:sellPawnItems', function(itemName, itemAmou
         exploitBan(src, 'sellPawnItems Exploiting')
         return
     end
-    if exports['qb-inventory']:RemoveItem(src, itemName, tonumber(itemAmount), false, 'qb-pawnshop:server:sellPawnItems') then
+    if exports['prp-inventory']:RemoveItem(src, itemName, tonumber(itemAmount), false, 'qb-pawnshop:server:sellPawnItems') then
         if Config.BankMoney then
             Player.Functions.AddMoney('bank', totalPrice, 'qb-pawnshop:server:sellPawnItems')
         else
@@ -50,7 +50,7 @@ end)
 RegisterNetEvent('qb-pawnshop:server:meltItemRemove', function(itemName, itemAmount, item)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
-    if exports['qb-inventory']:RemoveItem(src, itemName, itemAmount, false, 'qb-pawnshop:server:meltItemRemove') then
+    if exports['prp-inventory']:RemoveItem(src, itemName, itemAmount, false, 'qb-pawnshop:server:meltItemRemove') then
         TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[itemName], 'remove')
         local meltTime = (tonumber(itemAmount) * item.time)
         TriggerClientEvent('qb-pawnshop:client:startMelting', src, item, tonumber(itemAmount), (meltTime * 60000 / 1000))
@@ -80,7 +80,7 @@ RegisterNetEvent('qb-pawnshop:server:pickupMelted', function(item)
         local meltedAmount = v.amount
         for _, m in pairs(v.item.reward) do
             local rewardAmount = m.amount
-            if exports['qb-inventory']:AddItem(src, m.item, (meltedAmount * rewardAmount), false, false, 'qb-pawnshop:server:pickupMelted') then
+            if exports['prp-inventory']:AddItem(src, m.item, (meltedAmount * rewardAmount), false, false, 'qb-pawnshop:server:pickupMelted') then
                 TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[m.item], 'add')
                 TriggerClientEvent('QBCore:Notify', src, Lang:t('success.items_received', { value = (meltedAmount * rewardAmount), value2 = QBCore.Shared.Items[m.item].label }), 'success')
                 TriggerClientEvent('qb-pawnshop:client:resetPickup', src)

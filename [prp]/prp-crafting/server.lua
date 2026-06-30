@@ -145,7 +145,7 @@ RegisterNetEvent('prp-crafting:server:removeMaterials', function(itemName, amoun
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player or not QBCore.Shared.Items[itemName] then return end
 
-    if exports['qb-inventory']:RemoveItem(src, itemName, amount, false, 'prp-crafting:server:removeMaterials') then
+    if exports['prp-inventory']:RemoveItem(src, itemName, amount, false, 'prp-crafting:server:removeMaterials') then
         TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[itemName], 'remove')
     end
 end)
@@ -155,7 +155,7 @@ RegisterNetEvent('prp-crafting:server:removeCraftingTable', function(benchType)
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player or not GetBenchConfig(benchType) then return end
 
-    if exports['qb-inventory']:RemoveItem(src, benchType, 1, false, 'prp-crafting:server:removeCraftingTable') then
+    if exports['prp-inventory']:RemoveItem(src, benchType, 1, false, 'prp-crafting:server:removeCraftingTable') then
         if QBCore.Shared.Items[benchType] then
             TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[benchType], 'remove')
         end
@@ -168,7 +168,7 @@ RegisterNetEvent('prp-crafting:server:addCraftingTable', function(benchType)
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player or not GetBenchConfig(benchType) then return end
 
-    if exports['qb-inventory']:AddItem(src, benchType, 1, false, false, 'prp-crafting:server:addCraftingTable') then
+    if exports['prp-inventory']:AddItem(src, benchType, 1, false, false, 'prp-crafting:server:addCraftingTable') then
         if QBCore.Shared.Items[benchType] then
             TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[benchType], 'add')
         end
@@ -192,7 +192,7 @@ RegisterNetEvent('prp-crafting:server:receiveItem', function(benchType, craftedI
     end
 
     for _, req in ipairs(requiredItems or {}) do
-        if exports['qb-inventory']:RemoveItem(src, req.item, req.amount, false, 'prp-crafting:server:receiveItem') then
+        if exports['prp-inventory']:RemoveItem(src, req.item, req.amount, false, 'prp-crafting:server:receiveItem') then
             if QBCore.Shared.Items[req.item] then
                 TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[req.item], 'remove')
             end
@@ -201,7 +201,7 @@ RegisterNetEvent('prp-crafting:server:receiveItem', function(benchType, craftedI
         end
     end
 
-    if exports['qb-inventory']:AddItem(src, craftedItem, amountToCraft, false, false, 'prp-crafting:server:receiveItem') then
+    if exports['prp-inventory']:AddItem(src, craftedItem, amountToCraft, false, false, 'prp-crafting:server:receiveItem') then
         TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[craftedItem], 'add')
         TriggerClientEvent('QBCore:Notify', src, ('You crafted %sx %s'):format(amountToCraft, QBCore.Shared.Items[craftedItem].label), 'success')
         IncreasePlayerXP(src, xpGain, bench.xpType)

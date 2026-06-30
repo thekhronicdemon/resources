@@ -148,6 +148,109 @@ local function ServerCanPay(amount)
     return result == true
 end
 
+local function GetFuelCanAmount(item)
+    local info = item and item.info or {}
+    local key = Config.FuelCan.MetadataKey or 'quality'
+    return ClampFuel(info.fuel or info[key] or info.health or Config.FuelCan.StartingFuel)
+end
+
+local function GetClosestVehicleToPlayer(radius)
+    return GetClosestVehicleToCoords(GetEntityCoords(PlayerPedId()), radius or Config.FuelCan.VehicleSearchRadius)
+end
+
+local function StartFuelCanRefuel(item)
+    if isFueling or not Config.FuelCan.Enabled then return end
+    if not item or tostring(item.name or ''):lower() ~= tostring(Config.FuelCan.Item):lower() then return end
+
+    local vehicle = GetClosestVehicleToPlayer(Config.FuelCan.VehicleSearchRadius)
+    if not CanFuelVehicle(vehicle) then
+        Notify(Config.Text.NoVehicle, 'error')
+        return
+    end
+
+    local currentFuel = GetVehicleFuel(vehicle)
+    if currentFuel >= Config.MaxFuel - 0.5 then
+        Notify(Config.Text.VehicleFull, 'error')
+        return
+    end
+
+    local canFuel = GetFuelCanAmount(item)
+    if canFuel <= 0.0 then
+        Notify(Config.Text.NoFuelCan, 'error')
+        TriggerServerEvent('prp-fuel:server:updateFuelCan', item.slot, 0.0, true)
+        return
+    end
+
+    local useRate = tonumber(Config.FuelCan.CanPercentPerVehicleFuel) or 0.5
+    if useRate <= 0.0 then useRate = 0.5 end
+
+    isFueling = true
+    FaceEntity(vehicle)
+    StartFuelAnim()
+
+    local startCoords = GetEntityCoords(PlayerPedId())
+    local usedCan = 0.0
+    local cancelled = false
+
+    CreateThread(function()
+        while isFueling do
+            Wait(0)
+            DrawHelpText(('Fuel can: %.0f%% | Vehicle: %.0f%% | Press ~INPUT_FRONTEND_CANCEL~ to stop'):format(math.max(canFuel - usedCan, 0.0), GetVehicleFuel(vehicle)))
+            if IsControlJustPressed(0, 177) or IsControlJustPressed(0, 200) then
+                cancelled = true
+                isFueling = false
+            end
+        end
+    end)
+
+    while isFueling do
+        Wait(Config.FuelCan.TickTime)
+
+        if not DoesEntityExist(vehicle) then
+            cancelled = true
+            break
+        end
+
+        if #(GetEntityCoords(PlayerPedId()) - startCoords) > Config.FuelCan.StopDistance then
+            Notify(Config.Text.TooFar, 'error')
+            cancelled = true
+            break
+        end
+
+        currentFuel = GetVehicleFuel(vehicle)
+        if currentFuel >= Config.MaxFuel then break end
+
+        local canRemaining = math.max(canFuel - usedCan, 0.0)
+        if canRemaining <= 0.0 then break end
+
+        local addAmount = math.min(
+            Config.FuelCan.FuelPerTick,
+            Config.MaxFuel - currentFuel,
+            canRemaining / useRate
+        )
+
+        if addAmount <= 0.0 then break end
+
+        SetVehicleFuel(vehicle, currentFuel + addAmount, true)
+        usedCan = usedCan + (addAmount * useRate)
+    end
+
+    isFueling = false
+    ClearPedTasks(PlayerPedId())
+
+    if usedCan > 0.0 then
+        TriggerServerEvent('prp-fuel:server:updateFuelCan', item.slot, usedCan, false)
+        local remaining = math.max(canFuel - usedCan, 0.0)
+        if remaining <= 0.0 then
+            Notify(Config.Text.FuelCanEmpty, 'success')
+        else
+            Notify(('Vehicle refuelled. Fuel can: %.0f%%'):format(remaining), 'success')
+        end
+    elseif cancelled then
+        Notify(Config.Text.Cancelled, 'error')
+    end
+end
+
 local function StartRefuel(pumpEntity)
     if isFueling then return end
 
@@ -235,12 +338,26 @@ CreateThread(function()
                 canInteract = function(_, distance)
                     return not isFueling and distance <= 2.5 and not IsPedInAnyVehicle(PlayerPedId(), false)
                 end,
+            },
+            {
+                icon = 'fas fa-oil-can',
+                label = ('%s ($%s)'):format(Config.Text.BuyFuelCanLabel, Config.FuelCan.Price),
+                action = function()
+                    TriggerServerEvent('prp-fuel:server:buyFuelCan')
+                end,
+                canInteract = function(_, distance)
+                    return Config.FuelCan.Enabled and not isFueling and distance <= 2.5 and not IsPedInAnyVehicle(PlayerPedId(), false)
+                end,
             }
         },
         distance = 2.5
     })
 
     DebugPrint('qb-target pump models registered')
+end)
+
+RegisterNetEvent('prp-fuel:client:useFuelCan', function(item)
+    StartFuelCanRefuel(item)
 end)
 
 CreateThread(function()

@@ -34,7 +34,7 @@ local function giveStarterItems()
             info.birthdate = Player.PlayerData.charinfo.birthdate
             info.type = 'Class C Driver License'
         end
-        exports['qb-inventory']:AddItem(source, v.item, 1, false, info, 'qb-cityhall:giveStarterItems')
+        exports['prp-inventory']:AddItem(source, v.item, 1, false, info, 'qb-cityhall:giveStarterItems')
     end
 end
 
@@ -88,7 +88,7 @@ RegisterNetEvent('qb-cityhall:server:requestId', function(item, hall)
     else
         return false
     end
-    if not exports['qb-inventory']:AddItem(source, item, 1, false, info, 'qb-cityhall:server:requestId') then return end
+    if not exports['prp-inventory']:AddItem(source, item, 1, false, info, 'qb-cityhall:server:requestId') then return end
     TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[item], 'add')
 end)
 

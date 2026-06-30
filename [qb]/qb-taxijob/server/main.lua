@@ -39,7 +39,7 @@ RegisterNetEvent('qb-taxi:server:NpcPay', function(payment, hasReceivedBonus)
 
             local chance = math.random(1, 100)
             if chance < 26 then
-                exports['qb-inventory']:AddItem(src, Config.Rewards, 1, false, false, 'qb-taxi:server:NpcPay')
+                exports['prp-inventory']:AddItem(src, Config.Rewards, 1, false, false, 'qb-taxi:server:NpcPay')
                 TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[Config.Rewards], 'add')
             end
         else

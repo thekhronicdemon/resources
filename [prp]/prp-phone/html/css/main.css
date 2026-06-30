@@ -288,6 +288,16 @@ body {
     opacity: 1.0;
 }
 
+.phone-application-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+}
+
 .phone-applications.editing-app-layout .phone-application.has-app {
     cursor: grab;
     box-shadow: 0 0 0 .22vh rgba(255, 255, 255, 0.55);
@@ -309,9 +319,15 @@ body {
     bottom: 17vh;
 }
 
-.phone-application > i {
+.phone-application-icon > i {
     line-height: 4.6vh;
     font-size: 2vh;
+}
+
+.phone-application-icon .police-icon {
+    width: 2.6vh;
+    height: 2.6vh;
+    object-fit: contain;
 }
 
 .ApplicationIcon {

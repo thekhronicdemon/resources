@@ -45,7 +45,7 @@ function QBCore.Functions.GetCoords(entity)
 end
 
 function QBCore.Functions.HasItem(items, amount)
-    return exports['qb-inventory']:HasItem(items, amount)
+    return exports['prp-inventory']:HasItem(items, amount)
 end
 
 ---Returns the full character name
@@ -170,7 +170,7 @@ end
 
 function QBCore.Functions.Notify(text, texttype, length, icon)
     local message = {
-        action = 'notify',
+        action = 'prp-notify',
         type = texttype or 'primary',
         length = length or 5000,
     }
@@ -189,12 +189,13 @@ function QBCore.Functions.Notify(text, texttype, length, icon)
     SendNUIMessage(message)
 end
 
-function QBCore.Functions.Progressbar(name, label, duration, useWhileDead, canCancel, disableControls, animation, prop, propTwo, onFinish, onCancel)
+function QBCore.Functions.Progressbar(name, label, duration, useWhileDead, canCancel, disableControls, animation, prop, propTwo, onFinish, onCancel, icon)
     if GetResourceState('progressbar') ~= 'started' then error('progressbar needs to be started in order for QBCore.Functions.Progressbar to work') end
     exports['progressbar']:Progress({
         name = name:lower(),
         duration = duration,
         label = label,
+        icon = icon,
         useWhileDead = useWhileDead,
         canCancel = canCancel,
         controlDisables = disableControls,

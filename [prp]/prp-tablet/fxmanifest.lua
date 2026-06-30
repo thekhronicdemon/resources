@@ -31,5 +31,5 @@ files {
 
 dependencies {
     'qb-core',
-    'qb-inventory',
+    'prp-inventory',
 }

@@ -301,15 +301,15 @@ QBShared.Items = {
 
     -- Card ITEMS
     -- COMMON
-    bank_card                    = { name = 'bank_card', label = 'Bank Card', weight = 0, type = 'item', image = 'bank_card.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Used to access ATM' },
-    driver_license               = { name = 'driver_license', label = 'Drivers License', weight = 0, type = 'item', image = 'driver_license.png', unique = true, useable = true, shouldClose = false, rarity = 'common', description = 'Permit to show you can drive a vehicle' },
-    id_card                      = { name = 'id_card', label = 'ID Card', weight = 0, type = 'item', image = 'id_card.png', unique = true, useable = true, shouldClose = false, rarity = 'common', description = 'A card containing all your information to identify yourself' },
-    lawyerpass                   = { name = 'lawyerpass', label = 'Lawyer Pass', weight = 0, type = 'item', image = 'lawyerpass.png', unique = true, useable = true, shouldClose = false, rarity = 'common', description = 'Pass exclusive to lawyers to show they can represent a suspect' },
-    weaponlicense                = { name = 'weaponlicense', label = 'Weapon License', weight = 0, type = 'item', image = 'weapon_license.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Weapon License' },
+    bank_card                    = { name = 'bank_card', label = 'Bank Card', weight = 10, type = 'item', image = 'bank_card.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Used to access ATM' },
+    driver_license               = { name = 'driver_license', label = 'Drivers License', weight = 10, type = 'item', image = 'driver_license.png', unique = true, useable = true, shouldClose = false, rarity = 'common', description = 'Permit to show you can drive a vehicle' },
+    id_card                      = { name = 'id_card', label = 'ID Card', weight = 10, type = 'item', image = 'id_card.png', unique = true, useable = true, shouldClose = false, rarity = 'common', description = 'A card containing all your information to identify yourself' },
+    lawyerpass                   = { name = 'lawyerpass', label = 'Lawyer Pass', weight = 10, type = 'item', image = 'lawyerpass.png', unique = true, useable = true, shouldClose = false, rarity = 'common', description = 'Pass exclusive to lawyers to show they can represent a suspect' },
+    weaponlicense                = { name = 'weaponlicense', label = 'Weapon License', weight = 10, type = 'item', image = 'weapon_license.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Weapon License' },
 
     -- UNCOMMON
-    security_card_01             = { name = 'security_card_01', label = 'Security Card A', weight = 0, type = 'item', image = 'security_card_01.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A security card... I wonder what it goes to' },
-    security_card_02             = { name = 'security_card_02', label = 'Security Card B', weight = 0, type = 'item', image = 'security_card_02.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A security card... I wonder what it goes to' },
+    security_card_01             = { name = 'security_card_01', label = 'Security Card A', weight = 10, type = 'item', image = 'security_card_01.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A security card... I wonder what it goes to' },
+    security_card_02             = { name = 'security_card_02', label = 'Security Card B', weight = 10, type = 'item', image = 'security_card_02.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A security card... I wonder what it goes to' },
 
     -- Eat ITEMS
     -- COMMON
@@ -321,7 +321,7 @@ QBShared.Items = {
     -- Drink ITEMS
     -- COMMON
     coffee                       = { name = 'coffee', label = 'Coffee', weight = 200, type = 'item', image = 'coffee.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Pump 4 Caffeine' },
-    kurkakola                    = { name = 'kurkakola', label = 'Cola', weight = 500, type = 'item', image = 'cola.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'For all the thirsty out there' },
+    cola                         = { name = 'cola', label = 'Cola', weight = 100, type = 'item', image = 'cola.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'For all the thirsty out there' },
     water_bottle                 = { name = 'water_bottle', label = 'Bottle of Water', weight = 500, type = 'item', image = 'water_bottle.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'For all the thirsty out there' },
 
     -- Alcohol
@@ -335,15 +335,17 @@ QBShared.Items = {
 
     -- Drugs
     -- COMMON
-    joint                        = { name = 'joint', label = 'Joint', weight = 0, type = 'item', image = 'joint.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Sidney would be very proud at you' },
-    rolling_paper                = { name = 'rolling_paper', label = 'Rolling Paper', weight = 0, type = 'item', image = 'rolling_paper.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Paper made specifically for encasing and smoking tobacco or cannabis.' },
-
+    joint                        = { name = 'joint', label = 'Joint', weight = 100, type = 'item', image = 'joint.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Sidney would be very proud at you' },
+    rolling_paper                = { name = 'rolling_paper', label = 'Rolling Paper', weight = 10, type = 'item', image = 'rolling_paper.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Paper made specifically for encasing and smoking tobacco or cannabis.' },
+    cough_syrup                  = { name = 'cough_syrup', label = 'Cough Syrup', weight = 100, type = 'item', image = 'cough_syrup.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Treats a cold or flu' },
+    
     -- UNCOMMON
-    cokebaggy                    = { name = 'cokebaggy', label = 'Bag of Coke', weight = 0, type = 'item', image = 'cocaine_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'To get happy real quick' },
-    crack_baggy                  = { name = 'crack_baggy', label = 'Bag of Crack', weight = 0, type = 'item', image = 'crack_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'To get happy faster' },
+    cokebaggy                    = { name = 'cokebaggy', label = 'Bag of Coke', weight = 10, type = 'item', image = 'cocaine_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'To get happy real quick' },
+    crack_baggy                  = { name = 'crack_baggy', label = 'Bag of Crack', weight = 10, type = 'item', image = 'crack_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'To get happy faster' },
     meth                         = { name = 'meth', label = 'Meth', weight = 100, type = 'item', image = 'meth_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A baggie of Meth' },
-    oxy                          = { name = 'oxy', label = 'Prescription Oxy', weight = 0, type = 'item', image = 'oxy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'The Label Has Been Ripped Off' },
-    xtcbaggy                     = { name = 'xtcbaggy', label = 'Bag of XTC', weight = 0, type = 'item', image = 'xtc_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Pop those pills baby' },
+    oxy                          = { name = 'oxy', label = 'Prescription Oxy', weight = 10, type = 'item', image = 'oxy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'The Label Has Been Ripped Off' },
+    xtcbaggy                     = { name = 'xtcbaggy', label = 'Bag of XTC', weight = 10, type = 'item', image = 'xtc_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Pop those pills baby' },
+    lean                         = { name = 'lean', label = 'Cup of Lean', weight = 200, type = 'item', image = 'lean_cup.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Pop those pills baby' },
 
     -- RARE
     coke_brick                   = { name = 'coke_brick', label = 'Coke Brick', weight = 1000, type = 'item', image = 'coke_brick.png', unique = true, useable = false, shouldClose = true, rarity = 'rare', description = 'Heavy package of cocaine, mostly used for deals and takes a lot of space' },
@@ -352,33 +354,37 @@ QBShared.Items = {
 
     -- Seed And Weed
     -- COMMON
-    empty_weed_bag               = { name = 'empty_weed_bag', label = 'Empty Weed Bag', weight = 0, type = 'item', image = 'weed_baggy_empty.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A small empty bag' },
-    weed_ak47                    = { name = 'weed_ak47', label = 'AK47 2g', weight = 200, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g AK47' },
-    weed_ak47_seed               = { name = 'weed_ak47_seed', label = 'AK47 Seed', weight = 0, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of AK47' },
-    weed_amnesia                 = { name = 'weed_amnesia', label = 'Amnesia 2g', weight = 200, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g Amnesia' },
-    weed_amnesia_seed            = { name = 'weed_amnesia_seed', label = 'Amnesia Seed', weight = 0, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of Amnesia' },
+    empty_weed_bag               = { name = 'empty_weed_bag', label = 'Empty Weed Bag', weight = 10, type = 'item', image = 'weed_baggy_empty.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A small empty bag' },
+    weed_ak47                    = { name = 'weed_ak47', label = 'AK47 2g', weight = 90, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g AK47' },
+    weed_ak47_seed               = { name = 'weed_ak47_seed', label = 'AK47 Seed', weight = 10, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of AK47' },
+    weed_amnesia                 = { name = 'weed_amnesia', label = 'Amnesia 2g', weight = 90, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g Amnesia' },
+    weed_amnesia_seed            = { name = 'weed_amnesia_seed', label = 'Amnesia Seed', weight = 10, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of Amnesia' },
     weed_nutrition               = { name = 'weed_nutrition', label = 'Plant Fertilizer', weight = 2000, type = 'item', image = 'weed_nutrition.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Plant nutrition' },
-    weed_ogkush                  = { name = 'weed_ogkush', label = 'OGKush 2g', weight = 200, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g OG Kush' },
-    weed_ogkush_seed             = { name = 'weed_ogkush_seed', label = 'OGKush Seed', weight = 0, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of OG Kush' },
-    weed_purplehaze              = { name = 'weed_purplehaze', label = 'Purple Haze 2g', weight = 200, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g Purple Haze' },
-    weed_purplehaze_seed         = { name = 'weed_purplehaze_seed', label = 'Purple Haze Seed', weight = 0, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of Purple Haze' },
-    weed_skunk                   = { name = 'weed_skunk', label = 'Skunk 2g', weight = 200, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g Skunk' },
-    weed_skunk_seed              = { name = 'weed_skunk_seed', label = 'Skunk Seed', weight = 0, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of Skunk' },
-    weed_whitewidow              = { name = 'weed_whitewidow', label = 'White Widow 2g', weight = 200, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g White Widow' },
-    weed_whitewidow_seed         = { name = 'weed_whitewidow_seed', label = 'White Widow Seed', weight = 0, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed seed of White Widow' },
+    weed_ogkush                  = { name = 'weed_ogkush', label = 'OGKush 2g', weight = 90, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g OG Kush' },
+    weed_ogkush_seed             = { name = 'weed_ogkush_seed', label = 'OGKush Seed', weight = 10, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of OG Kush' },
+    weed_purplehaze              = { name = 'weed_purplehaze', label = 'Purple Haze 2g', weight = 90, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g Purple Haze' },
+    weed_purplehaze_seed         = { name = 'weed_purplehaze_seed', label = 'Purple Haze Seed', weight = 10, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of Purple Haze' },
+    weed_skunk                   = { name = 'weed_skunk', label = 'Skunk 2g', weight = 90, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g Skunk' },
+    weed_skunk_seed              = { name = 'weed_skunk_seed', label = 'Skunk Seed', weight = 10, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A weed seed of Skunk' },
+    weed_whitewidow              = { name = 'weed_whitewidow', label = 'White Widow 2g', weight = 90, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g White Widow' },
+    weed_whitewidow_seed         = { name = 'weed_whitewidow_seed', label = 'White Widow Seed', weight = 10, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed seed of White Widow' },
 
     -- Material
     -- COMMON
     aluminum                     = { name = 'aluminum', label = 'Aluminium', weight = 100, type = 'item', image = 'aluminum.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Nice piece of metal that you can probably use for something' },
     aluminumoxide                = { name = 'aluminumoxide', label = 'Aluminium Powder', weight = 100, type = 'item', image = 'aluminumoxide.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Some powder to mix with' },
     copper                       = { name = 'copper', label = 'Copper', weight = 100, type = 'item', image = 'copper.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Nice piece of metal that you can probably use for something' },
-    glass                        = { name = 'glass', label = 'Glass', weight = 100, type = 'item', image = 'glass.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'It is very fragile, watch out' },
-    iron                         = { name = 'iron', label = 'Iron', weight = 100, type = 'item', image = 'iron.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Handy piece of metal that you can probably use for something' },
+    glass                        = { name = 'glass', label = 'Glass', weight = 100, type = 'item', image = 'glass.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Fragile glass.' },
+    iron                         = { name = 'iron', label = 'Iron', weight = 100, type = 'item', image = 'iron.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Useful peice of iron.' },
     ironoxide                    = { name = 'ironoxide', label = 'Iron Powder', weight = 100, type = 'item', image = 'ironoxide.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Some powder to mix with.' },
-    metalscrap                   = { name = 'metalscrap', label = 'Metal Scrap', weight = 100, type = 'item', image = 'metalscrap.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'You can probably make something nice out of this' },
-    plastic                      = { name = 'plastic', label = 'Plastic', weight = 100, type = 'item', image = 'plastic.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'RECYCLE! - Greta Thunberg 2019' },
-    rubber                       = { name = 'rubber', label = 'Rubber', weight = 100, type = 'item', image = 'rubber.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Rubber, I believe you can make your own rubber ducky with it :D' },
+    metalscrap                   = { name = 'metalscrap', label = 'Metal Scrap', weight = 100, type = 'item', image = 'metalscrap.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Useful peice of scrap metal.' },
+    plastic                      = { name = 'plastic', label = 'Plastic', weight = 100, type = 'item', image = 'plastic.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Useful piece of plastic.' },
+    rubber                       = { name = 'rubber', label = 'Rubber', weight = 100, type = 'item', image = 'rubber.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Useful piece of rubber.' },
     steel                        = { name = 'steel', label = 'Steel', weight = 100, type = 'item', image = 'steel.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Nice piece of metal that you can probably use for something' },
+    cloth                        = { name = 'cloth', label = 'Cloth', weight = 100, type = 'item', image = 'cloth.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Useful piece of cloth.' },
+    
+    -- NEW ITEMS
+    paperclip                    = { name = 'paperclip', label = 'Paper Clip', weight = 100, type = 'item', image = 'paperclip.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Pin paper together' },
 
     -- Tools
     -- COMMON
@@ -393,15 +399,15 @@ QBShared.Items = {
     advancedlockpick             = { name = 'advancedlockpick', label = 'Advanced Lockpick', weight = 500, type = 'item', image = 'advancedlockpick.png', unique = false, useable = true, shouldClose = true, rarity = 'rare', description = 'If you lose your keys a lot this is very useful... Also useful to open your beers' },
     drill                        = { name = 'drill', label = 'Drill', weight = 20000, type = 'item', image = 'drill.png', unique = false, useable = false, shouldClose = false, rarity = 'rare', description = 'The real deal...' },
     electronickit                = { name = 'electronickit', label = 'Electronic Kit', weight = 100, type = 'item', image = 'electronickit.png', unique = false, useable = true, shouldClose = true, rarity = 'rare', description = 'If you\'ve always wanted to build a robot you can maybe start here. Maybe you\'ll be the new Elon Musk?' },
-    gatecrack                    = { name = 'gatecrack', label = 'Gatecrack', weight = 0, type = 'item', image = 'usb_device.png', unique = false, useable = false, shouldClose = true, rarity = 'rare', description = 'Handy software to tear down some fences' },
+    gatecrack                    = { name = 'gatecrack', label = 'Gatecrack', weight = 10, type = 'item', image = 'usb_device.png', unique = false, useable = false, shouldClose = true, rarity = 'rare', description = 'Handy software to tear down some fences' },
     thermite                     = { name = 'thermite', label = 'Thermite', weight = 1000, type = 'item', image = 'thermite.png', unique = false, useable = true, shouldClose = true, rarity = 'rare', description = 'Sometimes you\'d wish for everything to burn' },
-    trojan_usb                   = { name = 'trojan_usb', label = 'Trojan USB', weight = 0, type = 'item', image = 'usb_device.png', unique = false, useable = false, shouldClose = true, rarity = 'rare', description = 'Handy software to shut down some systems' },
+    trojan_usb                   = { name = 'trojan_usb', label = 'Trojan USB', weight = 10, type = 'item', image = 'usb_device.png', unique = false, useable = false, shouldClose = true, rarity = 'rare', description = 'Handy software to shut down some systems' },
 
     -- Vehicle Tools
     -- COMMON
     cleaningkit                  = { name = 'cleaningkit', label = 'Cleaning Kit', weight = 250, type = 'item', image = 'cleaningkit.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A microfiber cloth with some soap will let your car sparkle again!' },
     harness                      = { name = 'harness', label = 'Race Harness', weight = 1000, type = 'item', image = 'harness.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Racing Harness so no matter what you stay in the car' },
-    jerry_can                    = { name = 'jerry_can', label = 'Jerrycan 20L', weight = 20000, type = 'item', image = 'jerry_can.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A can full of Fuel' },
+    jerry_can                    = { name = 'jerry_can', label = 'Jerrycan 20L', weight = 20000, type = 'item', image = 'jerry_can.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A can full of fuel' },
     nitrous                      = { name = 'nitrous', label = 'Nitrous', weight = 1000, type = 'item', image = 'nitrous.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Speed up, gas pedal! :D' },
     repairkit                    = { name = 'repairkit', label = 'Repairkit', weight = 2500, type = 'item', image = 'repairkit.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A nice toolbox with stuff to repair your vehicle' },
     tirerepairkit                = { name = 'tirerepairkit', label = 'Tire Repair Kit', weight = 1000, type = 'item', image = 'tirerepairkit.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A kit to repair your tires' },
@@ -433,10 +439,10 @@ QBShared.Items = {
 
     -- Medication
     -- COMMON
-    bandage                      = { name = 'bandage', label = 'Bandage', weight = 0, type = 'item', image = 'bandage.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A bandage works every time' },
+    bandage                      = { name = 'bandage', label = 'Bandage', weight = 10, type = 'item', image = 'bandage.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A bandage works every time' },
     firstaid                     = { name = 'firstaid', label = 'First Aid', weight = 2500, type = 'item', image = 'firstaid.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'You can use this First Aid kit to get people back on their feet' },
     ifaks                        = { name = 'ifaks', label = 'ifaks', weight = 200, type = 'item', image = 'ifaks.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'ifaks for healing and a complete stress remover.' },
-    painkillers                  = { name = 'painkillers', label = 'Painkillers', weight = 0, type = 'item', image = 'painkillers.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'For pain you can\'t stand anymore, take this pill that\'d make you feel great again' },
+    painkillers                  = { name = 'painkillers', label = 'Painkillers', weight = 10, type = 'item', image = 'painkillers.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'For pain you can\'t stand anymore, take this pill that\'d make you feel great again' },
     walkstick                    = { name = 'walkstick', label = 'Walking Stick', weight = 1000, type = 'item', image = 'walkstick.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Walking stick for ya\'ll grannies out there.. HAHA' },
 
     -- Communication
@@ -444,14 +450,15 @@ QBShared.Items = {
     crypto_usb                   = { name = 'crypto_usb', label = 'Crypto USB', weight = 200, type = 'item', image = 'usb_device.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A loaded drive for tablet crypto work.' },
     cryptostick                  = { name = 'cryptostick', label = 'Crypto Stick', weight = 200, type = 'item', image = 'cryptostick.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Why would someone ever buy money that doesn\'t exist.. How many would it contain..?' },
     command_usb                  = { name = 'command_usb', label = 'Command USB', weight = 200, type = 'item', image = 'usb_device.png', unique = true, useable = true, shouldClose = true, rarity = 'legendary', description = 'A rare command module that unlocks the tablet terminal.' },
-    iphone                       = { name = 'iphone', label = 'iPhone', weight = 1000, type = 'item', image = 'iphone.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Very expensive phone' },
+    iphone                       = { name = 'iphone', label = 'iPhone', weight = 1000, type = 'item', image = 'iphone.png', unique = true, useable = false, shouldClose = true, rarity = 'common', phone = true, description = 'Very expensive phone' },
     laptop                       = { name = 'laptop', label = 'Laptop', weight = 4000, type = 'item', image = 'laptop.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Expensive laptop' },
-    samsungphone                 = { name = 'samsungphone', label = 'Samsung S10', weight = 1000, type = 'item', image = 'samsungphone.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Very expensive phone' },
+    samsungphone                 = { name = 'samsungphone', label = 'Samsung S10', weight = 1000, type = 'item', image = 'samsungphone.png', unique = true, useable = false, shouldClose = true, rarity = 'common', phone = true, description = 'Very expensive phone' },
     tablet                       = { name = 'tablet', label = 'Tablet', weight = 800, type = 'item', image = 'tablet.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Expensive tablet' },
 
     -- UNCOMMON
     fitbit                       = { name = 'fitbit', label = 'Fitbit', weight = 500, type = 'item', image = 'fitbit.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'I like fitbit' },
-    phone                        = { name = 'phone', label = 'Phone', weight = 500, type = 'item', image = 'phone.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Neat phone ya got there' },
+    phone                        = { name = 'phone', label = 'Phone', weight = 500, type = 'item', image = 'phone.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', phone = true, description = 'Neat phone ya got there' },
+    backpack                     = { name = 'backpack', label = 'Backpack', weight = 1000, type = 'item', image = 'backpack.png', unique = true, useable = false, shouldClose = true, rarity = 'uncommon', backpack = true, description = 'A wearable backpack with personal storage.' },
     pinger                       = { name = 'pinger', label = 'Pinger', weight = 1000, type = 'item', image = 'pinger.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'With a pinger and your phone you can send out your location' },
     radio                        = { name = 'radio', label = 'Radio', weight = 2000, type = 'item', image = 'radio.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'You can communicate with this through a signal' },
     radioscanner                 = { name = 'radioscanner', label = 'Radio Scanner', weight = 1000, type = 'item', image = 'radioscanner.png', unique = true, useable = false, shouldClose = true, rarity = 'uncommon', description = 'With this you can get some police alerts. Not 100% effective however' },
@@ -469,15 +476,16 @@ QBShared.Items = {
 
     -- Cops Tools
     -- COMMON
-    armor                        = { name = 'armor', label = 'Armor', weight = 5000, type = 'item', image = 'armor.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A wearable armour carrier that accepts armor plates.' },
-    armor_plate                  = { name = 'armor_plate', label = 'Armor Plate', weight = 1000, type = 'item', image = 'armor.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Adds 25% armor to a worn armour carrier.' },
-    empty_evidence_bag           = { name = 'empty_evidence_bag', label = 'Empty Evidence Bag', weight = 0, type = 'item', image = 'evidence.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Used a lot to keep DNA from blood, bullet shells and more' },
+    armor                        = { name = 'armor', label = 'Armor', weight = 5000, type = 'item', image = 'armor.png', unique = true, useable = true, shouldClose = true, rarity = 'common', armor = true, description = 'A wearable armour carrier that accepts up to 20 armor plates.' },
+    armor_plate                  = { name = 'armor_plate', label = 'Armor Plate', weight = 1000, type = 'item', image = 'armor.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Adds 5% armor to a worn armour carrier.' },
+    empty_evidence_bag           = { name = 'empty_evidence_bag', label = 'Empty Evidence Bag', weight = 10, type = 'item', image = 'evidence.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Used a lot to keep DNA from blood, bullet shells and more' },
     filled_evidence_bag          = { name = 'filled_evidence_bag', label = 'Evidence Bag', weight = 200, type = 'item', image = 'evidence.png', unique = true, useable = false, shouldClose = false, rarity = 'common', description = 'A filled evidence bag to see who committed the crime >:(' },
     handcuffs                    = { name = 'handcuffs', label = 'Handcuffs', weight = 100, type = 'item', image = 'handcuffs.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'Comes in handy when people misbehave. Maybe it can be used for something else?' },
     police_stormram              = { name = 'police_stormram', label = 'Stormram', weight = 18000, type = 'item', image = 'police_stormram.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'A nice tool to break into doors' },
 
     -- RARE
-    heavyarmor                   = { name = 'heavyarmor', label = 'Heavy Armor', weight = 5000, type = 'item', image = 'armor.png', unique = true, useable = true, shouldClose = true, rarity = 'rare', description = 'A heavy wearable armour carrier that accepts armor plates.' },
+    heavyarmor                   = { name = 'heavyarmor', label = 'Heavy Armor', weight = 5000, type = 'item', image = 'armor.png', unique = true, useable = true, shouldClose = true, rarity = 'rare', armor = true, description = 'A heavy wearable armour carrier that accepts up to 20 armor plates.' },
+    Backpack                     = { name = 'Backpack', label = 'Backpack', weight = 100, type = 'item', image = 'backpack.png', unique = true, useable = true, shouldClose = true, rarity = 'rare', armor = false, description = 'A backpack for more storage.' },
 
     -- Firework Tools
     -- COMMON
@@ -499,17 +507,17 @@ QBShared.Items = {
     newsbmic                     = { name = 'newsbmic', label = 'Boom Microphone', weight = 100, type = 'item', image = 'newsbmic.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A Useable BoomMic' },
     newscam                      = { name = 'newscam', label = 'News Camera', weight = 100, type = 'item', image = 'newscam.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A camera for the news' },
     newsmic                      = { name = 'newsmic', label = 'News Microphone', weight = 100, type = 'item', image = 'newsmic.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'A microphone for the news' },
-    parachute                    = { name = 'parachute', label = 'Parachute', weight = 30000, type = 'item', image = 'parachute.png', unique = true, useable = true, shouldClose = true, rarity = 'common', description = 'The sky is the limit! Woohoo!' },
+    parachute                    = { name = 'parachute', label = 'Parachute', weight = 30000, type = 'item', image = 'parachute.png', unique = true, useable = true, shouldClose = true, rarity = 'common', gadget = true, description = 'The sky is the limit! Woohoo!' },
 
     -- UNCOMMON
-    casinochips                  = { name = 'casinochips', label = 'Casino Chips', weight = 0, type = 'item', image = 'casinochips.png', unique = false, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Chips For Casino Gambling' },
-    certificate                  = { name = 'certificate', label = 'Certificate', weight = 0, type = 'item', image = 'certificate.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'Certificate that proves you own certain stuff' },
+    casinochips                  = { name = 'casinochips', label = 'Casino Chips', weight = 10, type = 'item', image = 'casinochips.png', unique = false, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Chips For Casino Gambling' },
+    certificate                  = { name = 'certificate', label = 'Certificate', weight = 10, type = 'item', image = 'certificate.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'Certificate that proves you own certain stuff' },
     labkey                       = { name = 'labkey', label = 'Key', weight = 500, type = 'item', image = 'labkey.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'Key for a lock...?' },
-    lighter                      = { name = 'lighter', label = 'Lighter', weight = 0, type = 'item', image = 'lighter.png', unique = true, useable = false, shouldClose = true, rarity = 'uncommon', description = 'On new years eve a nice fire to stand next to' },
+    lighter                      = { name = 'lighter', label = 'Lighter', weight = 10, type = 'item', image = 'lighter.png', unique = true, useable = false, shouldClose = true, rarity = 'uncommon', description = 'On new years eve a nice fire to stand next to' },
     markedbills                  = { name = 'markedbills', label = 'Marked Money', weight = 100, type = 'item', image = 'markedbills.png', unique = false, useable = false, shouldClose = true, rarity = 'uncommon', description = 'Money?' },
-    moneybag                     = { name = 'moneybag', label = 'Money Bag', weight = 0, type = 'item', image = 'moneybag.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A bag with cash' },
+    moneybag                     = { name = 'moneybag', label = 'Money Bag', weight = 10, type = 'item', image = 'moneybag.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A bag with cash' },
     printerdocument              = { name = 'printerdocument', label = 'Document', weight = 500, type = 'item', image = 'printerdocument.png', unique = true, useable = true, shouldClose = true, rarity = 'uncommon', description = 'A nice document' },
-    stickynote                   = { name = 'stickynote', label = 'Sticky note', weight = 0, type = 'item', image = 'stickynote.png', unique = true, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Sometimes handy to remember something :)' },
+    stickynote                   = { name = 'stickynote', label = 'Sticky note', weight = 10, type = 'item', image = 'stickynote.png', unique = true, useable = false, shouldClose = false, rarity = 'uncommon', description = 'Sometimes handy to remember something :)' },
     scratch_ticket               = { name = 'scratch_ticket', label = 'Scratch Ticket', weight = 10, type = 'item', image = 'scratch_ticket.png', unique = false, useable = true, shouldClose = true, rarity = 'rare', description = 'Goodluck.' },
    
     -- MINING

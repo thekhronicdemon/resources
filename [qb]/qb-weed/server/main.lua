@@ -30,7 +30,7 @@ RegisterServerEvent('qb-weed:server:removeSeed', function(itemslot, seed)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
-    exports['qb-inventory']:RemoveItem(src, seed, 1, itemslot, 'qb-weed:server:removeSeed')
+    exports['prp-inventory']:RemoveItem(src, seed, 1, itemslot, 'qb-weed:server:removeSeed')
 end)
 
 RegisterNetEvent('qb-weed:server:harvestPlant', function(house, amount, plantName, plantId)
@@ -42,9 +42,9 @@ RegisterNetEvent('qb-weed:server:harvestPlant', function(house, amount, plantNam
         if house ~= nil then
             local result = MySQL.query.await('SELECT * FROM house_plants WHERE plantid = ? AND building = ?', { plantId, house })
             if result[1] ~= nil then
-                exports['qb-inventory']:AddItem(src, 'weed_' .. plantName .. '_seed', amount, false, false, 'qb-weed:server:harvestPlant')
-                exports['qb-inventory']:AddItem(src, 'weed_' .. plantName, sndAmount, false, false, 'qb-weed:server:harvestPlant')
-                exports['qb-inventory']:RemoveItem(src, 'empty_weed_bag', sndAmount, false, 'qb-weed:server:harvestPlant')
+                exports['prp-inventory']:AddItem(src, 'weed_' .. plantName .. '_seed', amount, false, false, 'qb-weed:server:harvestPlant')
+                exports['prp-inventory']:AddItem(src, 'weed_' .. plantName, sndAmount, false, false, 'qb-weed:server:harvestPlant')
+                exports['prp-inventory']:RemoveItem(src, 'empty_weed_bag', sndAmount, false, 'qb-weed:server:harvestPlant')
                 MySQL.query('DELETE FROM house_plants WHERE plantid = ? AND building = ?', { plantId, house })
                 TriggerClientEvent('QBCore:Notify', src, Lang:t('text.the_plant_has_been_harvested'), 'success', 3500)
                 TriggerClientEvent('qb-weed:client:refreshHousePlants', -1, house)
@@ -67,7 +67,7 @@ RegisterNetEvent('qb-weed:server:foodPlant', function(house, amount, plantName, 
     local updatedFood = math.min(100, plantStats[1].food + amount)
     TriggerClientEvent('QBCore:Notify', src, QBWeed.Plants[plantName]['label'] ..' | Nutrition: ' .. plantStats[1].food .. '% + ' .. updatedFood - plantStats[1].food .. '% (' ..updatedFood .. '%)', 'success', 3500)
     MySQL.update('UPDATE house_plants SET food = ? WHERE building = ? AND plantid = ?',{ updatedFood, house, plantId })
-    exports['qb-inventory']:RemoveItem(src, 'weed_nutrition', 1, false, 'qb-weed:server:foodPlant')
+    exports['prp-inventory']:RemoveItem(src, 'weed_nutrition', 1, false, 'qb-weed:server:foodPlant')
     TriggerClientEvent('qb-weed:client:refreshHousePlants', -1, house)
 end)
 

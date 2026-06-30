@@ -2,29 +2,33 @@ export let NOTIFY_CONFIG = null;
 
 const defaultConfig = {
     NotificationStyling: {
-        group: true,
-        position: "top-right",
-        progress: true,
+        group: false,
+        position: "bottom",
+        progress: false,
     },
     VariantDefinitions: {
         success: {
-            classes: "success",
-            icon: "done",
+            classes: "prp-notify prp-notify-success",
+            icon: "check_circle",
         },
         primary: {
-            classes: "primary",
-            icon: "info",
+            classes: "prp-notify prp-notify-primary",
+            icon: "check_circle",
         },
         error: {
-            classes: "error",
-            icon: "dangerous",
+            classes: "prp-notify prp-notify-error",
+            icon: "cancel",
+        },
+        warning: {
+            classes: "prp-notify prp-notify-warning",
+            icon: "cancel",
         },
         police: {
-            classes: "police",
+            classes: "prp-notify prp-notify-police",
             icon: "local_police",
         },
         ambulance: {
-            classes: "ambulance",
+            classes: "prp-notify prp-notify-ambulance",
             icon: "fas fa-ambulance",
         },
     },

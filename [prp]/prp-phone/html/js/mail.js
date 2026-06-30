@@ -186,27 +186,38 @@ $(document).on('click', '#new-advert-submit', function(e){
 
 PRP.Phone.Functions.RefreshAdverts = function(Adverts) {
     $("#advert-header-name").html("@"+PRP.Phone.Data.PlayerData.charinfo.firstname+""+PRP.Phone.Data.PlayerData.charinfo.lastname+" | "+PRP.Phone.Data.PlayerData.charinfo.phone);
-    if (Adverts.length > 0 || Adverts.length == undefined) {
+    var AdvertList = [];
+
+    if (Array.isArray(Adverts)) {
+        AdvertList = Adverts;
+    } else if (Adverts && typeof Adverts === "object") {
+        $.each(Adverts, function(_, advert) {
+            AdvertList.push(advert);
+        });
+    }
+
+    if (AdvertList.length > 0) {
         $(".advert-list").html("");
-        $.each(Adverts, function(i, advert){
+        $.each(AdvertList, function(i, advert){
             var clean = DOMPurify.sanitize(advert.message , {
                 ALLOWED_TAGS: [],
                 ALLOWED_ATTR: []
             });
 
-            if (clean == '') { clean = 'I\'m a silly goose :/' }
+            if (clean == '') { clean = 'Invalid advertisement.' }
+
+            var deleteButton = '';
+            if (advert.number === PRP.Phone.Data.PlayerData.charinfo.phone){
+                deleteButton = '<i class="fas fa-trash adv-delete" style="font-size: 1rem; right:0;"></i>';
+            }
 
             if (advert.url) {
-                var element = `<div class="advert"><span class="advert-sender">${advert.name} | ${advert.number}</span><p>${clean}</p></br><img class="advimage" src=`+advert.url +` style=" border-radius:4px; width: 95%; position:relative; z-index: 1; right:1px;height: auto; bottom:1vh;"></br><span><div class="adv-icon"></div> </span></div>`;
+                var element = `<div class="advert"><span class="advert-sender">${advert.name} | ${advert.number}</span>${deleteButton}<p>${clean}</p></br><img class="advimage" src=`+advert.url +` style=" border-radius:4px; width: 95%; position:relative; z-index: 1; right:1px;height: auto; bottom:1vh;"></br><span><div class="adv-icon"></div> </span></div>`;
             } else {
-                var element = `<div class="advert"><span class="advert-sender">${advert.name} | ${advert.number}</span><p>${clean}</p></div>`;
+                var element = `<div class="advert"><span class="advert-sender">${advert.name} | ${advert.number}</span>${deleteButton}<p>${clean}</p></div>`;
             }
 
             $(".advert-list").append(element);
-
-            if (advert.number === PRP.Phone.Data.PlayerData.charinfo.phone){
-                $(".advert").append('<i class="fas fa-trash"style="font-size: 1rem; right:0;" id="adv-delete"></i>')
-            }
         });
     } else {
         $(".advert-list").html("");
@@ -215,7 +226,7 @@ PRP.Phone.Functions.RefreshAdverts = function(Adverts) {
     }
 }
 
-$(document).on('click','#adv-delete',function(e){
+$(document).on('click','.adv-delete',function(e){
     e.preventDefault();
     $.post('https://prp-phone/DeleteAdvert', function(){
         setTimeout(function(){

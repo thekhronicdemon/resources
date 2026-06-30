@@ -42,6 +42,13 @@ local vehicleClasses = {
     openwheel = 22,
 }
 
+local function getSharedVehicle(model)
+    local shared = QBCore.Shared or {}
+    local vehicles = shared.Vehicles or {}
+
+    return vehicles[model]
+end
+
 local function arrayToSet(array)
     local set = {}
     for _, item in ipairs(array) do
@@ -55,7 +62,7 @@ local function filterVehiclesByCategory(vehicles, category)
     local categorySet = arrayToSet(category)
 
     for _, vehicle in pairs(vehicles) do
-        local vehicleData = QBCore.Shared.Vehicles[vehicle.vehicle]
+        local vehicleData = getSharedVehicle(vehicle.vehicle)
         local vehicleCategoryString = vehicleData and vehicleData.category or 'compacts'
         local vehicleCategoryNumber = vehicleClasses[vehicleCategoryString]
 
@@ -112,7 +119,7 @@ local vehicleTypes = { -- https://docs.fivem.net/natives/?_0xA273060E
 }
 
 local function GetVehicleTypeByModel(model)
-    local vehicleData = QBCore.Shared.Vehicles[model]
+    local vehicleData = getSharedVehicle(model)
     if not vehicleData then return 'automobile' end
     local category = vehicleData.category
     local vehicleType = vehicleTypes[category]
@@ -122,7 +129,8 @@ end
 
 -- Spawns a vehicle and returns its network ID and properties.
 QBCore.Functions.CreateCallback('qb-garages:server:spawnvehicle', function(source, cb, plate, vehicle, coords)
-    local vehType = QBCore.Shared.Vehicles[vehicle] and QBCore.Shared.Vehicles[vehicle].type or GetVehicleTypeByModel(vehicle)
+    local vehicleData = getSharedVehicle(vehicle)
+    local vehType = vehicleData and vehicleData.type or GetVehicleTypeByModel(vehicle)
     local hash = type(vehicle) == "number" and vehicle or type(vehicle) == "string" and GetHashKey(vehicle) or nil
     if not vehicle then return end
     local veh = CreateVehicleServerSetter(hash, vehType, coords.x, coords.y, coords.z, coords.w)
@@ -229,12 +237,18 @@ end)
 
 QBCore.Functions.CreateCallback('qb-garages:server:GetPlayerVehicles', function(source, cb)
     local Player = QBCore.Functions.GetPlayer(source)
+    if not Player then
+        cb(nil)
+        return
+    end
+
     local Vehicles = {}
 
     MySQL.rawExecute('SELECT * FROM player_vehicles WHERE citizenid = ?', { Player.PlayerData.citizenid }, function(result)
+        result = result or {}
         if result[1] then
             for _, v in pairs(result) do
-                local VehicleData = QBCore.Shared.Vehicles[v.vehicle]
+                local VehicleData = getSharedVehicle(v.vehicle)
 
                 local VehicleGarage = Lang:t('error.no_garage')
                 if v.garage ~= nil then

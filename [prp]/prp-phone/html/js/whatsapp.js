@@ -1,6 +1,11 @@
 var WhatsappSearchActive = false;
 var OpenedChatPicture = null;
 var ExtraButtonsOpen = false;
+var WhatsappComposeTimer = null;
+
+function EscapeWhatsapp(value) {
+    return $("<div>").text(value || "").html();
+}
 
 $(document).ready(function(){
     $("#whatsapp-search-input").on("keyup", function() {
@@ -14,6 +19,8 @@ $(document).ready(function(){
 $(document).on('click', '#whatsapp-search-chats', function(e){
     e.preventDefault();
 
+    $(".whatsapp-compose").fadeOut(120);
+
     if ($("#whatsapp-search-input").css('display') == "none") {
         $("#whatsapp-search-input").fadeIn(150);
         WhatsappSearchActive = true;
@@ -21,6 +28,152 @@ $(document).on('click', '#whatsapp-search-chats', function(e){
         $("#whatsapp-search-input").fadeOut(150);
         WhatsappSearchActive = false;
     }
+});
+
+function ResetWhatsappCompose() {
+    if (WhatsappComposeTimer) {
+        clearTimeout(WhatsappComposeTimer);
+        WhatsappComposeTimer = null;
+    }
+
+    $("#whatsapp-compose-input").val("");
+    $(".whatsapp-compose-results").html("");
+    $(".whatsapp-compose").fadeOut(120);
+}
+
+function RenderWhatsappComposeResults(results, query) {
+    var ResultsObject = $(".whatsapp-compose-results");
+    var normalizedQuery = (query || "").trim();
+
+    ResultsObject.html("");
+
+    results = results || [];
+    if (/^[0-9]+$/.test(normalizedQuery)) {
+        var hasDirectNumber = false;
+        $.each(results, function(_, person) {
+            if (String(person.phone || person.number || "") === normalizedQuery) {
+                hasDirectNumber = true;
+            }
+        });
+
+        if (!hasDirectNumber) {
+            results.unshift({
+                firstname: "Phone",
+                lastname: normalizedQuery,
+                phone: normalizedQuery,
+            });
+        }
+    }
+
+    if (results.length === 0) {
+        ResultsObject.append('<div class="whatsapp-compose-empty">No results</div>');
+        return;
+    }
+
+    $.each(results, function(i, person) {
+        var number = String(person.phone || person.number || "");
+        if (number === "") return;
+
+        var name = person.name || ((person.firstname || "") + " " + (person.lastname || "")).trim() || number;
+        var ResultElement = '<div class="whatsapp-compose-result" id="whatsapp-compose-result-'+i+'"><strong>'+EscapeWhatsapp(name)+'</strong><span>'+EscapeWhatsapp(number)+'</span></div>';
+
+        ResultsObject.append(ResultElement);
+        $("#whatsapp-compose-result-"+i).data("contactdata", {
+            name: name,
+            number: number,
+        });
+    });
+}
+
+function SearchWhatsappCompose() {
+    var query = $("#whatsapp-compose-input").val().trim();
+
+    if (query.length < 2) {
+        $(".whatsapp-compose-results").html('<div class="whatsapp-compose-empty">Type a name or phone number</div>');
+        return;
+    }
+
+    $(".whatsapp-compose-results").html('<div class="whatsapp-compose-empty">Searching...</div>');
+    $.post('https://prp-phone/FetchSearchResults', JSON.stringify({
+        input: query,
+    }), function(result){
+        RenderWhatsappComposeResults(result || [], query);
+    });
+}
+
+PRP.Phone.Functions.OpenWhatsappChat = function(ContactData) {
+    ContactData = ContactData || {};
+    var OwnNumber = (((PRP.Phone.Data.PlayerData || {}).charinfo || {}).phone);
+    var ChatNumber = String(ContactData.number || "");
+    var ChatName = ContactData.name || ChatNumber;
+
+    if (ChatNumber === "") {
+        return;
+    }
+
+    if (ChatNumber === OwnNumber) {
+        PRP.Phone.Notifications.Add("fab fa-whatsapp", "Messages", "You can't message yourself.", "#25D366", 2000);
+        return;
+    }
+
+    ResetWhatsappCompose();
+    if (WhatsappSearchActive) {
+        $("#whatsapp-search-input").fadeOut(150);
+        WhatsappSearchActive = false;
+    }
+
+    OpenedChatPicture = null;
+    $.post('https://prp-phone/GetWhatsappChat', JSON.stringify({phone: ChatNumber}), function(chat){
+        PRP.Phone.Functions.SetupChatMessages(chat, {
+            name: ChatName,
+            number: ChatNumber
+        });
+    });
+
+    $('.whatsapp-openedchat-messages').animate({scrollTop: 9999}, 150);
+    $(".whatsapp-openedchat").css({"display":"block", "left":"0vh"});
+    $(".whatsapp-chats").css({"display":"block"}).animate({left: 30+"vh"}, 100, function(){
+        $(".whatsapp-chats").css({"display":"none"});
+    });
+}
+
+$(document).on('click', '#whatsapp-new-chat', function(e){
+    e.preventDefault();
+    $("#whatsapp-search-input").fadeOut(120);
+    WhatsappSearchActive = false;
+    $(".whatsapp-compose-results").html('<div class="whatsapp-compose-empty">Type a name or phone number</div>');
+    $(".whatsapp-compose").fadeIn(120, function() {
+        $("#whatsapp-compose-input").focus();
+    });
+});
+
+$(document).on('click', '#whatsapp-compose-close', function(e){
+    e.preventDefault();
+    ResetWhatsappCompose();
+});
+
+$(document).on('keyup', '#whatsapp-compose-input', function(e){
+    if (e.keyCode === 13) {
+        var query = $("#whatsapp-compose-input").val().trim();
+        if (/^[0-9]+$/.test(query)) {
+            PRP.Phone.Functions.OpenWhatsappChat({
+                name: query,
+                number: query,
+            });
+            return;
+        }
+    }
+
+    if (WhatsappComposeTimer) {
+        clearTimeout(WhatsappComposeTimer);
+    }
+
+    WhatsappComposeTimer = setTimeout(SearchWhatsappCompose, 250);
+});
+
+$(document).on('click', '.whatsapp-compose-result', function(e){
+    e.preventDefault();
+    PRP.Phone.Functions.OpenWhatsappChat($(this).data("contactdata"));
 });
 
 $(document).on('click', '.whatsapp-chat', function(e){
@@ -203,6 +356,8 @@ $(document).on('click', '#whatsapp-openedchat-send', function(e){
 });
 
 $(document).on('keypress', function (e) {
+    if ($(e.target).is("#whatsapp-compose-input")) return;
+
     if (OpenedChatData.number !== null) {
         if(e.which === 13){
             var Message = $("#whatsapp-openedchat-message").val();
@@ -291,7 +446,7 @@ PRP.Phone.Functions.SetupChatMessages = function(cData, NewChatData) {
                 });
                 if (message.message == '') message.message = 'Hmm, I shouldn\'t be able to do this...'
                 var Sender = "me";
-                if (message.sender !== PRP.Phone.Data.PlayerData.citizenid) { Sender = "other"; }
+                if (message.sender !== PRP.Phone.Functions.GetActivePhoneCitizenId()) { Sender = "other"; }
                 var MessageElement
                 if (message.type == "message") {
                     MessageElement = '<div class="whatsapp-openedchat-message whatsapp-openedchat-message-'+Sender+'">'+message.message+'<div class="whatsapp-openedchat-message-time">'+message.time+'</div></div><div class="clearfix"></div>'

@@ -1,4 +1,5 @@
 
+local QBCore = exports['qb-core']:GetCoreObject()
 local seatbeltOn = false
 local harnessOn = false
 local harnessHp = Config.HarnessUses
@@ -40,6 +41,7 @@ local function toggleSeatbelt()
     SeatBeltLoop()
     TriggerEvent("seatbelt:client:ToggleSeatbelt", seatbeltOn)
     TriggerServerEvent("InteractSound_SV:PlayWithinDistance", 5.0, seatbeltOn and "carbuckle" or "carunbuckle", 0.25)
+    QBCore.Functions.Notify(seatbeltOn and 'Seatbelt On' or 'Seatbelt Off', seatbeltOn and 'success' or 'error', 2500, 'seatbelt')
 end
 
 local function toggleHarness()

@@ -149,6 +149,10 @@ local function ReorganizeChats(key)
     PhoneData.Chats = ReorganizedChats
 end
 
+local function GetActivePhoneCitizenId()
+    return (PhoneData.DeviceProfile and PhoneData.DeviceProfile.citizenid) or (PhoneData.PlayerData and PhoneData.PlayerData.citizenid)
+end
+
 local function findVehFromPlateAndLocate(plate)
     local gameVehicles = QBCore.Functions.GetVehicles()
     for i = 1, #gameVehicles do
@@ -184,7 +188,7 @@ local function DisableDisplayControlActions()
     DisableControlAction(0, 245, true) -- disable chat
 end
 
-local function LoadPhone()
+local function LoadPhone(done)
     Wait(100)
     QBCore.Functions.TriggerCallback('prp-phone:server:GetPhoneData', function(pData)
         pData = pData or {}
@@ -194,8 +198,30 @@ local function LoadPhone()
         PhoneData.PlayerData = playerData
         PhoneData.PlayerData.metadata = metadata
         PhoneData.DeviceProfile = pData.DeviceProfile or {}
+        PhoneData.ActiveSim = pData.ActiveSim
+        PhoneData.PlayerData.charinfo = PhoneData.PlayerData.charinfo or {}
+        if PhoneData.ActiveSim then
+            PhoneData.PlayerData.charinfo.phone = PhoneData.ActiveSim
+        end
+
         local PhoneMeta = metadata['phone'] or {}
         PhoneData.MetaData = PhoneMeta
+        PhoneData.Contacts = pData.PlayerContacts or {}
+        PhoneData.Chats = {}
+        PhoneData.MentionedTweets = pData.MentionedTweets or {}
+        PhoneData.Hashtags = pData.Hashtags or {}
+        PhoneData.Tweets = pData.Tweets or {}
+        PhoneData.Mails = pData.Mails or {}
+        PhoneData.Adverts = pData.Adverts or {}
+        PhoneData.CryptoTransactions = {}
+        PhoneData.Images = pData.Images or {}
+        PhoneData.RecentCalls = pData.RecentCalls or {}
+
+        for _, app in pairs(Config.PhoneApplications) do
+            if app.Alerts ~= nil then
+                app.Alerts = 0
+            end
+        end
 
         if pData.InstalledApps ~= nil and next(pData.InstalledApps) ~= nil then
             for _, v in pairs(pData.InstalledApps) do
@@ -237,11 +263,17 @@ local function LoadPhone()
         if pData.Chats ~= nil and next(pData.Chats) ~= nil then
             local Chats = {}
             for _, v in pairs(pData.Chats) do
-                Chats[v.number] = {
-                    name = IsNumberInContacts(v.number),
-                    number = v.number,
-                    messages = json.decode(v.messages)
-                }
+                local number = v.number or v.Number
+                local rawMessages = v.messages or v.Messages or '[]'
+                local ok, decodedMessages = pcall(json.decode, rawMessages)
+
+                if number then
+                    Chats[number] = {
+                        name = IsNumberInContacts(number),
+                        number = number,
+                        messages = ok and type(decodedMessages) == 'table' and decodedMessages or {}
+                    }
+                end
             end
 
             PhoneData.Chats = Chats
@@ -276,71 +308,86 @@ local function LoadPhone()
             PlayerData = PhoneData.PlayerData,
             PlayerJob = PhoneData.PlayerData.job,
             applications = Config.PhoneApplications,
+            CryptoConfig = Config.PhoneCrypto,
+            AppConnectors = Config.PhoneAppConnectors,
             PlayerId = GetPlayerServerId(PlayerId())
         })
+        if type(done) == 'function' then
+            done()
+        end
     end)
 end
 
 local function OpenPhone()
-    QBCore.Functions.TriggerCallback('prp-phone:server:HasPhone', function(HasPhone)
-        if HasPhone then
-            PhoneData.PlayerData = QBCore.Functions.GetPlayerData()
-            SetNuiFocus(true, true)
-            SendNUIMessage({
-                action = 'open',
-                Tweets = PhoneData.Tweets,
-                AppData = Config.PhoneApplications,
-                CallData = PhoneData.CallData,
-                PlayerData = PhoneData.PlayerData,
-            })
-            PhoneData.isOpen = true
+    QBCore.Functions.TriggerCallback('prp-phone:server:HasPhone', function(CanUsePhone, HasPhone, MissingSim)
+        if CanUsePhone then
+            LoadPhone(function()
+                SetNuiFocus(true, true)
+                SendNUIMessage({
+                    action = 'open',
+                    Tweets = PhoneData.Tweets,
+                    AppData = Config.PhoneApplications,
+                    CallData = PhoneData.CallData,
+                    PlayerData = PhoneData.PlayerData,
+                    CryptoConfig = Config.PhoneCrypto,
+                })
+                PhoneData.isOpen = true
 
-            CreateThread(function()
-                while PhoneData.isOpen do
-                    DisableDisplayControlActions()
-                    Wait(1)
+                CreateThread(function()
+                    while PhoneData.isOpen do
+                        DisableDisplayControlActions()
+                        Wait(1)
+                    end
+                end)
+
+                if not PhoneData.CallData.InCall then
+                    DoPhoneAnimation('cellphone_text_in')
+                else
+                    DoPhoneAnimation('cellphone_call_to_text')
                 end
-            end)
 
-            if not PhoneData.CallData.InCall then
-                DoPhoneAnimation('cellphone_text_in')
-            else
-                DoPhoneAnimation('cellphone_call_to_text')
-            end
+                SetTimeout(250, function()
+                    newPhoneProp()
+                end)
 
-            SetTimeout(250, function()
-                newPhoneProp()
+                QBCore.Functions.TriggerCallback('qb-garages:server:GetPlayerVehicles', function(vehicles)
+                    PhoneData.GarageVehicles = vehicles
+                end)
             end)
-
-            QBCore.Functions.TriggerCallback('qb-garages:server:GetPlayerVehicles', function(vehicles)
-                PhoneData.GarageVehicles = vehicles
-            end)
+        elseif HasPhone or MissingSim then
+            QBCore.Functions.Notify('No SIM card equipped', 'error')
         else
-            QBCore.Functions.Notify("You don't have a phone", 'error')
+            QBCore.Functions.Notify('No phone equipped', 'error')
         end
     end)
 end
 
 local function CloseTablet()
     TabletOpen = false
-    SetNuiFocus(false, false)
+    SetNuiFocus(PhoneData.isOpen, PhoneData.isOpen)
     SendNUIMessage({
         action = 'closeTablet',
     })
 end
 
 local function OpenTablet()
-    PhoneData.PlayerData = QBCore.Functions.GetPlayerData()
-    TabletOpen = true
-    SetNuiFocus(true, true)
-    QBCore.Functions.TriggerCallback('prp-phone:server:GetTabletStatus', function(status)
+    local tabletState = GetResourceState('prp-tablet')
+    if tabletState ~= 'started' then
+        QBCore.Functions.Notify(('Tablet system is offline (%s).'):format(tabletState or 'unknown'), 'error')
+        return
+    end
+
+    if PhoneData.isOpen then
         SendNUIMessage({
-            action = 'openTablet',
-            applications = Config.TabletApplications,
-            PlayerData = PhoneData.PlayerData,
-            tabletStatus = status or {}
+            action = 'forceClosePhone',
         })
-    end)
+        SetTimeout(350, function()
+            TriggerEvent('prp-tablet:client:UseTablet')
+        end)
+        return
+    end
+
+    TriggerEvent('prp-tablet:client:UseTablet')
 end
 
 local function GenerateCallId(caller, target)
@@ -560,12 +607,36 @@ RegisterNetEvent('prp-phone:client:UsePhone', function()
 end)
 
 RegisterNetEvent('prp-phone:client:UseTablet', function()
-    TriggerEvent('prp-tablet:client:UseTablet')
+    OpenTablet()
 end)
 
-RegisterNetEvent('prp-phone:client:TabletMiningComplete', function(reward, message, activeMining)
-    TriggerEvent('prp-tablet:client:MiningComplete', reward, message, activeMining)
+RegisterNetEvent('prp-phone:client:TabletMiningComplete', function(_, message, activeMining)
+    SendNUIMessage({
+        action = 'tabletMiningComplete',
+        message = message or 'Crypto reward received.',
+        activeMining = activeMining or {}
+    })
+    QBCore.Functions.Notify(message or 'Crypto reward received.', 'success')
 end)
+
+local function GetPhoneAppCallback(appName, actionName)
+    local connector = Config.PhoneAppConnectors and Config.PhoneAppConnectors[appName]
+    if not connector then return nil end
+
+    local resource = connector.resource
+    local callback = connector.callbacks and connector.callbacks[actionName]
+    if callback and (not resource or GetResourceState(resource) == 'started') then
+        return callback
+    end
+
+    local fallbackResource = connector.fallbackResource
+    local fallbackCallback = connector.fallbackCallbacks and connector.fallbackCallbacks[actionName]
+    if fallbackCallback and (not fallbackResource or GetResourceState(fallbackResource) == 'started') then
+        return fallbackCallback
+    end
+
+    return nil
+end
 
 -- NUI Callbacks
 
@@ -631,6 +702,27 @@ RegisterNUICallback('SaveAppLayout', function(data, cb)
     cb('ok')
 end)
 
+RegisterNUICallback('PhoneAppRequest', function(data, cb)
+    data = data or {}
+    local appName = tostring(data.app or '')
+    local actionName = tostring(data.action or '')
+    local callbackName = GetPhoneAppCallback(appName, actionName)
+
+    if not callbackName then
+        cb({ success = false, message = 'This app connector is not available.' })
+        return
+    end
+
+    QBCore.Functions.TriggerCallback(callbackName, function(result)
+        cb(result or { success = false, message = 'No response from app connector.' })
+    end, data.payload or {})
+end)
+
+RegisterNUICallback('OpenTablet', function(_, cb)
+    OpenTablet()
+    cb('ok')
+end)
+
 RegisterNUICallback('GetMissedCalls', function(_, cb)
     cb(PhoneData.RecentCalls)
 end)
@@ -646,7 +738,16 @@ RegisterNUICallback('HasPhone', function(_, cb)
 end)
 
 RegisterNUICallback('SetupGarageVehicles', function(_, cb)
-    cb(PhoneData.GarageVehicles)
+    local garageCallback = GetPhoneAppCallback('garage', 'vehicles')
+    if not garageCallback then
+        cb(PhoneData.GarageVehicles)
+        return
+    end
+
+    QBCore.Functions.TriggerCallback(garageCallback, function(vehicles)
+        PhoneData.GarageVehicles = vehicles or {}
+        cb(PhoneData.GarageVehicles)
+    end)
 end)
 
 RegisterNUICallback('RemoveMail', function(data, cb)
@@ -885,7 +986,7 @@ RegisterNUICallback('LoadAdverts', function(_, cb)
         action = 'RefreshAdverts',
         Adverts = PhoneData.Adverts
     })
-    cb('ok')
+    cb(PhoneData.Adverts or {})
 end)
 
 RegisterNUICallback('ClearAlerts', function(data, cb)
@@ -1151,25 +1252,30 @@ RegisterNUICallback('DeleteContact', function(data, cb)
 end)
 
 RegisterNUICallback('GetCryptoData', function(data, cb)
-    QBCore.Functions.TriggerCallback('qb-crypto:server:GetCryptoData', function(CryptoData)
+    local providerCoin = data and data.crypto or ((Config.PhoneCrypto or {}).ProviderCoin or 'qbit')
+    local cryptoCallback = GetPhoneAppCallback('crypto', 'data') or 'qb-crypto:server:GetCryptoData'
+    QBCore.Functions.TriggerCallback(cryptoCallback, function(CryptoData)
         cb(CryptoData)
-    end, data.crypto)
+    end, providerCoin)
 end)
 
 RegisterNUICallback('BuyCrypto', function(data, cb)
-    QBCore.Functions.TriggerCallback('qb-crypto:server:BuyCrypto', function(CryptoData)
+    local cryptoCallback = GetPhoneAppCallback('crypto', 'buy') or 'qb-crypto:server:BuyCrypto'
+    QBCore.Functions.TriggerCallback(cryptoCallback, function(CryptoData)
         cb(CryptoData)
     end, data)
 end)
 
 RegisterNUICallback('SellCrypto', function(data, cb)
-    QBCore.Functions.TriggerCallback('qb-crypto:server:SellCrypto', function(CryptoData)
+    local cryptoCallback = GetPhoneAppCallback('crypto', 'sell') or 'qb-crypto:server:SellCrypto'
+    QBCore.Functions.TriggerCallback(cryptoCallback, function(CryptoData)
         cb(CryptoData)
     end, data)
 end)
 
 RegisterNUICallback('TransferCrypto', function(data, cb)
-    QBCore.Functions.TriggerCallback('qb-crypto:server:TransferCrypto', function(CryptoData)
+    local cryptoCallback = GetPhoneAppCallback('crypto', 'transfer') or 'qb-crypto:server:TransferCrypto'
+    QBCore.Functions.TriggerCallback(cryptoCallback, function(CryptoData)
         cb(CryptoData)
     end, data)
 end)
@@ -1507,7 +1613,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
                 PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                     message = ChatMessage,
                     time = ChatTime,
-                    sender = PhoneData.PlayerData.citizenid,
+                    sender = GetActivePhoneCitizenId(),
                     type = ChatType,
                     data = {},
                 }
@@ -1515,7 +1621,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
                 PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                     message = 'Shared Location',
                     time = ChatTime,
-                    sender = PhoneData.PlayerData.citizenid,
+                    sender = GetActivePhoneCitizenId(),
                     type = ChatType,
                     data = {
                         x = Pos.x,
@@ -1526,7 +1632,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
                 PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                     message = 'Photo',
                     time = ChatTime,
-                    sender = PhoneData.PlayerData.citizenid,
+                    sender = GetActivePhoneCitizenId(),
                     type = ChatType,
                     data = {
                         url = data.url
@@ -1546,7 +1652,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
                 PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                     message = ChatMessage,
                     time = ChatTime,
-                    sender = PhoneData.PlayerData.citizenid,
+                    sender = GetActivePhoneCitizenId(),
                     type = ChatType,
                     data = {},
                 }
@@ -1554,7 +1660,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
                 PhoneData.Chats[NumberKey].messages[ChatDate].messages[#PhoneData.Chats[NumberKey].messages[ChatDate].messages + 1] = {
                     message = 'Shared Location',
                     time = ChatTime,
-                    sender = PhoneData.PlayerData.citizenid,
+                    sender = GetActivePhoneCitizenId(),
                     type = ChatType,
                     data = {
                         x = Pos.x,
@@ -1565,7 +1671,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
                 PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                     message = 'Photo',
                     time = ChatTime,
-                    sender = PhoneData.PlayerData.citizenid,
+                    sender = GetActivePhoneCitizenId(),
                     type = ChatType,
                     data = {
                         url = data.url
@@ -1592,7 +1698,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
             PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                 message = ChatMessage,
                 time = ChatTime,
-                sender = PhoneData.PlayerData.citizenid,
+                sender = GetActivePhoneCitizenId(),
                 type = ChatType,
                 data = {},
             }
@@ -1600,7 +1706,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
             PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                 message = 'Shared Location',
                 time = ChatTime,
-                sender = PhoneData.PlayerData.citizenid,
+                sender = GetActivePhoneCitizenId(),
                 type = ChatType,
                 data = {
                     x = Pos.x,
@@ -1611,7 +1717,7 @@ RegisterNUICallback('SendMessage', function(data, cb)
             PhoneData.Chats[NumberKey].messages[ChatKey].messages[#PhoneData.Chats[NumberKey].messages[ChatKey].messages + 1] = {
                 message = 'Photo',
                 time = ChatTime,
-                sender = PhoneData.PlayerData.citizenid,
+                sender = GetActivePhoneCitizenId(),
                 type = ChatType,
                 data = {
                     url = data.url
@@ -1932,7 +2038,7 @@ RegisterNetEvent('prp-phone:client:RaceNotify', function(message)
     })
 end)
 
-RegisterNetEvent('prp-phone:client:AddRecentCall', function(data, time, type)
+RegisterNetEvent('prp-phone:client:AddRecentCall', function(data, time, type, silent)
     PhoneData.RecentCalls[#PhoneData.RecentCalls + 1] = {
         name = IsNumberInContacts(data.number),
         time = time,
@@ -1940,12 +2046,14 @@ RegisterNetEvent('prp-phone:client:AddRecentCall', function(data, time, type)
         number = data.number,
         anonymous = data.anonymous
     }
-    TriggerServerEvent('prp-phone:server:SetPhoneAlerts', 'phone')
-    Config.PhoneApplications['phone'].Alerts = Config.PhoneApplications['phone'].Alerts + 1
-    SendNUIMessage({
-        action = 'RefreshAppAlerts',
-        AppData = Config.PhoneApplications
-    })
+    if not silent and type == 'missed' then
+        TriggerServerEvent('prp-phone:server:SetPhoneAlerts', 'phone')
+        Config.PhoneApplications['phone'].Alerts = Config.PhoneApplications['phone'].Alerts + 1
+        SendNUIMessage({
+            action = 'RefreshAppAlerts',
+            AppData = Config.PhoneApplications
+        })
+    end
 end)
 
 RegisterNetEvent('prp-phone-new:client:BankNotify', function(text)
@@ -2153,7 +2261,7 @@ RegisterNetEvent('prp-phone:client:GetCalled', function(CallerNumber, CallId, An
                 break
             end
         else
-            TriggerServerEvent('prp-phone:server:AddRecentCall', 'missed', CallData)
+            TriggerServerEvent('prp-phone:server:AddRecentCall', 'incoming', CallData)
             break
         end
     end
@@ -2161,6 +2269,9 @@ end)
 
 RegisterNetEvent('prp-phone:client:UpdateMessages', function(ChatMessages, SenderNumber, New)
     local NumberKey = GetKeyByNumber(SenderNumber)
+    if not NumberKey then
+        New = true
+    end
 
     if New then
         PhoneData.Chats[#PhoneData.Chats + 1] = {

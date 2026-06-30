@@ -10,11 +10,6 @@ RegisterNetEvent('prp-garbage:server:rentTruck', function()
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
 
-    if not HasJob(Player) then
-        TriggerClientEvent('QBCore:Notify', src, Config.Notifications.NeedJob, 'error')
-        return
-    end
-
     if ActiveTrucks[src] then
         TriggerClientEvent('QBCore:Notify', src, Config.Notifications.AlreadyRented, 'error')
         return
@@ -89,7 +84,7 @@ end)
 RegisterNetEvent('prp-garbage:server:breakdownScrap', function(items)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
-    if not HasJob(Player) then return end
+    if not Player then return end
     if type(items) ~= 'table' or #items <= 0 then
         TriggerClientEvent('QBCore:Notify', src, Config.Notifications.NothingCarried, 'error')
         return

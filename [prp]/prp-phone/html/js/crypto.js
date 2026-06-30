@@ -9,13 +9,32 @@ CryptoData.Worth = 1000;
 CryptoData.WalletId = null;
 CryptoData.History = [];
 
+function GetCryptoDisplayShort() {
+    if (window.PRP && PRP.Phone && PRP.Phone.Functions && PRP.Phone.Functions.GetCryptoDisplayShort) {
+        return PRP.Phone.Functions.GetCryptoDisplayShort();
+    }
+
+    return "BTC";
+}
+
+function GetCryptoDisplayName() {
+    if (window.PRP && PRP.Phone && PRP.Phone.Functions && PRP.Phone.Functions.GetCryptoDisplayName) {
+        return PRP.Phone.Functions.GetCryptoDisplayName();
+    }
+
+    return "Bitcoin";
+}
+
 function SetupCryptoData(Crypto) {
     CryptoData.History = Crypto.History;
     CryptoData.Portfolio = (Crypto.Portfolio).toFixed(6);
     CryptoData.Worth = Crypto.Worth;
     CryptoData.WalletId = Crypto.WalletId;
 
-    $(".crypto-action-page-wallet").html("Wallet: "+CryptoData.Portfolio+" Qbit('s)");
+    $(".crypto-action-page-header-buy").text("Buy " + GetCryptoDisplayName());
+    $(".crypto-action-page-header-sell").text("Sell " + GetCryptoDisplayName());
+    $(".crypto-action-page-header-transfer").text("Transfer " + GetCryptoDisplayName());
+    $(".crypto-action-page-wallet").html("Wallet: "+CryptoData.Portfolio+" "+GetCryptoDisplayShort());
     $(".crypto-walletid").html(CryptoData.WalletId);
     $(".cryptotab-course-list").html("");
     if (CryptoData.History.length > 0) {
@@ -48,7 +67,7 @@ function UpdateCryptoData(Crypto) {
     CryptoData.Worth = Crypto.Worth;
     CryptoData.WalletId = Crypto.WalletId;
 
-    $(".crypto-action-page-wallet").html("Wallet: "+CryptoData.Portfolio+" Qbit('s)");
+    $(".crypto-action-page-wallet").html("Wallet: "+CryptoData.Portfolio+" "+GetCryptoDisplayShort());
     $(".crypto-walletid").html(CryptoData.WalletId);
     $(".cryptotab-course-list").html("");
     if (CryptoData.History.length > 0) {
@@ -161,7 +180,7 @@ $(document).on('click', '#buy-crypto', function(e){
                     UpdateCryptoData(CryptoData)
                     CloseCryptoPage()
                     PRP.Phone.Data.PlayerData.money.bank = parseInt(PRP.Phone.Data.PlayerData.money.bank) - parseInt(Price);
-                    PRP.Phone.Notifications.Add("fas fa-university", "QBank", "&#36; "+Price+",- has been withdrawn from your balance!", "#badc58", 2500);
+                    PRP.Phone.Notifications.Add("fas fa-university", "Bank", "&#36; "+Price+",- has been withdrawn from your balance!", "#badc58", 2500);
                 } else {
                     PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough money..", "#badc58", 1500);
                 }
@@ -192,13 +211,13 @@ $(document).on('click', '#sell-crypto', function(e){
                     UpdateCryptoData(CryptoData)
                     CloseCryptoPage()
                     PRP.Phone.Data.PlayerData.money.bank = parseInt(PRP.Phone.Data.PlayerData.money.bank) + parseInt(Price);
-                    PRP.Phone.Notifications.Add("fas fa-university", "QBank", "&#36; "+Price+",- has been added to your balance!", "#badc58", 2500);
+                    PRP.Phone.Notifications.Add("fas fa-university", "Bank", "&#36; "+Price+",- has been added to your balance!", "#badc58", 2500);
                 } else {
-                    PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough Qbits..", "#badc58", 1500);
+                    PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough "+GetCryptoDisplayShort()+"..", "#badc58", 1500);
                 }
             });
         } else {
-            PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough Qbits..", "#badc58", 1500);
+            PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough "+GetCryptoDisplayShort()+"..", "#badc58", 1500);
         }
     } else {
         PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "Fill out all fields!", "#badc58", 1500);
@@ -222,7 +241,7 @@ $(document).on('click', '#transfer-crypto', function(e){
                     WalletId: WalletId,
                 }), function(CryptoData){
                     if (CryptoData == "notenough") {
-                        PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough Qbits..", "#badc58", 1500);
+                        PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough "+GetCryptoDisplayShort()+"..", "#badc58", 1500);
                     } else if (CryptoData == "notvalid") {
                         PRP.Phone.Notifications.Add("fas fa-university", "Crypto", "this Wallet-ID doesn't exist!", "#badc58", 2500);
                     } else {
@@ -235,7 +254,7 @@ $(document).on('click', '#transfer-crypto', function(e){
                 PRP.Phone.Notifications.Add("fas fa-university", "Crypto", "You can't transfer to yourself..", "#badc58", 2500);
             }
         } else {
-            PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough Qbits..", "#badc58", 1500);
+            PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "You don't have enough "+GetCryptoDisplayShort()+"..", "#badc58", 1500);
         }
     } else {
         PRP.Phone.Notifications.Add("fas fa-chart-pie", "Crypto", "Fill out all fields!!", "#badc58", 1500);

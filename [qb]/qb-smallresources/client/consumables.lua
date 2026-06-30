@@ -17,6 +17,11 @@ local function loadAnimDict(dict)
     end
 end
 
+local function getProgressIcon(itemName, fallbackImage)
+    local item = itemName and QBCore.Shared and QBCore.Shared.Items and QBCore.Shared.Items[itemName]
+    return (item and item.image) or fallbackImage
+end
+
 local function equipParachuteAnim()
     loadAnimDict('clothingshirt')
     TaskPlayAnim(PlayerPedId(), 'clothingshirt', 'try_shirt_positive_d', 8.0, 1.0, -1, 49, 0, false, false, false)
@@ -162,7 +167,7 @@ RegisterNetEvent('consumables:client:Eat', function(itemName)
         TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items[itemName], 'remove')
         TriggerServerEvent('consumables:server:addHunger', QBCore.Functions.GetPlayerData().metadata.hunger + Config.Consumables.eat[itemName])
         TriggerServerEvent('hud:server:RelieveStress', math.random(2, 4))
-    end)
+    end, nil, getProgressIcon(itemName, 'sandwich.png'))
 end)
 
 RegisterNetEvent('consumables:client:Drink', function(itemName)
@@ -183,7 +188,7 @@ RegisterNetEvent('consumables:client:Drink', function(itemName)
     }, {}, function() -- Done
         TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items[itemName], 'remove')
         TriggerServerEvent('consumables:server:addThirst', QBCore.Functions.GetPlayerData().metadata.thirst + Config.Consumables.drink[itemName])
-    end)
+    end, nil, getProgressIcon(itemName, 'water_bottle.png'))
 end)
 
 RegisterNetEvent('consumables:client:DrinkAlcohol', function(itemName)
@@ -215,7 +220,7 @@ RegisterNetEvent('consumables:client:DrinkAlcohol', function(itemName)
         end
     end, function() -- Cancel
         QBCore.Functions.Notify(Lang:t('consumables.canceled'), 'error')
-    end)
+    end, getProgressIcon(itemName, 'beer.png'))
 end)
 
 RegisterNetEvent('consumables:client:Custom', function(itemName)
@@ -252,7 +257,7 @@ RegisterNetEvent('consumables:client:Custom', function(itemName)
             if data.replenish.event then
                 TriggerEvent(data.replenish.event)
             end
-        end)
+        end, nil, data.progress.icon or getProgressIcon(itemName))
     end, itemName)
 end)
 
@@ -276,7 +281,7 @@ RegisterNetEvent('consumables:client:Cokebaggy', function()
     end, function() -- Cancel
         StopAnimTask(ped, 'switch@trevor@trev_smoking_meth', 'trev_smoking_meth_loop', 1.0)
         QBCore.Functions.Notify(Lang:t('consumables.canceled'), 'error')
-    end)
+    end, getProgressIcon('cokebaggy', 'cocaine_baggy.png'))
 end)
 
 RegisterNetEvent('consumables:client:Crackbaggy', function()
@@ -299,7 +304,7 @@ RegisterNetEvent('consumables:client:Crackbaggy', function()
     end, function() -- Cancel
         StopAnimTask(ped, 'switch@trevor@trev_smoking_meth', 'trev_smoking_meth_loop', 1.0)
         QBCore.Functions.Notify(Lang:t('consumables.canceled'), 'error')
-    end)
+    end, getProgressIcon('crack_baggy', 'crack_baggy.png'))
 end)
 
 RegisterNetEvent('consumables:client:EcstasyBaggy', function()
@@ -320,7 +325,7 @@ RegisterNetEvent('consumables:client:EcstasyBaggy', function()
     end, function() -- Cancel
         StopAnimTask(PlayerPedId(), 'mp_suicide', 'pill', 1.0)
         QBCore.Functions.Notify(Lang:t('consumables.canceled'), 'error')
-    end)
+    end, getProgressIcon('xtcbaggy', 'xtc_baggy.png'))
 end)
 
 RegisterNetEvent('consumables:client:oxy', function()
@@ -342,7 +347,7 @@ RegisterNetEvent('consumables:client:oxy', function()
     end, function() -- Cancel
         StopAnimTask(PlayerPedId(), 'mp_suicide', 'pill', 1.0)
         QBCore.Functions.Notify(Lang:t('consumables.canceled'), 'error')
-    end)
+    end, getProgressIcon('oxy', 'oxy.png'))
 end)
 
 RegisterNetEvent('consumables:client:meth', function()
@@ -365,7 +370,7 @@ RegisterNetEvent('consumables:client:meth', function()
     end, function() -- Cancel
         StopAnimTask(PlayerPedId(), 'switch@trevor@trev_smoking_meth', 'trev_smoking_meth_loop', 1.0)
         QBCore.Functions.Notify(Lang:t('consumables.canceled'), 'error')
-    end)
+    end, getProgressIcon('meth', 'meth_baggy.png'))
 end)
 
 RegisterNetEvent('consumables:client:UseJoint', function()
@@ -383,7 +388,190 @@ RegisterNetEvent('consumables:client:UseJoint', function()
         end
         TriggerEvent('evidence:client:SetStatus', 'weedsmell', 300)
         TriggerServerEvent('hud:server:RelieveStress', Config.RelieveWeedStress)
+    end, nil, getProgressIcon('joint', 'joint.png'))
+end)
+local leanTripActive = false
+
+local function StartLeanTrip()
+    if leanTripActive then return end
+    leanTripActive = true
+
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+
+    local spawnedEntities = {}
+
+    StartScreenEffect("DrugsTrevorClownsFight", 60000, false)
+    ShakeGameplayCam("DRUNK_SHAKE", 0.35)
+
+    SetPedMotionBlur(ped, true)
+    SetPedIsDrunk(ped, true)
+
+    -- Alien hallucinations
+    local alienModel = `s_m_m_movalien_01`
+    RequestModel(alienModel)
+
+    while not HasModelLoaded(alienModel) do
+        Wait(10)
+    end
+
+    for i = 1, 5 do
+        local offset = vector3(
+            math.random(-18, 18),
+            math.random(-18, 18),
+            0.0
+        )
+
+        local spawnCoords = coords + offset
+
+        local alien = CreatePed(
+            4,
+            alienModel,
+            spawnCoords.x,
+            spawnCoords.y,
+            spawnCoords.z,
+            math.random(0, 360),
+            false,
+            false
+        )
+
+        SetEntityAsMissionEntity(alien, true, true)
+        SetBlockingOfNonTemporaryEvents(alien, true)
+
+        TaskWanderStandard(alien, 10.0, 10)
+
+        table.insert(spawnedEntities, alien)
+    end
+
+    -- Fake vehicles
+    local vehicleModel = `blista`
+
+    RequestModel(vehicleModel)
+
+    while not HasModelLoaded(vehicleModel) do
+        Wait(10)
+    end
+
+    for i = 1, 3 do
+        local spawnCoords = coords + vector3(
+            math.random(-25, 25),
+            math.random(-25, 25),
+            0.0
+        )
+
+        local veh = CreateVehicle(
+            vehicleModel,
+            spawnCoords.x,
+            spawnCoords.y,
+            spawnCoords.z,
+            math.random(0, 360),
+            false,
+            false
+        )
+
+        SetEntityAsMissionEntity(veh, true, true)
+
+        SetVehicleEngineOn(veh, true, true, false)
+
+        SetVehicleForwardSpeed(veh, math.random(20, 40) + 0.0)
+
+        ApplyForceToEntity(
+            veh,
+            1,
+            math.random(-15, 15) + 0.0,
+            math.random(-15, 15) + 0.0,
+            5.0,
+            0.0,
+            0.0,
+            0.0,
+            0,
+            false,
+            true,
+            true,
+            false,
+            true
+        )
+
+        table.insert(spawnedEntities, veh)
+    end
+
+    SetModelAsNoLongerNeeded(alienModel)
+    SetModelAsNoLongerNeeded(vehicleModel)
+
+    CreateThread(function()
+        Wait(60000)
+
+        StopScreenEffect("DrugsTrevorClownsFight")
+
+        StopGameplayCamShaking(true)
+
+        SetPedMotionBlur(PlayerPedId(), false)
+        SetPedIsDrunk(PlayerPedId(), false)
+
+        for _, entity in ipairs(spawnedEntities) do
+            if DoesEntityExist(entity) then
+                DeleteEntity(entity)
+            end
+        end
+
+        leanTripActive = false
     end)
+end
+
+RegisterNetEvent('consumables:client:DrinkLean', function()
+    local ped = PlayerPedId()
+
+    -- CREATE CUP
+    local prop = CreateObject(`prop_cs_paper_cup`, 0, 0, 0, true, true, true)
+
+    AttachEntityToEntity(
+        prop,
+        ped,
+        GetPedBoneIndex(ped, 57005),
+        0.12, 0.03, -0.04,
+        -85.0, 160.0, 0.0,
+        true, true, false, true, 1, true
+    )
+
+    QBCore.Functions.Progressbar(
+        "drink_lean",
+        "Drinking Lean...",
+        5000,
+        false,
+        true,
+        {
+            disableMovement = false,
+            disableCarMovement = false,
+            disableMouse = false,
+            disableCombat = true,
+        },
+        {
+            animDict = "amb@world_human_drinking@coffee@male@idle_a",
+            anim = "idle_c",
+            flags = 49,
+        },
+        {},
+        {},
+        function() -- DONE
+
+            -- DELETE CUP
+            DeleteObject(prop)
+
+            TriggerServerEvent('hud:server:RelieveStress', math.random(10, 20))
+
+            QBCore.Functions.Notify("You feel strange...", "success")
+
+            StartLeanTrip()
+        end,
+        function() -- CANCEL
+
+            -- DELETE CUP
+            DeleteObject(prop)
+
+            QBCore.Functions.Notify("Cancelled", "error")
+        end,
+        getProgressIcon('lean', 'lean_cup.png')
+    )
 end)
 
 RegisterNetEvent('consumables:client:UseParachute', function()
@@ -403,7 +591,7 @@ RegisterNetEvent('consumables:client:UseParachute', function()
         TriggerEvent('qb-clothing:client:loadOutfit', parachuteData)
         parachuteEquipped = true
         TaskPlayAnim(ped, 'clothingshirt', 'exit', 8.0, 1.0, -1, 49, 0, false, false, false)
-    end)
+    end, nil, getProgressIcon('parachute', 'parachute.png'))
 end)
 
 RegisterNetEvent('consumables:client:ResetParachute', function()
@@ -424,7 +612,7 @@ RegisterNetEvent('consumables:client:ResetParachute', function()
             TaskPlayAnim(ped, 'clothingshirt', 'exit', 8.0, 1.0, -1, 49, 0, false, false, false)
             TriggerServerEvent('consumables:server:AddParachute')
             parachuteEquipped = false
-        end)
+        end, nil, getProgressIcon('parachute', 'parachute.png'))
     else
         QBCore.Functions.Notify(Lang:t('consumables.no_parachute'), 'error')
     end
@@ -438,7 +626,7 @@ RegisterNetEvent('consumables:client:UseArmor', function(slot)
         disableCombat = true,
     }, {}, {}, {}, function() -- Done
         TriggerServerEvent('consumables:server:useArmor', slot)
-    end)
+    end, nil, getProgressIcon('armor', 'armor.png'))
 end)
 
 RegisterNetEvent('consumables:client:UseHeavyArmor', function(slot)
@@ -449,7 +637,7 @@ RegisterNetEvent('consumables:client:UseHeavyArmor', function(slot)
         disableCombat = true,
     }, {}, {}, {}, function() -- Done
         TriggerServerEvent('consumables:server:useHeavyArmor', slot)
-    end)
+    end, nil, getProgressIcon('heavyarmor', 'armor.png'))
 end)
 
 RegisterNetEvent('consumables:client:UseArmorPlate', function(slot)
@@ -460,7 +648,7 @@ RegisterNetEvent('consumables:client:UseArmorPlate', function(slot)
         disableCombat = true,
     }, {}, {}, {}, function() -- Done
         TriggerServerEvent('consumables:server:useArmorPlate', slot)
-    end)
+    end, nil, getProgressIcon('armor_plate', 'armor.png'))
 end)
 
 RegisterNetEvent('consumables:client:ResetArmor', function()
@@ -476,7 +664,7 @@ RegisterNetEvent('consumables:client:ResetArmor', function()
             SetPedArmour(ped, 0)
             TriggerEvent('qb-inventory:client:ItemBox', QBCore.Shared.Items['heavyarmor'], 'add')
             TriggerServerEvent('consumables:server:resetArmor')
-        end)
+        end, nil, getProgressIcon('heavyarmor', 'armor.png'))
     else
         QBCore.Functions.Notify(Lang:t('consumables.armor_empty'), 'error')
     end

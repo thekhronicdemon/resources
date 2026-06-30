@@ -94,8 +94,8 @@ end)
 
 RegisterNetEvent('evidence:server:AddBlooddropToInventory', function(bloodId, bloodInfo)
     local src = source
-    if exports['qb-inventory']:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence:server:AddBlooddropToInventory') then
-        if exports['qb-inventory']:AddItem(src, 'filled_evidence_bag', 1, false, bloodInfo, 'evidence:server:AddBlooddropToInventory') then
+    if exports['prp-inventory']:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence:server:AddBlooddropToInventory') then
+        if exports['prp-inventory']:AddItem(src, 'filled_evidence_bag', 1, false, bloodInfo, 'evidence:server:AddBlooddropToInventory') then
             TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['filled_evidence_bag'], 'add')
             TriggerClientEvent('evidence:client:RemoveBlooddrop', -1, bloodId)
             BloodDrops[bloodId] = nil
@@ -107,8 +107,8 @@ end)
 
 RegisterNetEvent('evidence:server:AddFingerprintToInventory', function(fingerId, fingerInfo)
     local src = source
-    if exports['qb-inventory']:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence:server:AddFingerprintToInventory') then
-        if exports['qb-inventory']:AddItem(src, 'filled_evidence_bag', 1, false, fingerInfo, 'evidence:server:AddFingerprintToInventory') then
+    if exports['prp-inventory']:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence:server:AddFingerprintToInventory') then
+        if exports['prp-inventory']:AddItem(src, 'filled_evidence_bag', 1, false, fingerInfo, 'evidence:server:AddFingerprintToInventory') then
             TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['filled_evidence_bag'], 'add')
             TriggerClientEvent('evidence:client:RemoveFingerprint', -1, fingerId)
             FingerDrops[fingerId] = nil
@@ -147,8 +147,8 @@ end)
 
 RegisterNetEvent('evidence:server:AddCasingToInventory', function(casingId, casingInfo)
     local src = source
-    if exports['qb-inventory']:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence:server:AddCasingToInventory') then
-        if exports['qb-inventory']:AddItem(src, 'filled_evidence_bag', 1, false, casingInfo, 'evidence:server:AddCasingToInventory') then
+    if exports['prp-inventory']:RemoveItem(src, 'empty_evidence_bag', 1, false, 'evidence:server:AddCasingToInventory') then
+        if exports['prp-inventory']:AddItem(src, 'filled_evidence_bag', 1, false, casingInfo, 'evidence:server:AddCasingToInventory') then
             TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['filled_evidence_bag'], 'add')
             TriggerClientEvent('evidence:client:RemoveCasing', -1, casingId)
             Casings[casingId] = nil

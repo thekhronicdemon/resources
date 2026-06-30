@@ -13,6 +13,7 @@ Config.HeaderDisabledApps = [
     "gang",
     "cryptoshop",
     "calculator",
+    "finances",
 ]
 
 Config.DefaultCryptoPage = "general";

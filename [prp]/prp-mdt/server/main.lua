@@ -384,8 +384,8 @@ RegisterNetEvent('prp-mdt:server:openEvidenceInventory', function(caseId)
     -- Newer qb-inventory builds. pcall prevents crashes if your qb/prp inventory uses an older API.
     local opened = false
     local ok = pcall(function()
-        if exports['qb-inventory'] and exports['qb-inventory'].OpenInventory then
-            exports['qb-inventory']:OpenInventory(src, stashId, { label = label, maxweight = weight, slots = slots })
+        if exports['prp-inventory'] and exports['prp-inventory'].OpenInventory then
+            exports['prp-inventory']:OpenInventory(src, stashId, { label = label, maxweight = weight, slots = slots })
             opened = true
         end
     end)

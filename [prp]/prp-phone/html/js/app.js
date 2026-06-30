@@ -26,6 +26,12 @@ PRP.Phone.Data = {
     PlayerJob: {},
     AnonymousCall: false,
     IsEditingApps: false,
+    CryptoConfig: {
+        ProviderCoin: "btc",
+        DisplayName: "Bitcoin",
+        DisplayShort: "BTC",
+        ShopLabel: "BTC only",
+    },
 }
 
 PRP.Phone.Data.MaxSlots = 28;
@@ -47,6 +53,30 @@ OpenedChatData = {
 
 var CanOpenApp = true;
 var up = false
+
+PRP.Phone.Functions.PrepareApplicationForOpen = function(app) {
+    var AppObject = $("."+app+"-app");
+
+    $(".phone-application-container").stop(true, true).css({"display":"block", "top":""});
+    $(".phone-application-container > div").each(function() {
+        var RootObject = $(this);
+        RootObject.stop(true, true).css({"top":"", "left":""});
+
+        if (!RootObject.hasClass(app+"-app")) {
+            RootObject.css({"display":"none"});
+        }
+    });
+
+    AppObject.stop(true, true).css({"display":"block", "top":"", "left":""});
+}
+
+PRP.Phone.Functions.HideApplicationLayer = function(app) {
+    var AppObject = app ? $("."+app+"-app") : $(".phone-application-container > div");
+
+    AppObject.stop(true, true).css({"display":"none", "top":"", "left":""});
+    $(".phone-application-container").stop(true, true).css({"display":"none", "top":""});
+    CanOpenApp = true;
+}
 
 PRP.Phone.Functions.GetApplicationSlot = function(app) {
     var defaultSlot = parseInt(app.slot);
@@ -103,6 +133,85 @@ function IsAppJobBlocked(joblist, myjob) {
     return retval;
 }
 
+PRP.Phone.Functions.ClearTooltip = function(element) {
+    if (!element) {
+        return;
+    }
+
+    var $element = $(element);
+
+    if (typeof $element.tooltip === "function") {
+        try {
+            $element.tooltip("dispose");
+        } catch (e) {
+            try {
+                $element.tooltip("destroy");
+            } catch (ignored) {}
+        }
+    }
+
+    if (window.bootstrap && window.bootstrap.Tooltip && typeof window.bootstrap.Tooltip.getInstance === "function") {
+        var instance = window.bootstrap.Tooltip.getInstance(element);
+        if (instance) {
+            instance.dispose();
+        }
+    }
+
+    $element
+        .removeAttr("title")
+        .removeAttr("data-original-title")
+        .removeAttr("data-bs-original-title")
+        .removeAttr("aria-describedby")
+        .removeAttr("data-toggle")
+        .removeAttr("data-placement")
+        .removeAttr("data-bs-toggle")
+        .removeAttr("data-bs-placement")
+        .removeData("bs.tooltip")
+        .removeData("placement");
+}
+
+PRP.Phone.Functions.SetupTooltip = function(element) {
+    var $element = $(element);
+
+    if (typeof $element.tooltip === "function") {
+        $element.tooltip({container: "body"});
+    } else if (window.bootstrap && window.bootstrap.Tooltip) {
+        if (typeof window.bootstrap.Tooltip.getOrCreateInstance === "function") {
+            window.bootstrap.Tooltip.getOrCreateInstance(element, {container: "body"});
+        } else if (typeof window.bootstrap.Tooltip.getInstance !== "function" || !window.bootstrap.Tooltip.getInstance(element)) {
+            new window.bootstrap.Tooltip(element, {container: "body"});
+        }
+    }
+}
+
+PRP.Phone.Functions.GetCryptoConfig = function() {
+    return PRP.Phone.Data.CryptoConfig || {};
+}
+
+PRP.Phone.Functions.GetCryptoProviderCoin = function() {
+    return PRP.Phone.Functions.GetCryptoConfig().ProviderCoin || "btc";
+}
+
+PRP.Phone.Functions.GetCryptoDisplayName = function() {
+    return PRP.Phone.Functions.GetCryptoConfig().DisplayName || "Bitcoin";
+}
+
+PRP.Phone.Functions.GetCryptoDisplayShort = function() {
+    return PRP.Phone.Functions.GetCryptoConfig().DisplayShort || "BTC";
+}
+
+PRP.Phone.Functions.GetCryptoShopLabel = function() {
+    return PRP.Phone.Functions.GetCryptoConfig().ShopLabel || (PRP.Phone.Functions.GetCryptoDisplayShort() + " only");
+}
+
+PRP.Phone.Functions.AppRequest = function(app, action, payload, cb) {
+    $.post("https://prp-phone/PhoneAppRequest", JSON.stringify({
+        app: app,
+        action: action,
+        payload: payload || {},
+    }), cb || function() {});
+}
+
 PRP.Phone.Functions.SetupApplications = function(data) {
     data = data || {};
     PRP.Phone.Data.Applications = data.applications || {};
@@ -112,11 +221,14 @@ PRP.Phone.Functions.SetupApplications = function(data) {
     var i;
     for (i = 1; i <= PRP.Phone.Data.MaxSlots; i++) {
         var applicationSlot = $(".phone-applications").find('[data-appslot="'+i+'"]');
+        $(applicationSlot).find("[data-toggle='tooltip'], [data-bs-toggle='tooltip']").each(function() {
+            PRP.Phone.Functions.ClearTooltip(this);
+        });
+        PRP.Phone.Functions.ClearTooltip(applicationSlot[0]);
         $(applicationSlot).html("");
         $(applicationSlot).css({
             "background-color":"transparent"
         });
-        $(applicationSlot).prop('title', "");
         $(applicationSlot).attr("draggable", false);
         $(applicationSlot).attr("data-has-app", "false");
         $(applicationSlot).removeAttr("data-app");
@@ -136,8 +248,16 @@ PRP.Phone.Functions.SetupApplications = function(data) {
             if (app.app == "meos") {
                 icon = '<img src="./img/politie.png" class="police-icon">';
             }
-            $(applicationSlot).html(icon+'<div class="app-unread-alerts">0</div>');
-            $(applicationSlot).prop('title', app.tooltipText);
+            var tooltipPos = app.tooltipPos || "bottom";
+            var appIcon = $('<div class="phone-application-icon"></div>');
+            appIcon.attr("data-toggle", "tooltip");
+            appIcon.attr("data-bs-toggle", "tooltip");
+            appIcon.attr("data-placement", tooltipPos);
+            appIcon.attr("data-bs-placement", tooltipPos);
+            appIcon.attr("data-app", app.app);
+            appIcon.prop("title", app.tooltipText || app.app);
+            appIcon.html(icon+'<div class="app-unread-alerts">0</div>');
+            $(applicationSlot).empty().append(appIcon);
             $(applicationSlot).data('app', app.app);
             $(applicationSlot).attr("data-app", app.app);
             $(applicationSlot).attr("draggable", false);
@@ -150,7 +270,9 @@ PRP.Phone.Functions.SetupApplications = function(data) {
         }
     });
 
-    $('[data-toggle="tooltip"]').tooltip();
+    $('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').each(function() {
+        PRP.Phone.Functions.SetupTooltip(this);
+    });
 }
 
 PRP.Phone.Functions.SetupAppWarnings = function(AppData) {
@@ -186,13 +308,18 @@ $(document).on('click', '.phone-application', function(e){
     }
 
     var PressedApplication = $(this).data('app');
+    if (PressedApplication == "tablet") {
+        $.post('https://prp-phone/OpenTablet', JSON.stringify({}));
+        return;
+    }
+
     var AppObject = $("."+PressedApplication+"-app");
 
     if (AppObject.length !== 0) {
         if (CanOpenApp) {
             if (PRP.Phone.Data.currentApplication == null) {
+                PRP.Phone.Functions.PrepareApplicationForOpen(PressedApplication);
                 PRP.Phone.Animations.TopSlideDown('.phone-application-container', 300, 0);
-                PRP.Phone.Functions.ToggleApp(PressedApplication, "block");
 
                 if (PRP.Phone.Functions.IsAppHeaderAllowed(PressedApplication)) {
                     PRP.Phone.Functions.HeaderTextColor("black", 300);
@@ -254,7 +381,7 @@ $(document).on('click', '.phone-application', function(e){
                     })
                 } else if (PressedApplication == "crypto") {
                     $.post('https://prp-phone/GetCryptoData', JSON.stringify({
-                        crypto: "qbit",
+                        crypto: PRP.Phone.Functions.GetCryptoProviderCoin(),
                     }), function(CryptoData){
                         SetupCryptoData(CryptoData);
                     })
@@ -307,6 +434,9 @@ $(document).on('click', '.phone-application', function(e){
                     PRP.Phone.Functions.Close();
                 }
 
+                if (typeof LoadPrpPhoneApp === "function") {
+                    LoadPrpPhoneApp(PressedApplication);
+                }
                 
             }
         }
@@ -416,8 +546,15 @@ PRP.Phone.Functions.BeginApplicationDrag = function(source, event) {
     drag.ghost = drag.source.clone();
     drag.ghost
         .removeAttr("data-toggle")
+        .removeAttr("data-bs-toggle")
         .removeAttr("title")
+        .removeAttr("data-original-title")
+        .removeAttr("data-bs-original-title")
+        .removeAttr("aria-describedby")
         .addClass("prp-app-drag-ghost");
+    drag.ghost.find("[data-toggle='tooltip'], [data-bs-toggle='tooltip']").each(function() {
+        PRP.Phone.Functions.ClearTooltip(this);
+    });
     $("body").append(drag.ghost);
 
     PRP.Phone.Functions.SetAppEditMode(true);
@@ -527,16 +664,20 @@ $(document).on('click', '.phone-home-container', function(event){
     if (PRP.Phone.Data.currentApplication === null) {
         PRP.Phone.Functions.Close();
     } else {
+        var ClosingApplication = PRP.Phone.Data.currentApplication;
+
         PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
-        PRP.Phone.Animations.TopSlideUp('.'+PRP.Phone.Data.currentApplication+"-app", 400, -160);
+        PRP.Phone.Animations.TopSlideUp('.'+ClosingApplication+"-app", 400, -160);
         CanOpenApp = false;
         setTimeout(function(){
-            PRP.Phone.Functions.ToggleApp(PRP.Phone.Data.currentApplication, "none");
+            PRP.Phone.Functions.ToggleApp(ClosingApplication, "none");
+            $("."+ClosingApplication+"-app").css({"top":"", "left":""});
+            $(".phone-application-container").css({"display":"none", "top":""});
             CanOpenApp = true;
         }, 400)
         PRP.Phone.Functions.HeaderTextColor("white", 300);
 
-        if (PRP.Phone.Data.currentApplication == "whatsapp") {
+        if (ClosingApplication == "whatsapp") {
             if (OpenedChatData.number !== null) {
                 setTimeout(function(){
                     $(".whatsapp-chats").css({"display":"block"});
@@ -552,7 +693,7 @@ $(document).on('click', '.phone-home-container', function(event){
                     OpenedChatData.number = null;
                 }, 450);
             }
-        } else if (PRP.Phone.Data.currentApplication == "bank") {
+        } else if (ClosingApplication == "bank") {
             if (CurrentTab == "invoices") {
                 setTimeout(function(){
                     $(".bank-app-invoices").animate({"left": "30vh"});
@@ -569,7 +710,7 @@ $(document).on('click', '.phone-home-container', function(event){
                     CurrentTab = "accounts";
                 }, 400)
             }
-        } else if (PRP.Phone.Data.currentApplication == "meos") {
+        } else if (ClosingApplication == "meos") {
             $(".meos-alert-new").remove();
             setTimeout(function(){
                 $(".meos-recent-alert").removeClass("noodknop");
@@ -582,6 +723,8 @@ $(document).on('click', '.phone-home-container', function(event){
 });
 
 PRP.Phone.Functions.Open = function(data) {
+    PRP.Phone.Functions.HideApplicationLayer();
+    PRP.Phone.Data.currentApplication = null;
     PRP.Phone.Animations.BottomSlideUp('.container', 300, 0);
     PRP.Phone.Notifications.LoadTweets(data.Tweets);
     PRP.Phone.Data.IsOpen = true;
@@ -592,35 +735,23 @@ PRP.Phone.Functions.ToggleApp = function(app, show) {
 }
 
 PRP.Phone.Functions.Close = function() {
+    var ClosingApplication = PRP.Phone.Data.currentApplication;
 
-    if (PRP.Phone.Data.currentApplication == "whatsapp") {
-        setTimeout(function(){
-            PRP.Phone.Animations.TopSlideUp('.phone-application-container', 400, -160);
-            PRP.Phone.Animations.TopSlideUp('.'+PRP.Phone.Data.currentApplication+"-app", 400, -160);
-            $(".whatsapp-app").css({"display":"none"});
-            PRP.Phone.Functions.HeaderTextColor("white", 300);
-
-            if (OpenedChatData.number !== null) {
-                setTimeout(function(){
-                    $(".whatsapp-chats").css({"display":"block"});
-                    $(".whatsapp-chats").animate({
-                        left: 0+"vh"
-                    }, 1);
-                    $(".whatsapp-openedchat").animate({
-                        left: -30+"vh"
-                    }, 1, function(){
-                        $(".whatsapp-openedchat").css({"display":"none"});
-                    });
-                    OpenedChatData.number = null;
-                }, 450);
-            }
-            OpenedChatPicture = null;
-            PRP.Phone.Data.currentApplication = null;
-        }, 500)
-    } else if (PRP.Phone.Data.currentApplication == "meos") {
+    if (ClosingApplication == "whatsapp") {
+        $(".whatsapp-chats").stop(true, true).css({"display":"block", "left":"0vh"});
+        $(".whatsapp-openedchat").stop(true, true).css({"display":"none", "left":"-30vh"});
+        OpenedChatPicture = null;
+        OpenedChatData.number = null;
+    } else if (ClosingApplication == "meos") {
         $(".meos-alert-new").remove();
         $(".meos-recent-alert").removeClass("noodknop");
         $(".meos-recent-alert").css({"background-color":"#004682"});
+    }
+
+    if (ClosingApplication !== null) {
+        PRP.Phone.Functions.HideApplicationLayer(ClosingApplication);
+        PRP.Phone.Functions.HeaderTextColor("white", 300);
+        PRP.Phone.Data.currentApplication = null;
     }
 
     PRP.Phone.Animations.BottomSlideDown('.container', 300, -70);
@@ -727,12 +858,22 @@ PRP.Phone.Notifications.Add = function(icon, title, text, color, timeout) {
 PRP.Phone.Functions.LoadPhoneData = function(data) {
     PRP.Phone.Data.PlayerData = data.PlayerData;
     PRP.Phone.Data.PlayerJob = data.PlayerJob;
+    PRP.Phone.Data.CryptoConfig = data.CryptoConfig || PRP.Phone.Data.CryptoConfig;
+    PRP.Phone.Data.DeviceProfile = data.PhoneData.DeviceProfile || {};
+    PRP.Phone.Data.ActiveSim = data.PhoneData.ActiveSim || null;
+    if (PRP.Phone.Data.ActiveSim && PRP.Phone.Data.PlayerData && PRP.Phone.Data.PlayerData.charinfo) {
+        PRP.Phone.Data.PlayerData.charinfo.phone = PRP.Phone.Data.ActiveSim;
+    }
     PRP.Phone.Data.MetaData = data.PhoneData.MetaData || {};
     PRP.Phone.Functions.LoadMetaData(PRP.Phone.Data.MetaData);
     PRP.Phone.Functions.LoadContacts(data.PhoneData.Contacts);
     PRP.Phone.Functions.SetupApplications(data);
 
     $("#player-id").html("<span>" + "ID: " + data.PlayerId + "</span>")
+}
+
+PRP.Phone.Functions.GetActivePhoneCitizenId = function() {
+    return ((PRP.Phone.Data.DeviceProfile || {}).citizenid) || ((PRP.Phone.Data.PlayerData || {}).citizenid);
 }
 
 PRP.Phone.Functions.UpdateTime = function(data) {

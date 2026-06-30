@@ -165,6 +165,15 @@
     top: 2vh;
 }
 
+.crypto-header-icon {
+    height: 14vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f2b84b;
+    font-size: 6.8vh;
+}
+
 .cryptotab-general {
     display: none;
     position: absolute;

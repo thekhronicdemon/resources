@@ -4,9 +4,44 @@ let TabletMiningJobs = [];
 let TabletMiningTimer = null;
 let RacingOriginalParent = null;
 let RacingPlaceholder = null;
+let TabletLaunchedFromPhone = false;
 
 function PrpPhoneNotify(title, text, icon, color) {
     PRP.Phone.Notifications.Add(icon || "fas fa-info-circle", title, text, color || "#111827", 3000);
+}
+
+function GetPhoneCryptoShort() {
+    if (window.PRP && PRP.Phone && PRP.Phone.Functions && PRP.Phone.Functions.GetCryptoDisplayShort) {
+        return PRP.Phone.Functions.GetCryptoDisplayShort();
+    }
+
+    return "BTC";
+}
+
+function GetPhoneCryptoShopLabel() {
+    if (window.PRP && PRP.Phone && PRP.Phone.Functions && PRP.Phone.Functions.GetCryptoShopLabel) {
+        return PRP.Phone.Functions.GetCryptoShopLabel();
+    }
+
+    return GetPhoneCryptoShort() + " only";
+}
+
+function FormatMoney(amount) {
+    amount = Number(amount) || 0;
+    return "$" + amount.toLocaleString("en-US", { maximumFractionDigits: 0 });
+}
+
+function PhoneAppRequest(app, action, payload, cb) {
+    if (window.PRP && PRP.Phone && PRP.Phone.Functions && PRP.Phone.Functions.AppRequest) {
+        PRP.Phone.Functions.AppRequest(app, action, payload, cb);
+        return;
+    }
+
+    $.post("https://prp-phone/PhoneAppRequest", JSON.stringify({
+        app: app,
+        action: action,
+        payload: payload || {},
+    }), cb || function() {});
 }
 
 function UpdateCalculatorDisplay() {
@@ -16,6 +51,7 @@ function UpdateCalculatorDisplay() {
 function RenderCryptoShop(items) {
     const list = $(".cryptoshop-items");
     list.html("");
+    $(".cryptoshop-currency-label").text(GetPhoneCryptoShopLabel());
 
     if (!items || items.length === 0) {
         list.append('<div class="prp-simple-card"><span class="prp-simple-title">No stock</span><p>Nothing is listed right now.</p></div>');
@@ -25,7 +61,7 @@ function RenderCryptoShop(items) {
     $.each(items, function(_, item) {
         list.append(
             '<div class="cryptoshop-item">' +
-                '<div><strong>' + item.label + '</strong><span>x' + item.amount + ' for ' + item.price + ' Qbit</span></div>' +
+                '<div><strong>' + item.label + '</strong><span>x' + item.amount + ' for ' + item.price + ' ' + GetPhoneCryptoShort() + '</span></div>' +
                 '<button class="cryptoshop-buy" data-item="' + item.item + '">Buy</button>' +
             '</div>'
         );
@@ -36,6 +72,73 @@ function LoadCryptoShop() {
     $.post("https://prp-phone/GetCryptoShopItems", JSON.stringify({}), function(resp) {
         RenderCryptoShop(resp || []);
     });
+}
+
+function RenderFinances(resp) {
+    const summary = $(".finances-summary");
+    const products = $(".finances-products");
+    const loans = $(".finances-loans");
+
+    summary.html("");
+    products.html("");
+    loans.html("");
+
+    if (!resp || (resp.success === false && !resp.profile)) {
+        $(".finances-score").text("Unavailable");
+        summary.append('<div class="prp-simple-card"><span class="prp-simple-title">Finances unavailable</span><p>' + EscapeHtml((resp && resp.message) || "The finance connector is offline.") + '</p></div>');
+        return;
+    }
+
+    const profile = resp.profile || {};
+    const creditScore = Number(profile.creditScore || profile.credit_score || 0);
+    $(".finances-score").text("Credit score " + creditScore);
+    summary.append(
+        '<div class="finance-score-card">' +
+            '<span>Credit Score</span>' +
+            '<strong>' + creditScore + '</strong>' +
+            '<p>' + EscapeHtml(profile.rating || "Building history") + '</p>' +
+        '</div>'
+    );
+
+    products.append('<span class="finance-section-title">Loan Offers</span>');
+    if (!resp.products || resp.products.length === 0) {
+        products.append('<div class="prp-simple-card"><span class="prp-simple-title">No offers</span><p>No loans are available for this credit profile.</p></div>');
+    } else {
+        $.each(resp.products, function(_, product) {
+            const disabled = product.available === false ? " disabled" : "";
+            const note = product.available === false ? EscapeHtml(product.reason || "Credit score too low") : "Estimated payment " + FormatMoney(product.paymentAmount);
+            products.append(
+                '<div class="finance-product">' +
+                    '<div><strong>' + EscapeHtml(product.label) + '</strong><span>' + FormatMoney(product.amount) + ' at ' + Number(product.interestRate * 100).toFixed(1) + '%</span><p>' + note + '</p></div>' +
+                    '<button class="finance-apply" data-product="' + EscapeHtml(product.id) + '"' + disabled + '>Apply</button>' +
+                '</div>'
+            );
+        });
+    }
+
+    loans.append('<span class="finance-section-title">Current Loans</span>');
+    if (!resp.loans || resp.loans.length === 0) {
+        loans.append('<div class="prp-simple-card"><span class="prp-simple-title">No loans</span><p>You do not have any active finance agreements.</p></div>');
+    } else {
+        $.each(resp.loans, function(_, loan) {
+            const status = loan.status || "active";
+            const payment = Math.min(Number(loan.paymentAmount) || Number(loan.balance) || 0, Number(loan.balance) || 0);
+            loans.append(
+                '<div class="finance-loan">' +
+                    '<div class="finance-loan-top"><strong>' + EscapeHtml(loan.label || "Loan") + '</strong><span class="finance-loan-status">' + EscapeHtml(status) + '</span></div>' +
+                    '<div class="finance-loan-meta"><span>Balance ' + FormatMoney(loan.balance) + '</span><span>Payment ' + FormatMoney(payment) + '</span></div>' +
+                    '<button class="finance-pay" data-loan="' + loan.id + '" data-amount="' + payment + '">Pay ' + FormatMoney(payment) + '</button>' +
+                '</div>'
+            );
+        });
+    }
+}
+
+function LoadFinances() {
+    $(".finances-score").text("Loading...");
+    $(".finances-summary").html('<div class="prp-simple-card"><span class="prp-simple-title">Loading</span><p>Fetching finance profile...</p></div>');
+    $(".finances-products, .finances-loans").html("");
+    PhoneAppRequest("finances", "profile", {}, RenderFinances);
 }
 
 function LoadGangStatus() {
@@ -49,6 +152,18 @@ function LoadGangStatus() {
         $(".gang-status").text(resp.gang.label + " - " + bossText);
     });
 }
+
+function LoadPrpPhoneApp(app) {
+    if (app === "cryptoshop") {
+        LoadCryptoShop();
+    } else if (app === "gang") {
+        LoadGangStatus();
+    } else if (app === "finances") {
+        LoadFinances();
+    }
+}
+
+window.LoadPrpPhoneApp = LoadPrpPhoneApp;
 
 function EscapeHtml(value) {
     return $("<div>").text(value || "").html();
@@ -138,11 +253,13 @@ function UpdateTabletCryptoStatus(data) {
 }
 
 function OpenTablet(data) {
+    TabletLaunchedFromPhone = !!(window.PRP && PRP.Phone && PRP.Phone.Data && PRP.Phone.Data.IsOpen && $(".container").is(":visible"));
     TabletPlayerData = data.PlayerData || {};
     if (window.PRP && PRP.Phone && PRP.Phone.Data && data.PlayerData) {
         PRP.Phone.Data.PlayerData = data.PlayerData;
     }
 
+    $(".container").toggleClass("phone-covered-by-tablet", TabletLaunchedFromPhone);
     $(".tablet-container").fadeIn(120);
     $(".tablet-app-grid").html("");
     UpdateTabletCryptoStatus(data);
@@ -244,6 +361,8 @@ function LoadTabletBusiness() {
 
 function HideTablet() {
     RestoreRacingFromTablet();
+    $(".container").removeClass("phone-covered-by-tablet");
+    TabletLaunchedFromPhone = false;
     $(".tablet-container").fadeOut(120);
 }
 
@@ -276,15 +395,6 @@ function SetTabletPage(page) {
     }
 }
 
-$(document).on("click", ".phone-application", function() {
-    const app = $(this).data("app");
-    if (app === "cryptoshop") {
-        setTimeout(LoadCryptoShop, 150);
-    } else if (app === "gang") {
-        setTimeout(LoadGangStatus, 150);
-    }
-});
-
 $(document).on("click", ".cryptoshop-buy", function() {
     const item = $(this).data("item");
     $.post("https://prp-phone/BuyCryptoShopItem", JSON.stringify({ item: item }), function(resp) {
@@ -294,6 +404,31 @@ $(document).on("click", ".cryptoshop-buy", function() {
         } else {
             PrpPhoneNotify("Crypto Shop", (resp && resp.message) || "Purchase failed", "fas fa-shopping-bag", "#b91c1c");
         }
+    });
+});
+
+$(document).on("click", ".finance-apply", function() {
+    const productId = $(this).data("product");
+    PhoneAppRequest("finances", "applyLoan", { productId: productId }, function(resp) {
+        if (resp && resp.success) {
+            PrpPhoneNotify("Finances", resp.message || "Loan approved", "fas fa-chart-line", "#0f766e");
+        } else {
+            PrpPhoneNotify("Finances", (resp && resp.message) || "Loan declined", "fas fa-chart-line", "#b91c1c");
+        }
+        RenderFinances(resp);
+    });
+});
+
+$(document).on("click", ".finance-pay", function() {
+    const loanId = Number($(this).data("loan"));
+    const amount = Number($(this).data("amount"));
+    PhoneAppRequest("finances", "makePayment", { loanId: loanId, amount: amount }, function(resp) {
+        if (resp && resp.success) {
+            PrpPhoneNotify("Finances", resp.message || "Payment made", "fas fa-chart-line", "#0f766e");
+        } else {
+            PrpPhoneNotify("Finances", (resp && resp.message) || "Payment failed", "fas fa-chart-line", "#b91c1c");
+        }
+        RenderFinances(resp);
     });
 });
 
@@ -406,6 +541,7 @@ $(document).ready(function() {
                 HideTablet();
                 break;
             case "forceClosePhone":
+                HideTablet();
                 if (PRP.Phone && PRP.Phone.Functions && PRP.Phone.Functions.Close) {
                     PRP.Phone.Functions.Close();
                 }

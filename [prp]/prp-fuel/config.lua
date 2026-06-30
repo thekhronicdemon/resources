@@ -16,6 +16,23 @@ Config.Refuel = {
     PaymentType = 'cash',
 }
 
+Config.FuelCan = {
+    Enabled = true,
+    Item = 'jerry_can',
+    Price = 500,
+    PaymentType = 'cash',
+    StartingFuel = 100.0,
+    FuelPerTick = 1.0,
+    TickTime = 650,
+    VehicleSearchRadius = 5.0,
+    StopDistance = 5.0,
+
+    -- 100 vehicle fuel added uses 50% of the can, so a full can can fill
+    -- two fully empty vehicles before it is deleted.
+    CanPercentPerVehicleFuel = 0.5,
+    MetadataKey = 'quality',
+}
+
 Config.Consumption = {
     Enabled = true,
     TickTime = 5000,
@@ -31,11 +48,16 @@ Config.Consumption = {
 
 Config.Text = {
     TargetLabel = 'Refuel Vehicle',
+    BuyFuelCanLabel = 'Buy Fuel Can',
     NoVehicle = 'No vehicle close enough to this pump.',
     VehicleFull = 'This vehicle is already full.',
     TooFar = 'You moved too far away from the pump.',
     NoMoney = 'You do not have enough money.',
+    NoFuelCan = 'This fuel can is empty.',
     Refuelled = 'Vehicle refuelled.',
+    FuelCanBought = 'Fuel can purchased.',
+    FuelCanUsed = 'Fuel can updated.',
+    FuelCanEmpty = 'Fuel can emptied and discarded.',
     Cancelled = 'Refuelling cancelled.',
 }
 

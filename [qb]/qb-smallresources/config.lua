@@ -102,7 +102,7 @@ Config.Consumables = {
     },
     drink = { -- default drink items
         ['water_bottle'] = math.random(35, 54),
-        ['kurkakola'] = math.random(35, 54),
+        ['cola'] = math.random(35, 54),
         ['coffee'] = math.random(40, 50)
     },
     alcohol = { -- default alcohol items

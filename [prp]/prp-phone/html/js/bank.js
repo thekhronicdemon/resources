@@ -26,7 +26,7 @@ $(document).on('click', '.bank-app-account', function(e){
     copyText.setSelectionRange(0, 99999);
     document.execCommand("copy");
 
-    PRP.Phone.Notifications.Add("fas fa-university", "QBank", "Citizen ID copied!", "#badc58", 1750);
+    PRP.Phone.Notifications.Add("fas fa-university", "Bank", "Citizen ID copied!", "#badc58", 1750);
 });
 
 var CurrentTab = "accounts";
@@ -73,19 +73,19 @@ PRP.Phone.Functions.DoBankOpen = function() {
 
     $(".bank-app-loaded").css({"display":"none", "padding-left":"30vh"});
     $(".bank-app-accounts").css({"left":"30vh"});
-    $(".qbank-logo").css({"left": "0vh"});
-    $("#qbank-text").css({"opacity":"0.0", "left":"9vh"});
+    $(".bank-logo").css({"left": "0vh"});
+    $("#bank-text").css({"opacity":"0.0", "left":"9vh"});
     $(".bank-app-loading").css({
         "display":"block",
         "left":"0vh",
     });
     setTimeout(function(){
         CurrentTab = "accounts";
-        $(".qbank-logo").animate({
+        $(".bank-logo").animate({
             left: -12+"vh"
         }, 500);
         setTimeout(function(){
-            $("#qbank-text").animate({
+            $("#bank-text").animate({
                 opacity: 1.0,
                 left: 14+"vh"
             });
@@ -128,14 +128,14 @@ $(document).on('click', '#accept-transfer', function(e){
                     $("#bank-transfer-amount").val("");
 
                     SetBankBalance(data.NewBalance);
-                    PRP.Phone.Notifications.Add("fas fa-university", "QBank", "You have transfered &#36; "+amount+"!", "#badc58", 1500);
+                    PRP.Phone.Notifications.Add("fas fa-university", "Bank", "You have transfered &#36; "+amount+"!", "#badc58", 1500);
                 } else {
-                    PRP.Phone.Notifications.Add("fas fa-university", "QBank", "You don't have enough balance!", "#badc58", 1500);
+                    PRP.Phone.Notifications.Add("fas fa-university", "Bank", "You don't have enough balance!", "#badc58", 1500);
                 }
                 PRP.Phone.Animations.TopSlideUp(".bank-app-transfer", 400, -100);
             });
     } else {
-        PRP.Phone.Notifications.Add("fas fa-university", "QBank", "Fill out all fields!", "#badc58", 1750);
+        PRP.Phone.Notifications.Add("fas fa-university", "Bank", "Fill out all fields!", "#badc58", 1750);
     }
 });
 
@@ -172,16 +172,16 @@ $(document).on('click', '.pay-invoice', function(event){
                         $("#"+InvoiceId).remove();
                     }, 100);
                 });
-                PRP.Phone.Notifications.Add("fas fa-university", "QBank", "You have paid &#36;"+FormatBankAmount(InvoiceAmount)+"!", "#badc58", 1500);
+                PRP.Phone.Notifications.Add("fas fa-university", "Bank", "You have paid &#36;"+FormatBankAmount(InvoiceAmount)+"!", "#badc58", 1500);
                 var amountData = Number($(".bank-app-account-balance").data('balance')) || 0;
                 var NewAmount = amountData - InvoiceAmount;
                 SetBankBalance(NewAmount);
             } else {
-                PRP.Phone.Notifications.Add("fas fa-university", "QBank", "You don't have enough balance!", "#badc58", 1500);
+                PRP.Phone.Notifications.Add("fas fa-university", "Bank", "You don't have enough balance!", "#badc58", 1500);
             }
         });
     } else {
-        PRP.Phone.Notifications.Add("fas fa-university", "QBank", "You don't have enough balance!", "#badc58", 1500);
+        PRP.Phone.Notifications.Add("fas fa-university", "Bank", "You don't have enough balance!", "#badc58", 1500);
     }
 });
 
@@ -197,7 +197,7 @@ $(document).on('click', '.decline-invoice', async function(event) {
         invoiceId: InvoiceData.id,
     }));
     if(resp === true) {
-        PRP.Phone.Notifications.Add("fas fa-university", "QBank", "You declined the invoice", "#8c7ae6")
+        PRP.Phone.Notifications.Add("fas fa-university", "Bank", "You declined the invoice", "#8c7ae6")
         $("#"+InvoiceId).animate({
             left: 30+"vh",
         }, 300, function(){
@@ -206,7 +206,7 @@ $(document).on('click', '.decline-invoice', async function(event) {
             }, 100);
         });
     } else {
-        PRP.Phone.Notifications.Add("fas fa-university", "QBank", "Couldnt decline this invoice...", "#8c7ae6")
+        PRP.Phone.Notifications.Add("fas fa-university", "Bank", "Couldnt decline this invoice...", "#8c7ae6")
     }
 });
 
@@ -266,7 +266,7 @@ $(document).on('click', '.bank-app-my-contact', function(e){
     if (PressedContactData.iban !== "" && PressedContactData.iban !== undefined && PressedContactData.iban !== null) {
         $("#bank-transfer-iban").val(PressedContactData.iban);
     } else {
-            PRP.Phone.Notifications.Add("fas fa-university", "QBank", "There is no Citizen ID attached to this contact!", "#badc58", 2500);
+            PRP.Phone.Notifications.Add("fas fa-university", "Bank", "There is no Citizen ID attached to this contact!", "#badc58", 2500);
     }
     PRP.Phone.Animations.TopSlideUp(".bank-app-my-contacts", 400, -100);
 });

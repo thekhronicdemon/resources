@@ -110,6 +110,16 @@ Config.PhoneApplications = {
         slot = 9,
         Alerts = 0,
     },
+    ['tablet'] = {
+        app = 'tablet',
+        color = '#0f766e',
+        icon = 'fas fa-tablet-alt',
+        tooltipText = 'Tablet',
+        job = false,
+        blockedjobs = {},
+        slot = 10,
+        Alerts = 0,
+    },
     ['houses'] = {
         app = 'houses',
         color = '#27ae60',
@@ -196,6 +206,17 @@ Config.PhoneApplications = {
         slot = 18,
         Alerts = 0,
     },
+    ['finances'] = {
+        app = 'finances',
+        color = '#0f172a',
+        icon = 'fas fa-chart-line',
+        tooltipText = 'Finances',
+        tooltipPos = 'bottom',
+        job = false,
+        blockedjobs = {},
+        slot = 20,
+        Alerts = 0,
+    },
 }
 Config.MaxSlots = 28
 
@@ -203,6 +224,75 @@ Config.SimCards = {
     RequireSim = true,
     NumberPrefix = '04',
     NumberLength = 8,
+}
+
+Config.PhoneCrypto = {
+    Account = 'crypto',
+    DefaultCoin = 'btc',
+    ProviderCoin = 'qbit',
+    DisplayName = 'Bitcoin',
+    DisplayPlural = 'Bitcoin',
+    DisplayShort = 'BTC',
+    ShopLabel = 'BTC only',
+    Coins = {
+        btc = {
+            label = 'Bitcoin',
+            short = 'BTC',
+            provider = 'qbit',
+        },
+        eth = {
+            label = 'Ethereum',
+            short = 'ETH',
+            provider = 'qbit',
+            enabled = false,
+        },
+        sol = {
+            label = 'Solana',
+            short = 'SOL',
+            provider = 'qbit',
+            enabled = false,
+        },
+    },
+}
+
+Config.PhoneAppConnectors = {
+    garage = {
+        resource = 'prp-garage',
+        callbacks = {
+            vehicles = 'prp-garage:server:GetPlayerVehicles',
+        },
+        fallbackResource = 'qb-garages',
+        fallbackCallbacks = {
+            vehicles = 'qb-garages:server:GetPlayerVehicles',
+        },
+    },
+    crypto = {
+        resource = 'prp-crypto',
+        callbacks = {
+            data = 'prp-crypto:server:GetCryptoData',
+            buy = 'prp-crypto:server:BuyCrypto',
+            sell = 'prp-crypto:server:SellCrypto',
+            transfer = 'prp-crypto:server:TransferCrypto',
+        },
+        fallbackResource = 'qb-crypto',
+        fallbackCallbacks = {
+            data = 'qb-crypto:server:GetCryptoData',
+            buy = 'qb-crypto:server:BuyCrypto',
+            sell = 'qb-crypto:server:SellCrypto',
+            transfer = 'qb-crypto:server:TransferCrypto',
+        },
+    },
+    finances = {
+        resource = 'prp-finance',
+        callbacks = {
+            profile = 'prp-finance:server:GetProfile',
+            applyLoan = 'prp-finance:server:ApplyLoan',
+            makePayment = 'prp-finance:server:MakePayment',
+        },
+    },
+    tablet = {
+        embedded = true,
+    },
 }
 
 Config.TabletApplications = {
@@ -266,7 +356,7 @@ Config.StoreApps = {
         slot = 19,
         Alerts = 0,
         password = true,
-        creator = 'QBCore',
+        creator = 'Progression RP',
         title = 'Territory',
     },
 }

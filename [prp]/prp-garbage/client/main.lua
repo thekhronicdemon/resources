@@ -202,7 +202,6 @@ local function SpawnDepotPed()
             {
                 icon = 'fas fa-truck',
                 label = 'Rent Trashmaster ($' .. tostring(Config.Depot.deposit or 250) .. ' Deposit)',
-                job = Config.JobName,
                 action = function()
                     TriggerServerEvent('prp-garbage:server:rentTruck')
                 end
@@ -210,7 +209,6 @@ local function SpawnDepotPed()
             {
                 icon = 'fas fa-undo',
                 label = 'Return Trashmaster',
-                job = Config.JobName,
                 action = function()
                     local veh = rentedTruck
                     if not veh or not DoesEntityExist(veh) then
@@ -255,7 +253,6 @@ local function AddRearTruckTarget(veh)
             {
                 icon = 'fas fa-dumpster',
                 label = 'Place in Truck',
-                job = Config.JobName,
                 canInteract = function(entity)
                     if not carriedType then return false end
                     local rear = GetOffsetFromEntityInWorldCoords(entity, Config.TruckRearOffset.x, Config.TruckRearOffset.y, Config.TruckRearOffset.z)
@@ -364,7 +361,7 @@ end)
 CreateThread(function()
     while true do
         Wait(2500)
-        if HasGarbageJob() then
+        if HasGarbageJob() or activeMode == 'scrap' then
             local pcoords = GetEntityCoords(PlayerPedId())
             for _, veh in ipairs(GetGamePool('CVehicle')) do
                 if IsGarbageTruck(veh) and #(GetEntityCoords(veh) - pcoords) <= (Config.TruckDistance + 15.0) then
@@ -376,15 +373,19 @@ CreateThread(function()
 end)
 
 local function OpenJobMenu()
-    if not HasGarbageJob() then Notify(Config.Notifications.NeedJob, 'error') return end
+    local areas = {
+        { id = 'scrap', label = Config.HardRubbish.label, description = Config.HardRubbish.description },
+    }
+
+    if HasGarbageJob() then
+        table.insert(areas, 1, { id = 'mirrorpark', label = Config.Areas.mirrorpark.label, description = Config.Areas.mirrorpark.description })
+    end
+
     SetNuiFocus(true, true)
     nuiOpen = true
     SendNUIMessage({
         action = 'open',
-        areas = {
-            { id = 'mirrorpark', label = Config.Areas.mirrorpark.label, description = Config.Areas.mirrorpark.description },
-            { id = 'scrap', label = Config.HardRubbish.label, description = Config.HardRubbish.description },
-        },
+        areas = areas,
         canStopScrap = activeMode == 'scrap'
     })
 end
@@ -397,7 +398,7 @@ RegisterNUICallback('close', function(_, cb)
     cb('ok')
 end)
 
-local function CanStartWithTruck(cb)
+local function CanStartWithTruck(mode, cb)
     if not Config.RequireGarbageTruck then cb(true) return end
     local ped = PlayerPedId()
     local veh = GetVehiclePedIsIn(ped, false)
@@ -407,6 +408,12 @@ local function CanStartWithTruck(cb)
             cb(false)
             return
         end
+
+        if mode == 'scrap' then
+            cb(true)
+            return
+        end
+
         QBCore.Functions.TriggerCallback('prp-garbage:server:isOwnedTruck', function(isOwned)
             if not isOwned then Notify(Config.Notifications.WrongTruck, 'error') end
             cb(isOwned)
@@ -421,7 +428,13 @@ RegisterNUICallback('selectJob', function(data, cb)
     SetNuiFocus(false, false)
     nuiOpen = false
     if activeMode then Notify(Config.Notifications.AlreadyRunning, 'error') cb('ok') return end
-    CanStartWithTruck(function(ok)
+    if data.id == 'mirrorpark' and not HasGarbageJob() then
+        Notify(Config.Notifications.NeedJob, 'error')
+        cb('ok')
+        return
+    end
+
+    CanStartWithTruck(data.id, function(ok)
         if not ok then return end
         if data.id == 'mirrorpark' then StartBinRoute() end
         if data.id == 'scrap' then StartScrapRoute() end
@@ -536,7 +549,6 @@ function SpawnScrapCluster(index)
                     {
                         icon = 'fas fa-recycle',
                         label = 'Pick Up ' .. propCfg.label,
-                        job = Config.JobName,
                         canInteract = function(entity)
                             return activeMode == 'scrap' and carriedType == nil and DoesEntityExist(entity)
                         end,
@@ -566,6 +578,10 @@ function StartScrapRoute()
     currentClusterIndex = 1
     truckLoad = {}
     ClearTruckLoadProps()
+    local veh = GetVehiclePedIsIn(PlayerPedId(), false)
+    if veh ~= 0 and IsGarbageTruck(veh) then
+        AddRearTruckTarget(veh)
+    end
     SpawnScrapCluster(1)
     Notify(Config.Notifications.ScrapStarted, 'success')
 end
@@ -593,7 +609,6 @@ local function SpawnScrapyard()
                 {
                     icon = 'fas fa-hammer',
                     label = 'Break Down Hard Rubbish',
-                    job = Config.JobName,
                     action = function()
                         if #truckLoad <= 0 then Notify(Config.Notifications.NothingCarried, 'error') return end
                         local label = 'Breaking down hard rubbish (' .. tostring(#truckLoad) .. ' left)...'

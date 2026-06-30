@@ -123,8 +123,8 @@ QBConfig.Notify = {}
 
 QBConfig.Notify.NotificationStyling = {
     group = false,      -- Allow notifications to stack with a badge instead of repeating
-    position = 'right', -- top-left | top-right | bottom-left | bottom-right | top | bottom | left | right | center
-    progress = true     -- Display Progress Bar
+    position = 'bottom', -- top-left | top-right | bottom-left | bottom-right | top | bottom | left | right | center
+    progress = false     -- Display Progress Bar
 }
 
 -- These are how you define different notification variants
@@ -132,27 +132,27 @@ QBConfig.Notify.NotificationStyling = {
 -- The "icon" key is the css-icon code, this project uses `Material Icons` & `Font Awesome`
 QBConfig.Notify.VariantDefinitions = {
     success = {
-        classes = 'success',
+        classes = 'prp-notify prp-notify-success',
         icon = 'check_circle'
     },
     primary = {
-        classes = 'primary',
-        icon = 'notifications'
+        classes = 'prp-notify prp-notify-primary',
+        icon = 'check_circle'
     },
     warning = {
-        classes = 'warning',
-        icon = 'warning'
+        classes = 'prp-notify prp-notify-warning',
+        icon = 'cancel'
     },
     error = {
-        classes = 'error',
-        icon = 'error'
+        classes = 'prp-notify prp-notify-error',
+        icon = 'cancel'
     },
     police = {
-        classes = 'police',
+        classes = 'prp-notify prp-notify-police',
         icon = 'local_police'
     },
     ambulance = {
-        classes = 'ambulance',
+        classes = 'prp-notify prp-notify-ambulance',
         icon = 'fas fa-ambulance'
     }
 }

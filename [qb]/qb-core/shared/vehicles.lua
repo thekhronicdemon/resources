@@ -134,6 +134,8 @@ local Vehicles = {
     { model = 'tahoma',          name = 'Tahoma Coupe',                  brand = 'Declasse',        price = 12000,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
     { model = 'broadway',        name = 'Broadway',                      brand = 'Classique',       price = 20000,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
     { model = 'fr36',            name = 'FR36',                          brand = 'Fathom',          price = 161000,  category = 'coupes',         type = 'automobile', shop = 'pdm' },
+    { model = 'nis180',          name = '180SX'                          brand = 'Nissan',          price = 38675,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
+    { model = 'maj350z',         name = '350Z'                           brand = 'Nissan',          price = 64562,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
     --- Muscle (4)
     { model = 'blade',           name = 'Blade',                         brand = 'Vapid',           price = 23500,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
     { model = 'buccaneer',       name = 'Buccaneer',                     brand = 'Albany',          price = 22500,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
@@ -345,15 +347,8 @@ local Vehicles = {
     { model = 'coureur',         name = 'La Coureuse',                   brand = 'Penaud',          price = 199000,  category = 'sports',         type = 'automobile', shop = 'pdm' },
     { model = 'r300',            name = '300R',                          brand = 'Annis',           price = 56000,   category = 'sports',         type = 'automobile', shop = 'pdm' },
     { model = 'panthere',        name = 'Panthere',                      brand = 'Toundra',         price = 55000,   category = 'sports',         type = 'automobile', shop = 'pdm' },
-    { model = 'driftsentinel',   name = 'Drift Sentinel Classic',        brand = 'Ubermacht',       price = 150000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'paragon3',        name = 'Paragon S',                     brand = 'Enus',            price = 220000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'eurosX32',        name = 'Euros X32',                     brand = 'Annis',           price = 180000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'vorschlaghammer', name = 'Vorschlaghammer',               brand = 'Pfister',         price = 250000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'driftcypher',     name = 'Drift Cypher',                  brand = 'Ubermacht',       price = 160000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'coquette5',       name = 'Coquette D1',                   brand = 'Invetero',        price = 220000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'pipistrello',     name = 'Pipistrello',                   brand = 'Overflod',        price = 240000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'niobe',           name = 'Niobe',                         brand = 'Ubermacht',       price = 180000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
-    { model = 'driftvorschlag',  name = 'Vorschlaghammer',               brand = 'Pfister',         price = 250000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
+    { model = 'pgt322',          name = 'GT3',                           brand = 'Porsche',         price = 145262,  category = 'sports',         type = 'automobile', shop = 'pdm' },
+
     --- Super (7)
     { model = 'adder',           name = 'Adder',                         brand = 'Truffade',        price = 280000,  category = 'super',          type = 'automobile', shop = 'luxury' },
     { model = 'autarch',         name = 'Autarch',                       brand = 'Överflöd',        price = 224000,  category = 'super',          type = 'automobile', shop = 'luxury' },
@@ -406,6 +401,9 @@ local Vehicles = {
     { model = 'entity3',         name = 'Entity MT',                     brand = 'Overflod',        price = 200000,  category = 'super',          type = 'automobile', shop = 'luxury' },
     { model = 'virtue',          name = 'Virtue',                        brand = 'Ocelot',          price = 72000,   category = 'super',          type = 'automobile', shop = 'luxury' },
     { model = 'turismo3',        name = 'Turismo Omaggio',               brand = 'Grotti',          price = 284500,  category = 'super',          type = 'automobile', shop = 'luxury' },
+    { model = '675ltsp',         name = '675LT',                         brand = 'Mclaren',         price = 164872,  category = 'super',          type = 'automobile', shop = 'pdm' },
+    { model = 'm720',            name = 'm720',                          brand = 'Mclaren',         price = 187209,  category = 'super',          type = 'automobile', shop = 'pdm' },
+    
     --- Motorcycles (8)
     { model = 'akuma',           name = 'Akuma',                         brand = 'Dinka',           price = 55000,   category = 'motorcycles',    type = 'bike',       shop = 'pdm' },
     { model = 'avarus',          name = 'Avarus',                        brand = 'LCC',             price = 20000,   category = 'motorcycles',    type = 'bike',       shop = 'pdm' },

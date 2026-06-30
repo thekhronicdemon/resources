@@ -221,6 +221,7 @@ RegisterNetEvent('qb-vehiclekeys:client:ToggleEngine', function()
     local vehicle = GetVehiclePedIsIn(PlayerPedId(), true)
     if HasKeys(QBCore.Functions.GetPlate(vehicle)) then
         SetVehicleEngineOn(vehicle, not EngineOn, false, true)
+        QBCore.Functions.Notify(EngineOn and 'Engine Off' or 'Engine On', EngineOn and 'error' or 'success', 2500, 'engine')
     end
 end)
 
@@ -317,8 +318,10 @@ function ToggleEngine(veh)
     local EngineOn = GetIsVehicleEngineRunning(veh)
     if EngineOn then
         SetVehicleEngineOn(veh, false, false, true)
+        QBCore.Functions.Notify('Engine Off', 'error', 2500, 'engine')
     else
         SetVehicleEngineOn(veh, true, true, true)
+        QBCore.Functions.Notify('Engine On', 'success', 2500, 'engine')
     end
 end
 

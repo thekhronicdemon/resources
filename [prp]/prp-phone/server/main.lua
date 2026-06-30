@@ -13,9 +13,31 @@ local TWData = {}
 local TabletMining = {}
 local SpeakerPhoneSessions = {}
 
-local function SafeSchemaQuery(query)
+local PhoneItems = {
+    phone = true,
+    iphone = true,
+    samsungphone = true,
+}
+
+local SimCardItems = {
+    simcard = true,
+    sim_card = true,
+}
+
+local function CopyTable(value)
+    if type(value) ~= 'table' then return value end
+
+    local copy = {}
+    for key, data in pairs(value) do
+        copy[key] = CopyTable(data)
+    end
+
+    return copy
+end
+
+local function SafeSchemaQuery(query, params)
     local ok, err = pcall(function()
-        MySQL.query.await(query)
+        MySQL.query.await(query, params or {})
     end)
 
     if not ok then
@@ -23,11 +45,115 @@ local function SafeSchemaQuery(query)
     end
 end
 
+local function SchemaColumnExists(tableName, columnName)
+    local ok, result = pcall(function()
+        return MySQL.scalar.await([[
+            SELECT COUNT(*)
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+              AND COLUMN_NAME = ?
+        ]], { tableName, columnName })
+    end)
+
+    return ok and tonumber(result) and tonumber(result) > 0
+end
+
+local function SchemaIndexExists(tableName, indexName)
+    local ok, result = pcall(function()
+        return MySQL.scalar.await([[
+            SELECT COUNT(*)
+            FROM INFORMATION_SCHEMA.STATISTICS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+              AND INDEX_NAME = ?
+        ]], { tableName, indexName })
+    end)
+
+    return ok and tonumber(result) and tonumber(result) > 0
+end
+
+local function AddSchemaColumnIfMissing(tableName, columnName, definition)
+    if not SchemaColumnExists(tableName, columnName) then
+        SafeSchemaQuery(('ALTER TABLE `%s` ADD COLUMN `%s` %s'):format(tableName, columnName, definition))
+    end
+end
+
+local function CopySchemaColumnIfExists(tableName, fromColumn, toColumn)
+    if SchemaColumnExists(tableName, fromColumn) and SchemaColumnExists(tableName, toColumn) then
+        SafeSchemaQuery(('UPDATE `%s` SET `%s` = `%s` WHERE (`%s` IS NULL OR `%s` = \'\') AND `%s` IS NOT NULL'):format(
+            tableName,
+            toColumn,
+            fromColumn,
+            toColumn,
+            toColumn,
+            fromColumn
+        ))
+    end
+end
+
+local function AddSchemaIndexIfMissing(tableName, indexName, columns)
+    if not SchemaIndexExists(tableName, indexName) then
+        SafeSchemaQuery(('ALTER TABLE `%s` ADD INDEX `%s` (%s)'):format(tableName, indexName, columns))
+    end
+end
+
+local function AddSchemaPrimaryKeyIfMissing(tableName, columnName)
+    if not SchemaIndexExists(tableName, 'PRIMARY') then
+        SafeSchemaQuery(('ALTER TABLE `%s` ADD PRIMARY KEY (`%s`)'):format(tableName, columnName))
+    end
+end
+
 MySQL.ready(function()
+    SafeSchemaQuery([[
+        CREATE TABLE IF NOT EXISTS phone_messages (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            citizenid varchar(80) DEFAULT NULL,
+            number varchar(50) DEFAULT NULL,
+            messages LONGTEXT DEFAULT NULL,
+            PRIMARY KEY (id),
+            KEY citizenid (citizenid),
+            KEY number (number)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ]])
+    if SchemaColumnExists('phone_messages', 'CitizendID') and not SchemaColumnExists('phone_messages', 'citizenid') then
+        SafeSchemaQuery('ALTER TABLE phone_messages CHANGE COLUMN `CitizendID` `citizenid` varchar(80) DEFAULT NULL')
+    end
+
+    AddSchemaColumnIfMissing('phone_messages', 'citizenid', 'varchar(80) DEFAULT NULL')
+    AddSchemaColumnIfMissing('phone_messages', 'number', 'varchar(50) DEFAULT NULL')
+    AddSchemaColumnIfMissing('phone_messages', 'messages', 'LONGTEXT DEFAULT NULL')
+    AddSchemaColumnIfMissing('phone_messages', 'id', 'int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY')
+    CopySchemaColumnIfExists('phone_messages', 'CitizendID', 'citizenid')
+    CopySchemaColumnIfExists('phone_messages', 'CitizenID', 'citizenid')
+    CopySchemaColumnIfExists('phone_messages', 'CitizenId', 'citizenid')
+    CopySchemaColumnIfExists('phone_messages', 'Number', 'number')
+    CopySchemaColumnIfExists('phone_messages', 'Messages', 'messages')
+    if SchemaColumnExists('phone_messages', 'CitizendID') then
+        SafeSchemaQuery('ALTER TABLE phone_messages MODIFY COLUMN `CitizendID` varchar(80) DEFAULT NULL')
+    end
+
     SafeSchemaQuery('ALTER TABLE phone_gallery MODIFY image LONGTEXT NOT NULL')
+    AddSchemaPrimaryKeyIfMissing('phone_messages', 'id')
+    SafeSchemaQuery('ALTER TABLE phone_messages MODIFY COLUMN id int(11) NOT NULL AUTO_INCREMENT')
     SafeSchemaQuery('ALTER TABLE phone_messages MODIFY messages LONGTEXT DEFAULT NULL')
+    AddSchemaIndexIfMissing('phone_messages', 'phone_messages_owner_number', '`citizenid`, `number`')
     SafeSchemaQuery('ALTER TABLE phone_tweets MODIFY url LONGTEXT DEFAULT NULL')
     SafeSchemaQuery('ALTER TABLE phone_tweets MODIFY picture LONGTEXT DEFAULT \'./img/default.png\'')
+    SafeSchemaQuery([[
+        CREATE TABLE IF NOT EXISTS phone_recent_calls (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            citizenid varchar(80) DEFAULT NULL,
+            name varchar(80) DEFAULT NULL,
+            number varchar(50) DEFAULT NULL,
+            `type` varchar(20) DEFAULT NULL,
+            anonymous tinyint(1) NOT NULL DEFAULT 0,
+            `time` varchar(20) DEFAULT NULL,
+            `date` timestamp NULL DEFAULT current_timestamp(),
+            PRIMARY KEY (id),
+            KEY citizenid (citizenid)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ]])
 end)
 
 -- Functions
@@ -165,8 +291,9 @@ local function GenerateUniqueSimNumber()
         local existsOnline = QBCore.Functions.GetPlayerByPhone(number)
         local existsSaved = MySQL.scalar.await('SELECT citizenid FROM players WHERE charinfo LIKE ? LIMIT 1', { '%"phone":"' .. number .. '"%' })
         local existsInventory = MySQL.scalar.await('SELECT citizenid FROM players WHERE inventory LIKE ? LIMIT 1', { '%"simNumber":"' .. number .. '"%' })
+        local existsEquipment = MySQL.scalar.await('SELECT citizenid FROM players WHERE metadata LIKE ? LIMIT 1', { '%"simNumber":"' .. number .. '"%' })
 
-        if not existsOnline and not existsSaved and not existsInventory then
+        if not existsOnline and not existsSaved and not existsInventory and not existsEquipment then
             return number
         end
     end
@@ -176,43 +303,117 @@ end
 
 local function NormalizeSimCardInfo(info)
     info = type(info) == 'table' and info or {}
-    info.simNumber = info.simNumber or GenerateUniqueSimNumber()
+    local simNumber = info.simNumber or info.phoneNumber or info.number
+    if not simNumber or tostring(simNumber) == '' or tostring(simNumber):lower() == 'unknown' then
+        simNumber = GenerateUniqueSimNumber()
+    end
+
+    info.simNumber = tostring(simNumber)
     info.simSerial = info.simSerial or ('SIM-' .. QBCore.Shared.RandomStr(3) .. QBCore.Shared.RandomInt(4))
     info.description = ('Phone number: %s'):format(info.simNumber)
     return info
 end
 
-local function GetPhoneItem(Player, requireSim)
-    if not Player or not Player.PlayerData or not Player.PlayerData.items then return nil end
+local function IsPhoneItem(item)
+    if not item or not item.name then return false end
+
+    local itemName = tostring(item.name):lower()
+    local itemInfo = QBCore.Shared.Items[itemName]
+    return PhoneItems[itemName] == true or (itemInfo and itemInfo.phone == true)
+end
+
+local function IsSimCardItem(item)
+    if not item or not item.name then return false end
+
+    local itemName = tostring(item.name):lower()
+    local itemInfo = QBCore.Shared.Items[itemName]
+    return SimCardItems[itemName] == true or (itemInfo and itemInfo.simcard == true)
+end
+
+local function GetEquipment(Player)
+    if not Player or not Player.PlayerData then return {} end
 
     local metadata = Player.PlayerData.metadata or {}
-    local phonedata = metadata['phonedata'] or {}
-    local activeSim = phonedata.ActiveSim or (Player.PlayerData.charinfo and Player.PlayerData.charinfo.phone)
-    local fallback = nil
-    local simFallback = nil
-    for _, item in pairs(Player.PlayerData.items) do
-        if item and item.name and item.name:lower() == 'phone' then
-            if item.info and item.info.simNumber then
-                if activeSim and tostring(item.info.simNumber) == tostring(activeSim) then
-                    return item
-                end
-                simFallback = simFallback or item
-            else
-                fallback = fallback or item
-            end
-        end
+    return type(metadata.equipment) == 'table' and metadata.equipment or {}
+end
+
+local function SetEquipment(Player, equipment)
+    if not Player or not Player.Functions then return false end
+
+    Player.Functions.SetMetaData('equipment', equipment or {})
+    return true
+end
+
+local function GetEquippedPhoneItem(Player)
+    if not Player or not Player.PlayerData then return nil end
+
+    local equipment = GetEquipment(Player)
+    local phone = equipment.phone
+    if IsPhoneItem(phone) then
+        return phone
     end
 
-    if simFallback then return simFallback end
-    if requireSim then return nil end
-    return fallback
+    return nil
+end
+
+local function GetEquippedSimCardItem(Player)
+    local simcard = GetEquipment(Player).simcard
+    if IsSimCardItem(simcard) then
+        return simcard
+    end
+
+    return nil
+end
+
+local function SetEquippedSimCardInfo(Player, info)
+    local equipment = GetEquipment(Player)
+    if not IsSimCardItem(equipment.simcard) then return false end
+
+    equipment.simcard.info = info or {}
+    if equipment.simcard.info.description then
+        equipment.simcard.description = equipment.simcard.info.description
+    end
+
+    return SetEquipment(Player, equipment)
+end
+
+local function GetActiveSimInfo(Player, phone)
+    local phoneInfo = type(phone and phone.info) == 'table' and phone.info or {}
+    if phoneInfo.simNumber and tostring(phoneInfo.simNumber) ~= '' and tostring(phoneInfo.simNumber):lower() ~= 'unknown' then
+        return phoneInfo, 'phone', phone
+    end
+
+    local simcard = GetEquippedSimCardItem(Player)
+    if not simcard then return nil end
+
+    local simInfo = NormalizeSimCardInfo(CopyTable(simcard.info or {}))
+    if type(simInfo.simContacts) ~= 'table' then
+        simInfo.simContacts = type(simInfo.contacts) == 'table' and simInfo.contacts or {}
+    end
+    simInfo.contacts = type(simInfo.contacts) == 'table' and simInfo.contacts or simInfo.simContacts
+
+    SetEquippedSimCardInfo(Player, simInfo)
+    simcard.info = simInfo
+
+    return simInfo, 'simcard', simcard
+end
+
+local function GetPhoneItem(Player, requireSim)
+    local phone = GetEquippedPhoneItem(Player)
+    if not phone then return nil end
+
+    if requireSim and not GetActiveSimInfo(Player, phone) then
+        return nil
+    end
+
+    return phone
 end
 
 local function GetPhoneWithoutSim(Player)
     if not Player or not Player.PlayerData or not Player.PlayerData.items then return nil end
 
     for _, item in pairs(Player.PlayerData.items) do
-        if item and item.name and item.name:lower() == 'phone' then
+        if IsPhoneItem(item) then
             if not item.info or not item.info.simNumber then
                 return item
             end
@@ -227,7 +428,7 @@ local function GetPhoneBySlot(Player, slot)
 
     slot = tonumber(slot)
     for _, item in pairs(Player.PlayerData.items) do
-        if item and item.name and item.name:lower() == 'phone' and tonumber(item.slot) == slot then
+        if IsPhoneItem(item) and tonumber(item.slot) == slot then
             return item
         end
     end
@@ -251,17 +452,6 @@ local function GetTabletItem(Player)
     return fallback
 end
 
-local function CopyTable(value)
-    if type(value) ~= 'table' then return value end
-
-    local copy = {}
-    for key, data in pairs(value) do
-        copy[key] = CopyTable(data)
-    end
-
-    return copy
-end
-
 local function SetInventoryItemInfo(Player, slot, info)
     if not Player or not slot then return false end
 
@@ -280,6 +470,22 @@ local function SetInventoryItemInfo(Player, slot, info)
     end
 
     return false
+end
+
+local function SetEquippedPhoneInfo(Player, info)
+    if not Player or not Player.PlayerData then return false end
+
+    local metadata = Player.PlayerData.metadata or {}
+    local equipment = type(metadata.equipment) == 'table' and metadata.equipment or {}
+    if not IsPhoneItem(equipment.phone) then return false end
+
+    equipment.phone.info = info or {}
+    if equipment.phone.info.description then
+        equipment.phone.description = equipment.phone.info.description
+    end
+
+    Player.Functions.SetMetaData('equipment', equipment)
+    return true
 end
 
 local function RemoveMatchingInventoryItems(Player, itemName, matcher)
@@ -363,6 +569,37 @@ local function GetCitizenProfile(citizenid)
     return profile
 end
 
+local function NormalizePhoneNumber(number)
+    if number == nil then return nil end
+
+    number = tostring(number)
+    if number == '' or number:lower() == 'unknown' then return nil end
+
+    return number
+end
+
+local function GetPhoneDataId(info, Player)
+    info = type(info) == 'table' and info or {}
+
+    if info.simNumber and tostring(info.simNumber) ~= '' then
+        return 'phone:' .. tostring(info.simNumber)
+    end
+
+    if info.phoneDataId and tostring(info.phoneDataId) ~= '' then
+        return tostring(info.phoneDataId)
+    end
+
+    if info.deviceId and tostring(info.deviceId) ~= '' then
+        return 'device:' .. tostring(info.deviceId)
+    end
+
+    if info.deviceOwnerCitizenid and tostring(info.deviceOwnerCitizenid) ~= '' then
+        return tostring(info.deviceOwnerCitizenid)
+    end
+
+    return Player and Player.PlayerData and Player.PlayerData.citizenid or nil
+end
+
 local function EnsurePhoneDeviceInfo(Player, phone)
     if not phone then return {} end
 
@@ -379,8 +616,18 @@ local function EnsurePhoneDeviceInfo(Player, phone)
         changed = true
     end
 
-    if changed and phone.slot then
-        SetInventoryItemInfo(Player, phone.slot, info)
+    local phoneDataId = GetPhoneDataId(info, Player)
+    if phoneDataId and info.phoneDataId ~= phoneDataId then
+        info.phoneDataId = phoneDataId
+        changed = true
+    end
+
+    if changed then
+        if phone.slot == 'phone' then
+            SetEquippedPhoneInfo(Player, info)
+        elseif phone.slot then
+            SetInventoryItemInfo(Player, phone.slot, info)
+        end
         phone.info = info
     end
 
@@ -391,10 +638,23 @@ local function GetPhoneContext(Player, requireSim)
     local phone = GetPhoneItem(Player, requireSim)
     if not phone then return nil end
 
-    local info = EnsurePhoneDeviceInfo(Player, phone)
-    if requireSim and not info.simNumber then return nil end
+    local deviceInfo = EnsurePhoneDeviceInfo(Player, phone)
+    local simInfo, simSource, simItem = GetActiveSimInfo(Player, phone)
+    if requireSim and not simInfo then return nil end
 
-    local dataCitizenid = info.deviceOwnerCitizenid or Player.PlayerData.citizenid
+    local info = CopyTable(deviceInfo)
+    if simInfo then
+        info.simNumber = simInfo.simNumber
+        info.simSerial = simInfo.simSerial
+        info.simContacts = type(simInfo.simContacts) == 'table' and simInfo.simContacts or (type(simInfo.contacts) == 'table' and simInfo.contacts or {})
+        info.simSlot = simInfo.simSlot
+    end
+
+    local dataCitizenid = GetPhoneDataId(info, Player)
+    if dataCitizenid then
+        info.phoneDataId = dataCitizenid
+    end
+
     if info.simNumber then
         SetActivePhoneNumber(Player, info.simNumber)
     end
@@ -402,19 +662,244 @@ local function GetPhoneContext(Player, requireSim)
     return {
         phone = phone,
         info = info,
+        deviceInfo = deviceInfo,
+        simInfo = simInfo,
+        simSource = simSource,
+        simItem = simItem,
         dataCitizenid = dataCitizenid,
+        phoneNumber = info.simNumber and tostring(info.simNumber) or nil,
         simContacts = type(info.simContacts) == 'table' and info.simContacts or {},
-        profile = GetCitizenProfile(dataCitizenid)
+        profile = GetCitizenProfile(info.deviceOwnerCitizenid or Player.PlayerData.citizenid)
     }
 end
 
 local function SyncInstalledSimContacts(Player, contacts)
-    local phone = GetPhoneItem(Player, true)
-    if not phone then return end
+    local context = GetPhoneContext(Player, true)
+    if not context then return end
 
+    contacts = contacts or {}
+
+    if context.simSource == 'simcard' then
+        local simInfo = CopyTable(context.simInfo or (context.simItem and context.simItem.info) or {})
+        simInfo.simContacts = contacts
+        simInfo.contacts = contacts
+        SetEquippedSimCardInfo(Player, simInfo)
+        return
+    end
+
+    local phone = context.phone
     local info = EnsurePhoneDeviceInfo(Player, phone)
     info.simContacts = contacts or {}
-    SetInventoryItemInfo(Player, phone.slot, info)
+    if phone.slot == 'phone' then
+        SetEquippedPhoneInfo(Player, info)
+    else
+        SetInventoryItemInfo(Player, phone.slot, info)
+    end
+end
+
+local function DecodeJsonObject(value, fallback)
+    if type(value) == 'table' then return value end
+    if not value or value == '' then return fallback or {} end
+
+    local ok, decoded = pcall(json.decode, value)
+    if ok and type(decoded) == 'table' then
+        return decoded
+    end
+
+    return fallback or {}
+end
+
+local function FindPhoneItemByNumber(items, number)
+    number = NormalizePhoneNumber(number)
+    if not number or type(items) ~= 'table' then return nil end
+
+    for _, item in pairs(items) do
+        if IsPhoneItem(item) then
+            local info = type(item.info) == 'table' and item.info or {}
+            if NormalizePhoneNumber(info.simNumber) == number then
+                return item, info
+            end
+        end
+    end
+
+    return nil
+end
+
+local function FindMetadataPhoneByNumber(metadata, number)
+    number = NormalizePhoneNumber(number)
+    if not number or type(metadata) ~= 'table' then return nil end
+
+    local equipment = type(metadata.equipment) == 'table' and metadata.equipment or {}
+    local phone = equipment.phone
+    if IsPhoneItem(phone) then
+        local info = type(phone.info) == 'table' and phone.info or {}
+        if NormalizePhoneNumber(info.simNumber) == number then
+            return phone, info
+        end
+
+        local simcard = equipment.simcard
+        if IsSimCardItem(simcard) then
+            local simInfo = type(simcard.info) == 'table' and simcard.info or {}
+            if NormalizePhoneNumber(simInfo.simNumber) == number then
+                local mergedInfo = CopyTable(info)
+                mergedInfo.simNumber = simInfo.simNumber
+                mergedInfo.simSerial = simInfo.simSerial
+                mergedInfo.simContacts = type(simInfo.simContacts) == 'table' and simInfo.simContacts or (type(simInfo.contacts) == 'table' and simInfo.contacts or {})
+                mergedInfo.phoneDataId = GetPhoneDataId(mergedInfo, nil)
+                return phone, mergedInfo
+            end
+        end
+    end
+
+    return nil
+end
+
+local function GetOnlinePhoneContextByNumber(number)
+    number = NormalizePhoneNumber(number)
+    if not number then return nil end
+
+    for _, playerId in pairs(QBCore.Functions.GetPlayers()) do
+        local Player = QBCore.Functions.GetPlayer(playerId)
+        local context = Player and GetPhoneContext(Player, true) or nil
+        if context and NormalizePhoneNumber(context.phoneNumber or context.info.simNumber) == number then
+            context.source = Player.PlayerData.source
+            context.Player = Player
+            return context
+        end
+    end
+
+    return nil
+end
+
+local function BuildStoredPhoneContext(row, phone, info, number)
+    number = NormalizePhoneNumber(number)
+    info = type(info) == 'table' and info or {}
+
+    return {
+        phone = phone,
+        info = info,
+        dataCitizenid = GetPhoneDataId(info, nil) or (number and ('phone:' .. number)) or row.citizenid,
+        phoneNumber = NormalizePhoneNumber(info.simNumber) or number,
+        ownerCitizenid = info.deviceOwnerCitizenid or row.citizenid,
+        profile = GetCitizenProfile(info.deviceOwnerCitizenid or row.citizenid),
+        offline = true
+    }
+end
+
+local function GetStoredPhoneContextByNumber(number)
+    number = NormalizePhoneNumber(number)
+    if not number then return nil end
+
+    local rows = MySQL.query.await(
+        'SELECT citizenid, charinfo, inventory, metadata FROM players WHERE inventory LIKE ? OR metadata LIKE ? OR charinfo LIKE ? LIMIT 25',
+        { '%' .. number .. '%', '%' .. number .. '%', '%' .. number .. '%' }
+    ) or {}
+
+    for _, row in pairs(rows) do
+        local metadata = DecodeJsonObject(row.metadata, {})
+        local phone, info = FindMetadataPhoneByNumber(metadata, number)
+        if phone then
+            return BuildStoredPhoneContext(row, phone, info, number)
+        end
+
+        local inventory = DecodeJsonObject(row.inventory, {})
+        phone, info = FindPhoneItemByNumber(inventory, number)
+        if phone then
+            return BuildStoredPhoneContext(row, phone, info, number)
+        end
+
+        local charinfo = DecodeJsonObject(row.charinfo, {})
+        if NormalizePhoneNumber(charinfo.phone) == number then
+            return BuildStoredPhoneContext(row, nil, {
+                simNumber = number,
+                phoneDataId = 'phone:' .. number,
+                deviceOwnerCitizenid = row.citizenid
+            }, number)
+        end
+    end
+
+    return nil
+end
+
+local function GetPhoneContextByNumber(number)
+    return GetOnlinePhoneContextByNumber(number) or GetStoredPhoneContextByNumber(number)
+end
+
+local function SaveChatThread(ownerKey, otherNumber, messages)
+    ownerKey = ownerKey and tostring(ownerKey) or nil
+    otherNumber = NormalizePhoneNumber(otherNumber)
+    if not ownerKey or not otherNumber then return false end
+
+    local encodedMessages = json.encode(messages or {})
+    local chat = MySQL.query.await('SELECT id FROM phone_messages WHERE citizenid = ? AND number = ? LIMIT 1', { ownerKey, otherNumber })
+    if chat and chat[1] then
+        local ok, err = pcall(function()
+            MySQL.update.await('UPDATE phone_messages SET messages = ? WHERE citizenid = ? AND number = ?', { encodedMessages, ownerKey, otherNumber })
+        end)
+        if not ok then
+            print(('^1[prp-phone] Failed to update saved messages for %s/%s: %s^7'):format(ownerKey, otherNumber, tostring(err)))
+        end
+
+        return true
+    end
+
+    local ok, err = pcall(function()
+        MySQL.insert.await('INSERT INTO phone_messages (citizenid, number, messages) VALUES (?, ?, ?)', { ownerKey, otherNumber, encodedMessages })
+    end)
+    if not ok then
+        local fallbackOk, fallbackErr = pcall(function()
+            MySQL.insert.await('INSERT INTO phone_messages (id, citizenid, number, messages) SELECT COALESCE(MAX(id), 0) + 1, ?, ?, ? FROM phone_messages', { ownerKey, otherNumber, encodedMessages })
+        end)
+
+        if not fallbackOk then
+            print(('^1[prp-phone] Failed to insert saved messages for %s/%s: %s / %s^7'):format(ownerKey, otherNumber, tostring(err), tostring(fallbackErr)))
+        end
+    end
+
+    return false
+end
+
+local function LoadRecentCalls(phoneKey)
+    local calls = {}
+    if not phoneKey then return calls end
+
+    local rows = MySQL.query.await(
+        'SELECT name, number, `type`, anonymous, `time` FROM phone_recent_calls WHERE citizenid = ? ORDER BY id ASC LIMIT 50',
+        { phoneKey }
+    ) or {}
+
+    for _, row in pairs(rows) do
+        calls[#calls + 1] = {
+            name = row.name or row.number,
+            number = row.number,
+            type = row.type,
+            anonymous = tonumber(row.anonymous) == 1,
+            time = row.time
+        }
+    end
+
+    return calls
+end
+
+local function StoreRecentCall(phoneKey, data, label, callType, addAlert)
+    phoneKey = phoneKey and tostring(phoneKey) or nil
+    if not phoneKey or not data or not data.number then return end
+
+    MySQL.insert(
+        'INSERT INTO phone_recent_calls (citizenid, name, number, `type`, anonymous, `time`) VALUES (?, ?, ?, ?, ?, ?)',
+        {
+            phoneKey,
+            tostring(data.name or data.number),
+            tostring(data.number),
+            tostring(callType or 'missed'),
+            data.anonymous and 1 or 0,
+            tostring(label or os.date('%H:%M'))
+        }
+    )
+
+    if addAlert then
+        QBPhone.SetPhoneAlerts(phoneKey, 'phone')
+    end
 end
 
 local function GetMailCitizenId(Player)
@@ -440,33 +925,36 @@ local function InstallSimCard(source, simItem)
     simInfo.simContacts = simContacts
     simInfo.description = ('Phone number: %s'):format(simNumber)
     local phoneSlot = phone.slot
-    local phoneInfo = EnsurePhoneDeviceInfo(Player, { info = CopyTable(phone.info) })
+    local phoneEquipped = phoneSlot == 'phone'
+    local phoneInfo = EnsurePhoneDeviceInfo(Player, phone)
 
     if phoneInfo.simNumber then
         Notify(source, 'That phone already has a SIM card installed.', 'error')
         return
     end
 
-    if not exports['qb-inventory']:RemoveItem(source, 'simcard', 1, simItem and simItem.slot, 'installed sim card') then
+    if not exports['prp-inventory']:RemoveItem(source, 'simcard', 1, simItem and simItem.slot, 'installed sim card') then
         Notify(source, 'Could not install the SIM card.', 'error')
         return
     end
 
-    phone = GetPhoneBySlot(Player, phoneSlot)
+    phone = phoneEquipped and GetEquippedPhoneItem(Player) or GetPhoneBySlot(Player, phoneSlot)
     if not phone then
-        exports['qb-inventory']:AddItem(source, 'simcard', 1, false, simInfo, 'failed sim install refund')
+        exports['prp-inventory']:AddItem(source, 'simcard', 1, false, simInfo, 'failed sim install refund')
         Notify(source, 'Could not find a phone slot for the SIM card.', 'error')
         return
     end
 
-    phoneInfo = EnsurePhoneDeviceInfo(Player, { info = CopyTable(phone.info) })
+    phoneInfo = EnsurePhoneDeviceInfo(Player, phone)
     phoneInfo.simNumber = simNumber
     phoneInfo.simSerial = simSerial
     phoneInfo.simContacts = simContacts
+    phoneInfo.phoneDataId = GetPhoneDataId(phoneInfo, Player)
     phoneInfo.description = 'SIM: ' .. simNumber
 
-    if not SetInventoryItemInfo(Player, phoneSlot, phoneInfo) then
-        exports['qb-inventory']:AddItem(source, 'simcard', 1, false, simInfo, 'failed sim install refund')
+    local saved = phoneEquipped and SetEquippedPhoneInfo(Player, phoneInfo) or SetInventoryItemInfo(Player, phoneSlot, phoneInfo)
+    if not saved then
+        exports['prp-inventory']:AddItem(source, 'simcard', 1, false, simInfo, 'failed sim install refund')
         Notify(source, 'Could not save the SIM card to this phone.', 'error')
         return
     end
@@ -491,6 +979,10 @@ local function FindCryptoShopItem(itemName)
     end
 
     return nil
+end
+
+local function GetCryptoDisplayShort()
+    return (Config.PhoneCrypto and Config.PhoneCrypto.DisplayShort) or 'BTC'
 end
 
 local function AddCryptoTransaction(citizenid, title, message)
@@ -561,12 +1053,7 @@ local function RemoveTabletMiningJob(source, jobId)
 end
 
 local function GetOnlineStatus(number)
-    local Target = QBCore.Functions.GetPlayerByPhone(number)
-    local retval = false
-    if Target ~= nil then
-        retval = true
-    end
-    return retval
+    return GetOnlinePhoneContextByNumber(number) ~= nil
 end
 
 local function GenerateMailId()
@@ -750,20 +1237,16 @@ QBCore.Functions.CreateCallback("prp-phone:server:GetInvoices", function(source,
 end)
 
 QBCore.Functions.CreateCallback('prp-phone:server:GetCallState', function(_, cb, ContactData)
-    local Target = QBCore.Functions.GetPlayerByPhone(ContactData.number)
-    if Target ~= nil then
-        if Calls[Target.PlayerData.citizenid] ~= nil then
-            if Calls[Target.PlayerData.citizenid].inCall then
-                cb(false, true)
-            else
-                cb(true, true)
-            end
-        else
-            cb(true, true)
-        end
-    else
+    local targetContext = ContactData and GetPhoneContextByNumber(ContactData.number) or nil
+    if not targetContext then
         cb(false, false)
+        return
     end
+
+    local targetKey = targetContext.dataCitizenid
+    local isOnline = targetContext.source ~= nil
+    local canCall = not (Calls[targetKey] and Calls[targetKey].inCall)
+    cb(canCall, isOnline)
 end)
 
 QBCore.Functions.CreateCallback('prp-phone:server:GetPhoneData', function(source, cb)
@@ -787,6 +1270,7 @@ QBCore.Functions.CreateCallback('prp-phone:server:GetPhoneData', function(source
         CryptoTransactions = {},
         Tweets = {},
         Images = {},
+        RecentCalls = {},
         InstalledApps = phonedata.InstalledApps or {}
     }
     PhoneData.Adverts = Adverts
@@ -804,6 +1288,7 @@ QBCore.Functions.CreateCallback('prp-phone:server:GetPhoneData', function(source
         charinfo = context.profile or {}
     }
     PhoneData.ActiveSim = context.info.simNumber
+    PhoneData.RecentCalls = LoadRecentCalls(dataCitizenid)
 
     local contacts = context.simContacts
     if type(contacts) ~= 'table' or next(contacts) == nil then
@@ -826,7 +1311,7 @@ QBCore.Functions.CreateCallback('prp-phone:server:GetPhoneData', function(source
         PhoneData.Garage = garageresult
     end
 
-    local messages = MySQL.query.await('SELECT * FROM phone_messages WHERE citizenid = ?', { dataCitizenid })
+    local messages = MySQL.query.await('SELECT id, citizenid, number AS number, messages AS messages FROM phone_messages WHERE citizenid = ?', { dataCitizenid })
     if messages ~= nil and next(messages) ~= nil then
         PhoneData.Chats = messages
     end
@@ -935,13 +1420,16 @@ QBCore.Functions.CreateCallback('prp-phone:server:GetContactPictures', function(
         local query = '%' .. v.number .. '%'
         local result = MySQL.query.await('SELECT * FROM players WHERE charinfo LIKE ?', { query })
         if result[1] ~= nil then
-            local MetaData = json.decode(result[1].metadata)
+            local MetaData = DecodeJsonObject(result[1].metadata, {})
+            local PhoneMeta = type(MetaData.phone) == 'table' and MetaData.phone or {}
 
-            if MetaData.phone.profilepicture ~= nil then
-                v.picture = MetaData.phone.profilepicture
+            if PhoneMeta.profilepicture ~= nil then
+                v.picture = PhoneMeta.profilepicture
             else
                 v.picture = 'default'
             end
+        else
+            v.picture = v.picture or 'default'
         end
     end
     SetTimeout(100, function()
@@ -952,11 +1440,13 @@ end)
 QBCore.Functions.CreateCallback('prp-phone:server:GetContactPicture', function(_, cb, Chat)
     local query = '%' .. Chat.number .. '%'
     local result = MySQL.query.await('SELECT * FROM players WHERE charinfo LIKE ?', { query })
-    local MetaData = json.decode(result[1].metadata)
-    if MetaData.phone.profilepicture ~= nil then
-        Chat.picture = MetaData.phone.profilepicture
-    else
-        Chat.picture = 'default'
+    Chat.picture = 'default'
+    if result and result[1] ~= nil then
+        local MetaData = DecodeJsonObject(result[1].metadata, {})
+        local PhoneMeta = type(MetaData.phone) == 'table' and MetaData.phone or {}
+        if PhoneMeta.profilepicture ~= nil then
+            Chat.picture = PhoneMeta.profilepicture
+        end
     end
     SetTimeout(100, function()
         cb(Chat)
@@ -1128,11 +1618,18 @@ QBCore.Functions.CreateCallback('prp-phone:server:HasPhone', function(source, cb
     local Player = QBCore.Functions.GetPlayer(source)
     if Player ~= nil then
         local requireSim = Config.SimCards and Config.SimCards.RequireSim
-        cb(GetPhoneItem(Player, requireSim) ~= nil)
+        local phone = GetPhoneItem(Player, false)
+        if not phone then
+            cb(false, false, false)
+            return
+        end
+
+        local hasSim = not requireSim or GetActiveSimInfo(Player, phone) ~= nil
+        cb(hasSim, true, requireSim and not hasSim)
         return
     end
 
-    cb(false)
+    cb(false, false, false)
 end)
 
 QBCore.Functions.CreateCallback('prp-phone:server:GetTabletStatus', function(source, cb)
@@ -1178,7 +1675,7 @@ QBCore.Functions.CreateCallback('prp-phone:server:BuyCryptoShopItem', function(s
     local crypto = tonumber(Player.PlayerData.money.crypto) or 0
 
     if crypto < price then
-        cb({ success = false, message = 'Not enough Qbit.' })
+        cb({ success = false, message = ('Not enough %s.'):format(GetCryptoDisplayShort()) })
         return
     end
 
@@ -1187,14 +1684,14 @@ QBCore.Functions.CreateCallback('prp-phone:server:BuyCryptoShopItem', function(s
         return
     end
 
-    if not exports['qb-inventory']:AddItem(src, shopItem.item, amount, false, shopItem.info or {}, 'crypto shop purchase') then
+    if not exports['prp-inventory']:AddItem(src, shopItem.item, amount, false, shopItem.info or {}, 'crypto shop purchase') then
         Player.Functions.AddMoney('crypto', price, 'crypto shop refund')
         cb({ success = false, message = 'Your inventory is full.' })
         return
     end
 
     TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items[shopItem.item], 'add')
-    AddCryptoTransaction(Player.PlayerData.citizenid, 'Crypto Shop', ('Purchased %sx %s for %.2f Qbit.'):format(amount, shopItem.label or shopItem.item, price))
+    AddCryptoTransaction(Player.PlayerData.citizenid, 'Crypto Shop', ('Purchased %sx %s for %.2f %s.'):format(amount, shopItem.label or shopItem.item, price, GetCryptoDisplayShort()))
     cb({ success = true, message = ('Purchased %sx %s.'):format(amount, shopItem.label or shopItem.item) })
 end)
 
@@ -1264,7 +1761,7 @@ QBCore.Functions.CreateCallback('prp-phone:server:StartTabletCryptoMine', functi
         if not Target then return end
 
         Target.Functions.AddMoney('crypto', reward, 'tablet crypto mining')
-        local message = ('Crypto rig paid out %.6f Qbit.'):format(reward)
+        local message = ('Crypto rig paid out %.6f %s.'):format(reward, GetCryptoDisplayShort())
         AddCryptoTransaction(Target.PlayerData.citizenid, 'Tablet Rig', message)
         TriggerClientEvent('prp-phone:client:TabletMiningComplete', src, reward, message, GetTabletMiningJobs(src))
         TriggerClientEvent('prp-phone:client:AddTransaction', src, Target, {}, message, 'Tablet Rig')
@@ -1575,11 +2072,14 @@ RegisterNetEvent('prp-phone:server:SetCallState', function(bool)
     if not bool then
         ClearSpeakerPhone(src)
     end
-    if Calls[Ply.PlayerData.citizenid] ~= nil then
-        Calls[Ply.PlayerData.citizenid].inCall = bool
+
+    local context = GetPhoneContext(Ply, true)
+    local callKey = context and context.dataCitizenid or Ply.PlayerData.citizenid
+    if Calls[callKey] ~= nil then
+        Calls[callKey].inCall = bool
     else
-        Calls[Ply.PlayerData.citizenid] = {}
-        Calls[Ply.PlayerData.citizenid].inCall = bool
+        Calls[callKey] = {}
+        Calls[callKey].inCall = bool
     end
 end)
 
@@ -1709,9 +2209,25 @@ end)
 RegisterNetEvent('prp-phone:server:CallContact', function(TargetData, CallId, AnonymousCall)
     local src = source
     local Ply = QBCore.Functions.GetPlayer(src)
-    local Target = QBCore.Functions.GetPlayerByPhone(TargetData.number)
-    if Target ~= nil then
-        TriggerClientEvent('prp-phone:client:GetCalled', Target.PlayerData.source, Ply.PlayerData.charinfo.phone, CallId, AnonymousCall)
+    if not Ply or not TargetData or not TargetData.number then return end
+
+    local callerContext = GetPhoneContext(Ply, true)
+    if not callerContext then return end
+
+    local callerNumber = tostring(callerContext.phoneNumber or Ply.PlayerData.charinfo.phone or '')
+    local label = os.date('%H:%M')
+    StoreRecentCall(callerContext.dataCitizenid, TargetData, label, 'outgoing', false)
+    TriggerClientEvent('prp-phone:client:AddRecentCall', src, TargetData, label, 'outgoing', true)
+
+    local targetContext = GetPhoneContextByNumber(TargetData.number)
+    if targetContext and targetContext.source then
+        TriggerClientEvent('prp-phone:client:GetCalled', targetContext.source, callerNumber, CallId, AnonymousCall)
+    elseif targetContext then
+        StoreRecentCall(targetContext.dataCitizenid, {
+            name = AnonymousCall and 'Anonymous' or callerNumber,
+            number = callerNumber,
+            anonymous = AnonymousCall
+        }, label, 'missed', true)
     end
 end)
 
@@ -1898,80 +2414,51 @@ RegisterNetEvent('prp-phone:server:UpdateMessages', function(ChatMessages, ChatN
 
     local senderCitizenid = senderContext.dataCitizenid
     local senderNumber = tostring(senderContext.info.simNumber or SenderData.PlayerData.charinfo.phone or '')
-    local query = '%' .. ChatNumber .. '%'
-    local PlayerRows = MySQL.query.await('SELECT * FROM players WHERE charinfo LIKE ?', { query })
-    if PlayerRows[1] ~= nil then
-        local TargetData = QBCore.Functions.GetPlayerByCitizenId(PlayerRows[1].citizenid)
-        if TargetData ~= nil then
-            local targetContext = GetPhoneContext(TargetData, true)
-            local targetCitizenid = targetContext and targetContext.dataCitizenid or TargetData.PlayerData.citizenid
-            local targetNumber = tostring((targetContext and targetContext.info.simNumber) or TargetData.PlayerData.charinfo.phone or ChatNumber)
-            local Chat = MySQL.query.await('SELECT * FROM phone_messages WHERE citizenid = ? AND number = ?', { senderCitizenid, ChatNumber })
-            if Chat[1] ~= nil then
-                -- Update for target
-                MySQL.update('UPDATE phone_messages SET messages = ? WHERE citizenid = ? AND number = ?', { json.encode(ChatMessages), targetCitizenid, senderNumber })
-                -- Update for sender
-                MySQL.update('UPDATE phone_messages SET messages = ? WHERE citizenid = ? AND number = ?', { json.encode(ChatMessages), senderCitizenid, targetNumber })
-                -- Send notification & Update messages for target
-                TriggerClientEvent('prp-phone:client:UpdateMessages', TargetData.PlayerData.source, ChatMessages, senderNumber, false)
-            else
-                -- Insert for target
-                MySQL.insert('INSERT INTO phone_messages (citizenid, number, messages) VALUES (?, ?, ?)', { targetCitizenid, senderNumber, json.encode(ChatMessages) })
-                -- Insert for sender
-                MySQL.insert('INSERT INTO phone_messages (citizenid, number, messages) VALUES (?, ?, ?)', { senderCitizenid, targetNumber, json.encode(ChatMessages) })
-                -- Send notification & Update messages for target
-                TriggerClientEvent('prp-phone:client:UpdateMessages', TargetData.PlayerData.source, ChatMessages, senderNumber, true)
-            end
-        else
-            local targetCharinfo = json.decode(PlayerRows[1].charinfo) or {}
-            local targetNumber = tostring(targetCharinfo.phone or ChatNumber)
-            local Chat = MySQL.query.await('SELECT * FROM phone_messages WHERE citizenid = ? AND number = ?', { senderCitizenid, ChatNumber })
-            if Chat[1] ~= nil then
-                -- Update for target
-                MySQL.update('UPDATE phone_messages SET messages = ? WHERE citizenid = ? AND number = ?', { json.encode(ChatMessages), PlayerRows[1].citizenid, senderNumber })
-                -- Update for sender
-                MySQL.update('UPDATE phone_messages SET messages = ? WHERE citizenid = ? AND number = ?', { json.encode(ChatMessages), senderCitizenid, targetNumber })
-            else
-                -- Insert for target
-                MySQL.insert('INSERT INTO phone_messages (citizenid, number, messages) VALUES (?, ?, ?)', { PlayerRows[1].citizenid, senderNumber, json.encode(ChatMessages) })
-                -- Insert for sender
-                MySQL.insert('INSERT INTO phone_messages (citizenid, number, messages) VALUES (?, ?, ?)', { senderCitizenid, targetNumber, json.encode(ChatMessages) })
-            end
-        end
+
+    ChatNumber = NormalizePhoneNumber(ChatNumber)
+    if not ChatNumber then return end
+
+    local targetContext = GetPhoneContextByNumber(ChatNumber)
+    local targetCitizenid = targetContext and targetContext.dataCitizenid or ('phone:' .. ChatNumber)
+    local targetNumber = tostring((targetContext and targetContext.phoneNumber) or ChatNumber)
+    local targetHadChat = SaveChatThread(targetCitizenid, senderNumber, ChatMessages)
+
+    SaveChatThread(senderCitizenid, targetNumber, ChatMessages)
+
+    if targetContext and targetContext.source and targetContext.source ~= src then
+        TriggerClientEvent('prp-phone:client:UpdateMessages', targetContext.source, ChatMessages, senderNumber, not targetHadChat)
     end
 end)
 
 RegisterNetEvent('prp-phone:server:AddRecentCall', function(type, data)
     local src = source
     local Ply = QBCore.Functions.GetPlayer(src)
+    if not Ply or not data then return end
+
     local Hour = os.date('%H')
     local Minute = os.date('%M')
     local label = Hour .. ':' .. Minute
+
+    local context = GetPhoneContext(Ply, true)
+    local phoneKey = context and context.dataCitizenid or Ply.PlayerData.citizenid
+    StoreRecentCall(phoneKey, data, label, type, false)
     TriggerClientEvent('prp-phone:client:AddRecentCall', src, data, label, type)
-    local Trgt = QBCore.Functions.GetPlayerByPhone(data.number)
-    if Trgt ~= nil then
-        TriggerClientEvent('prp-phone:client:AddRecentCall', Trgt.PlayerData.source, {
-            name = Ply.PlayerData.charinfo.firstname .. ' ' .. Ply.PlayerData.charinfo.lastname,
-            number = Ply.PlayerData.charinfo.phone,
-            anonymous = data.anonymous
-        }, label, 'outgoing')
-    end
 end)
 
 RegisterNetEvent('prp-phone:server:CancelCall', function(ContactData)
     ClearSpeakerPhone(source)
     if not ContactData or not ContactData.TargetData then return end
-    local Ply = QBCore.Functions.GetPlayerByPhone(ContactData.TargetData.number)
-    if Ply ~= nil then
-        TriggerClientEvent('prp-phone:client:CancelCall', Ply.PlayerData.source)
+    local targetContext = GetPhoneContextByNumber(ContactData.TargetData.number)
+    if targetContext and targetContext.source then
+        TriggerClientEvent('prp-phone:client:CancelCall', targetContext.source)
     end
 end)
 
 RegisterNetEvent('prp-phone:server:AnswerCall', function(CallData)
     if not CallData or not CallData.TargetData then return end
-    local Ply = QBCore.Functions.GetPlayerByPhone(CallData.TargetData.number)
-    if Ply ~= nil then
-        TriggerClientEvent('prp-phone:client:AnswerCall', Ply.PlayerData.source)
+    local targetContext = GetPhoneContextByNumber(CallData.TargetData.number)
+    if targetContext and targetContext.source then
+        TriggerClientEvent('prp-phone:client:AnswerCall', targetContext.source)
     end
 end)
 

@@ -24,7 +24,7 @@ Config.Products = {
     ['normal'] = {
         { name = 'tosti',         price = 2,   amount = 50 },
         { name = 'water_bottle',  price = 2,   amount = 50 },
-        { name = 'kurkakola',     price = 2,   amount = 50 },
+        { name = 'cola',          price = 2,   amount = 50 },
         { name = 'twerks_candy',  price = 2,   amount = 50 },
         { name = 'snikkel_candy', price = 2,   amount = 50 },
         { name = 'sandwich',      price = 2,   amount = 50 },

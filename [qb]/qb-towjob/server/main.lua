@@ -43,7 +43,7 @@ RegisterNetEvent('qb-tow:server:nano', function(vehNetID)
     end
     local chance = math.random(1, 100)
     if chance < 26 then
-        exports['qb-inventory']:AddItem(src, 'cryptostick', 1, false, false, 'qb-tow:server:nano')
+        exports['prp-inventory']:AddItem(src, 'cryptostick', 1, false, false, 'qb-tow:server:nano')
         TriggerClientEvent('qb-inventory:client:ItemBox', src, QBCore.Shared.Items['cryptostick'], 'add')
     end
 end)

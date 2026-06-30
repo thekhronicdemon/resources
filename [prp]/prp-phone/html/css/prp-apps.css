@@ -107,6 +107,95 @@
     color: #ffffff;
 }
 
+.finance-score-card,
+.finance-product,
+.finance-loan {
+    margin-bottom: 1vh;
+    padding: 1.1vh;
+    background: #ffffff;
+    border-radius: .8vh;
+    border: .1vh solid rgba(15, 23, 42, .12);
+    color: #111827;
+}
+
+.finance-score-card span,
+.finance-section-title {
+    display: block;
+    color: #475569;
+    font-size: 1.1vh;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.finance-score-card strong {
+    display: block;
+    margin: .3vh 0;
+    font-size: 3.2vh;
+    line-height: 1;
+}
+
+.finance-score-card p,
+.finance-product p {
+    margin: .35vh 0 0;
+    color: #64748b;
+    font-size: 1.05vh;
+}
+
+.finance-section-title {
+    margin: 1.2vh 0 .7vh;
+}
+
+.finance-product,
+.finance-loan {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .8vh;
+    align-items: center;
+}
+
+.finance-product strong,
+.finance-loan strong {
+    display: block;
+    font-size: 1.35vh;
+}
+
+.finance-product span,
+.finance-loan-meta span,
+.finance-loan-status {
+    color: #475569;
+    font-size: 1.05vh;
+}
+
+.finance-apply,
+.finance-pay {
+    min-width: 7.4vh;
+    height: 3.2vh;
+    border: 0;
+    border-radius: .8vh;
+    background: #111827;
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1vh;
+    cursor: pointer;
+}
+
+.finance-apply:disabled {
+    background: #cbd5e1;
+    color: #64748b;
+    cursor: default;
+}
+
+.finance-loan {
+    grid-template-columns: 1fr;
+}
+
+.finance-loan-top,
+.finance-loan-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: .8vh;
+}
+
 .calculator-display {
     height: 10vh;
     padding: 4.2vh 1.8vh 0 1.8vh;
@@ -151,6 +240,10 @@
     background: rgba(9, 9, 9, .72);
     font-family: 'Poppins', sans-serif;
     z-index: 50;
+}
+
+.phone-covered-by-tablet {
+    pointer-events: none;
 }
 
 .tablet-frame {

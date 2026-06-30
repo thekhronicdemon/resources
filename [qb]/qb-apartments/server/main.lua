@@ -60,7 +60,7 @@ end)
 
 RegisterNetEvent('apartments:server:openStash', function(CurrentApartment)
     local src = source
-    exports['qb-inventory']:OpenInventory(src, CurrentApartment)
+    exports['prp-inventory']:OpenInventory(src, CurrentApartment)
 end)
 
 RegisterNetEvent('apartments:server:CreateApartment', function(type, label, firstSpawn)
