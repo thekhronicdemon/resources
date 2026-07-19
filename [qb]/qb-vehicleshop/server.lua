@@ -1,5 +1,17 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 local financetimer = {}
+local stockTableReady = false
+
+local stockTableSql = [[
+    CREATE TABLE IF NOT EXISTS `prp_pdm_stock` (
+        `shop` varchar(50) NOT NULL,
+        `vehicle` varchar(50) NOT NULL,
+        `stock` int(11) NOT NULL DEFAULT 0,
+        `price` int(11) NOT NULL DEFAULT 0,
+        `enabled` tinyint(1) NOT NULL DEFAULT 1,
+        PRIMARY KEY (`shop`, `vehicle`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+]]
 
 local vehicleTypes = {
     motorcycles = 'bike',
@@ -64,11 +76,41 @@ local function VehicleInShop(vehicle, shopName)
     return vehicle.shop == shopName
 end
 
+local function EnsureStockTable()
+    if stockTableReady then return true end
+
+    local ok, err = pcall(function()
+        MySQL.query.await(stockTableSql)
+    end)
+
+    if not ok then
+        print(('[qb-vehicleshop] Failed to prepare prp_pdm_stock table: %s'):format(err))
+        return false
+    end
+
+    stockTableReady = true
+    return true
+end
+
 local function GetStockRow(shopName, model)
-    local row = MySQL.single.await('SELECT * FROM prp_pdm_stock WHERE shop = ? AND vehicle = ?', { shopName, model })
     local vehicle = QBCore.Shared.Vehicles[model]
     if not vehicle then return nil end
+
     local defaultStock = Config.AdvancedPDM.DefaultStock or 0
+    local row = nil
+
+    if EnsureStockTable() then
+        local ok, result = pcall(function()
+            return MySQL.single.await('SELECT * FROM prp_pdm_stock WHERE shop = ? AND vehicle = ?', { shopName, model })
+        end)
+
+        if ok then
+            row = result
+        else
+            print(('[qb-vehicleshop] Failed to read PDM stock for %s/%s: %s'):format(tostring(shopName), tostring(model), result))
+        end
+    end
+
     if row then
         return {
             stock = tonumber(row.stock) or 0,
@@ -84,13 +126,24 @@ local function GetStockRow(shopName, model)
 end
 
 local function UpsertStock(shopName, model, stock, price, enabled)
-    MySQL.update.await('INSERT INTO prp_pdm_stock (shop, vehicle, stock, price, enabled) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE stock = VALUES(stock), price = VALUES(price), enabled = VALUES(enabled)', {
-        shopName,
-        model,
-        tonumber(stock) or 0,
-        tonumber(price) or 0,
-        enabled and 1 or 0
-    })
+    if not EnsureStockTable() then return false end
+
+    local ok, err = pcall(function()
+        MySQL.update.await('INSERT INTO prp_pdm_stock (shop, vehicle, stock, price, enabled) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE stock = VALUES(stock), price = VALUES(price), enabled = VALUES(enabled)', {
+            shopName,
+            model,
+            tonumber(stock) or 0,
+            tonumber(price) or 0,
+            enabled and 1 or 0
+        })
+    end)
+
+    if not ok then
+        print(('[qb-vehicleshop] Failed to update PDM stock for %s/%s: %s'):format(tostring(shopName), tostring(model), err))
+        return false
+    end
+
+    return true
 end
 
 local function DecrementStock(shopName, model)
@@ -115,6 +168,7 @@ local function CanManageShop(src, shopName)
 end
 
 local function BuildCatalog(shopName, includeDisabled)
+    shopName = shopName or 'pdm'
     local shop = Config.Shops[shopName]
     if not shop then return nil end
     local vehicles, categories = {}, {}
@@ -269,16 +323,7 @@ local function CompletePurchase(targetSrc, data, sellerSrc)
 end
 
 CreateThread(function()
-    MySQL.query.await([[
-        CREATE TABLE IF NOT EXISTS `prp_pdm_stock` (
-            `shop` varchar(50) NOT NULL,
-            `vehicle` varchar(50) NOT NULL,
-            `stock` int(11) NOT NULL DEFAULT 0,
-            `price` int(11) NOT NULL DEFAULT 0,
-            `enabled` tinyint(1) NOT NULL DEFAULT 1,
-            PRIMARY KEY (`shop`, `vehicle`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-    ]])
+    EnsureStockTable()
 end)
 
 QBCore.Functions.CreateCallback('qb-vehicleshop:server:spawnvehicle', function(_, cb, plate, vehicle, coords)
@@ -292,13 +337,26 @@ QBCore.Functions.CreateCallback('qb-vehicleshop:server:spawnvehicle', function(_
     cb(netId, vehProps, plate)
 end)
 
-QBCore.Functions.CreateCallback('qb-vehicleshop:server:getCatalog', function(_, cb, shopName)
-    cb(BuildCatalog(shopName, false))
+QBCore.Functions.CreateCallback('qb-vehicleshop:server:getCatalog', function(source, cb, shopName)
+    local ok, payload = pcall(BuildCatalog, shopName, false)
+    if not ok then
+        print(('[qb-vehicleshop] Failed to build catalog for %s: %s'):format(tostring(shopName), payload))
+        TriggerClientEvent('QBCore:Notify', source, 'PDM catalog failed to load. Check server console.', 'error')
+        cb(false)
+        return
+    end
+    cb(payload)
 end)
 
 QBCore.Functions.CreateCallback('qb-vehicleshop:server:getManagementData', function(source, cb, shopName)
     if not CanManageShop(source, shopName) then cb(false) return end
-    cb(BuildCatalog(shopName, true))
+    local ok, payload = pcall(BuildCatalog, shopName, true)
+    if not ok then
+        print(('[qb-vehicleshop] Failed to build management catalog for %s: %s'):format(tostring(shopName), payload))
+        cb(false)
+        return
+    end
+    cb(payload)
 end)
 
 QBCore.Functions.CreateCallback('qb-vehicleshop:server:getVehicles', function(source, cb)
@@ -365,8 +423,11 @@ RegisterNetEvent('qb-vehicleshop:server:updateStock', function(shopName, data)
     if not data or not data.model or not QBCore.Shared.Vehicles[data.model] then return end
     local stock = math.max(tonumber(data.stock) or 0, 0)
     local price = math.max(tonumber(data.price) or QBCore.Shared.Vehicles[data.model].price or 0, 0)
-    UpsertStock(shopName, data.model, stock, price, data.enabled ~= false)
-    TriggerClientEvent('QBCore:Notify', src, 'Stock updated.', 'success')
+    if UpsertStock(shopName, data.model, stock, price, data.enabled ~= false) then
+        TriggerClientEvent('QBCore:Notify', src, 'Stock updated.', 'success')
+    else
+        TriggerClientEvent('QBCore:Notify', src, 'Stock could not be updated. Check server console.', 'error')
+    end
 end)
 
 RegisterNetEvent('qb-vehicleshop:server:customTestDrive', function(vehicle, playerid)

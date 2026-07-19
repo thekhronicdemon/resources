@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS `prp_drug_plants` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `owner` varchar(50) NOT NULL,
+  `x` double NOT NULL,
+  `y` double NOT NULL,
+  `z` double NOT NULL,
+  `heading` float NOT NULL DEFAULT 0,
+  `stage` enum('pot','dirt','growing','ready') NOT NULL DEFAULT 'pot',
+  `dirt_grade` char(1) DEFAULT NULL,
+  `dirt_quality` decimal(5,2) NOT NULL DEFAULT 0,
+  `seed_quality` decimal(5,2) NOT NULL DEFAULT 0,
+  `strain` varchar(50) DEFAULT NULL,
+  `water_count` tinyint unsigned NOT NULL DEFAULT 0,
+  `last_watered` int unsigned NOT NULL DEFAULT 0,
+  `fertilized` tinyint(1) NOT NULL DEFAULT 0,
+  `planted_at` int unsigned NOT NULL DEFAULT 0,
+  `ready_at` int unsigned NOT NULL DEFAULT 0,
+  `yield_quality` decimal(5,2) NOT NULL DEFAULT 0,
+  `created_at` int unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_owner` (`owner`),
+  KEY `idx_stage` (`stage`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

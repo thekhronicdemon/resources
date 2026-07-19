@@ -339,6 +339,9 @@ QBShared.Items = {
     rolling_paper                = { name = 'rolling_paper', label = 'Rolling Paper', weight = 10, type = 'item', image = 'rolling_paper.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Paper made specifically for encasing and smoking tobacco or cannabis.' },
     cough_syrup                  = { name = 'cough_syrup', label = 'Cough Syrup', weight = 100, type = 'item', image = 'cough_syrup.png', unique = false, useable = false, shouldClose = true, rarity = 'common', description = 'Treats a cold or flu' },
     
+    shovel                       = { name = 'shovel', label = 'Shovel', weight = 100, type = 'item', image = 'shovel.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Used for digging.' },
+    
+    
     -- UNCOMMON
     cokebaggy                    = { name = 'cokebaggy', label = 'Bag of Coke', weight = 10, type = 'item', image = 'cocaine_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'To get happy real quick' },
     crack_baggy                  = { name = 'crack_baggy', label = 'Bag of Crack', weight = 10, type = 'item', image = 'crack_baggy.png', unique = false, useable = true, shouldClose = true, rarity = 'uncommon', description = 'To get happy faster' },
@@ -369,6 +372,199 @@ QBShared.Items = {
     weed_whitewidow              = { name = 'weed_whitewidow', label = 'White Widow 2g', weight = 90, type = 'item', image = 'weed_baggy.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed bag with 2g White Widow' },
     weed_whitewidow_seed         = { name = 'weed_whitewidow_seed', label = 'White Widow Seed', weight = 10, type = 'item', image = 'weed_seed.png', unique = false, useable = true, shouldClose = false, rarity = 'common', description = 'A weed seed of White Widow' },
 
+    ['fertilizer'] = {
+    name = 'fertilizer',
+    label = 'Fertilizer',
+    weight = 500,
+    type = 'item',
+    image = 'fertilizer.png',
+    unique = false,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Improves plant quality and yield.'
+},
+
+['empty_weed_bag'] = {
+    name = 'empty_weed_bag',
+    label = 'Empty Weed Bag',
+    weight = 5,
+    type = 'item',
+    image = 'empty_weed_bag.png',
+    unique = false,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Used to package weed buds.'
+},
+
+['rolling_paper'] = {
+    name = 'rolling_paper',
+    label = 'Rolling Paper',
+    weight = 2,
+    type = 'item',
+    image = 'rolling_paper.png',
+    unique = false,
+    useable = true,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Used to roll a joint.'
+},
+
+['plant_pot'] = {
+    name = 'plant_pot',
+    label = 'Plant Pot',
+    weight = 1000,
+    type = 'item',
+    image = 'plant_pot.png',
+    unique = false,
+    useable = true,
+    shouldClose = true,
+    combinable = nil,
+    description = 'A pot used to grow weed.'
+},
+
+['shovel'] = {
+    name = 'shovel',
+    label = 'Shovel',
+    weight = 2500,
+    type = 'item',
+    image = 'shovel.png',
+    unique = true,
+    useable = true,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Dig for dirt.'
+},
+
+------------------------------------------------
+-- Dirt
+------------------------------------------------
+
+['dirt_a'] = {
+    name = 'dirt_a',
+    label = 'Class A Dirt',
+    weight = 1000,
+    type = 'item',
+    image = 'dirt.png',
+    unique = true,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Premium growing soil.'
+},
+
+['dirt_b'] = {
+    name = 'dirt_b',
+    label = 'Class B Dirt',
+    weight = 1000,
+    type = 'item',
+    image = 'dirt.png',
+    unique = true,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'High quality soil.'
+},
+
+['dirt_c'] = {
+    name = 'dirt_c',
+    label = 'Class C Dirt',
+    weight = 1000,
+    type = 'item',
+    image = 'dirt.png',
+    unique = true,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Average growing soil.'
+},
+
+['dirt_d'] = {
+    name = 'dirt_d',
+    label = 'Class D Dirt',
+    weight = 1000,
+    type = 'item',
+    image = 'dirt.png',
+    unique = true,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Poor quality soil.'
+},
+
+------------------------------------------------
+-- Seeds
+------------------------------------------------
+
+['weed_seed'] = {
+    name = 'weed_seed',
+    label = 'Weed Seed',
+    weight = 5,
+    type = 'item',
+    image = 'weed_seed.png',
+    unique = true,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'A seed containing unique genetics.'
+},
+
+------------------------------------------------
+-- Harvest
+------------------------------------------------
+
+['weed_bud'] = {
+    name = 'weed_bud',
+    label = 'Weed Bud',
+    weight = 20,
+    type = 'item',
+    image = 'weed_bud.png',
+    unique = true,
+    useable = true,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Freshly harvested weed.'
+},
+
+['weed_baggy'] = {
+    name = 'weed_baggy',
+    label = 'Bagged Weed',
+    weight = 25,
+    type = 'item',
+    image = 'weed_baggy.png',
+    unique = true,
+    useable = true,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Packaged weed ready for sale.'
+},
+
+['weed_joint'] = {
+    name = 'weed_joint',
+    label = 'Joint',
+    weight = 10,
+    type = 'item',
+    image = 'weed_joint.png',
+    unique = true,
+    useable = true,
+    shouldClose = true,
+    combinable = nil,
+    description = 'A hand rolled joint.'
+},
+
+['weed_brick'] = {
+    name = 'weed_brick',
+    label = 'Weed Brick',
+    weight = 500,
+    type = 'item',
+    image = 'weed_brick.png',
+    unique = true,
+    useable = false,
+    shouldClose = true,
+    combinable = nil,
+    description = 'Compressed weed brick.'
+},
     -- Material
     -- COMMON
     aluminum                     = { name = 'aluminum', label = 'Aluminium', weight = 100, type = 'item', image = 'aluminum.png', unique = false, useable = false, shouldClose = false, rarity = 'common', description = 'Nice piece of metal that you can probably use for something' },
@@ -419,6 +615,62 @@ QBShared.Items = {
     briefcrate                  = { name = 'briefcrate', label = 'Briefcrate', weight = 1000, type = 'item', image = 'prp-crate.png', unique = true, useable = true, shouldClose = true, rarity = 'legendary', description = 'Try your luck. Goodluck.' },
 
     -- Mechanic Parts
+    mechanic_tablet = {
+    name = 'mechanic_tablet',
+    label = 'Mechanic Tablet',
+    weight = 1000,
+    type = 'item',
+    image = 'tablet.png',
+    unique = true,
+    useable = true,
+    rarity = 'common',
+    shouldClose = true,
+    combinable = nil,
+    description = 'Controls installed stance, airbag and hydraulic upgrades.'
+},
+
+airbags = {
+    name = 'airbags',
+    label = 'Air Suspension Kit',
+    weight = 5000,
+    type = 'item',
+    image = 'airbags.png',
+    unique = false,
+    useable = true,
+    rarity = 'common',
+    shouldClose = true,
+    combinable = nil,
+    description = 'Installs or removes permanent air suspension from a vehicle.'
+},
+
+stancer = {
+    name = 'stancer',
+    label = 'Stancer Upgrade Kit',
+    weight = 3500,
+    type = 'item',
+    image = 'stancer.png',
+    unique = false,
+    useable = true,
+    rarity = 'common',
+    shouldClose = true,
+    combinable = nil,
+    description = 'Unlocks camber, wheel width, track width and stance adjustment.'
+},
+
+hydraulics_kit = {
+    name = 'hydraulics_kit',
+    label = 'Hydraulics Kit',
+    weight = 6000,
+    type = 'item',
+    image = 'hydraulics_kit.png',
+    unique = false,
+    useable = true,
+    rarity = 'common',
+    shouldClose = true,
+    combinable = nil,
+    description = 'Installs or removes permanent hydraulic suspension controls.'
+},
+
     -- COMMON
     veh_armor                    = { name = 'veh_armor', label = 'Armor', weight = 1000, type = 'item', image = 'veh_armor.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Upgrade vehicle armor' },
     veh_exterior                 = { name = 'veh_exterior', label = 'Exterior', weight = 1000, type = 'item', image = 'veh_exterior.png', unique = false, useable = true, shouldClose = true, rarity = 'common', description = 'Upgrade vehicle exterior' },

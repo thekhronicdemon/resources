@@ -5,6 +5,7 @@ local Initialized = false
 local insideShop = nil
 local currentShop = nil
 local catalogOpen = false
+local openingCatalog = false
 local catalogVehicles = {}
 local selectedVehicle = nil
 local selectedColor = nil
@@ -251,6 +252,7 @@ end
 
 local function CloseCatalog(keepPreview)
     catalogOpen = false
+    openingCatalog = false
     nuiNonce = nuiNonce + 1
     SetNuiFocus(false, false)
     DispatchPDMUI({ action = 'close' })
@@ -260,8 +262,27 @@ local function CloseCatalog(keepPreview)
 end
 
 local function OpenCatalog(shopName)
-    if catalogOpen then return end
+    if catalogOpen or openingCatalog then return end
+    if not shopName or not Config.Shops[shopName] then
+        Notify('PDM shop location was not detected. Step out and back into the showroom.', 'error')
+        return
+    end
+    if GetResourceState('prp-pdm-ui') ~= 'started' then
+        Notify('PDM catalog UI is not started. Restart prp-pdm-ui.', 'error')
+        return
+    end
+
+    openingCatalog = true
+    local requestStarted = GetGameTimer()
+    SetTimeout(8000, function()
+        if openingCatalog and GetGameTimer() - requestStarted >= 8000 then
+            openingCatalog = false
+            Notify('PDM catalog took too long to load. Try again.', 'error')
+        end
+    end)
+
     QBCore.Functions.TriggerCallback('qb-vehicleshop:server:getCatalog', function(payload)
+        openingCatalog = false
         if not payload or not payload.vehicles or #payload.vehicles == 0 then
             Notify('There are no vehicles configured for this shop.', 'error')
             return

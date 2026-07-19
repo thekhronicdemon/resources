@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRP Mechanic Tablet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app" class="hidden">
+    <div id="tablet" class="tablet">
+        <header>
+            <div>
+                <span class="eyebrow">PROGRESSION CUSTOMS</span>
+                <h1>Mechanic Tablet</h1>
+                <p id="vehicleLabel">Vehicle</p>
+            </div>
+            <button id="close">&times;</button>
+        </header>
+
+        <nav>
+            <button class="tab active" data-page="stance">Stance</button>
+            <button class="tab" data-page="hydraulics">Hydraulics</button>
+        </nav>
+
+        <main>
+            <section id="stance" class="page active">
+                <div id="stanceLocked" class="locked">Install a stancer kit to unlock these controls.</div>
+                <div id="stanceControls" class="grid"></div>
+                <div class="actions">
+                    <button id="resetStance" class="secondary">Reset</button>
+                    <button id="saveStance">Save setup</button>
+                </div>
+            </section>
+
+            <section id="hydraulics" class="page">
+                <div id="hydraulicsLocked" class="locked">Install a hydraulics kit to unlock bouncing.</div>
+                <div id="hydraulicsControls" class="feature-card">
+                    <h2>Hydraulic Bounce</h2>
+                    <p>Driver keybinds unlock again after the wheels land.</p>
+                    <div class="keys">
+                        <span><b>H</b> Toggle hydraulics</span>
+                        <span><b>Numpad 8</b> Front</span>
+                        <span><b>Numpad 2</b> Rear</span>
+                        <span><b>Numpad 4</b> Left</span>
+                        <span><b>Numpad 6</b> Right</span>
+                        <span><b>Numpad 5</b> Full bounce</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
