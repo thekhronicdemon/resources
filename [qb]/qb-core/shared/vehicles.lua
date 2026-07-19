@@ -134,8 +134,8 @@ local Vehicles = {
     { model = 'tahoma',          name = 'Tahoma Coupe',                  brand = 'Declasse',        price = 12000,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
     { model = 'broadway',        name = 'Broadway',                      brand = 'Classique',       price = 20000,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
     { model = 'fr36',            name = 'FR36',                          brand = 'Fathom',          price = 161000,  category = 'coupes',         type = 'automobile', shop = 'pdm' },
-    { model = 'nis180',          name = '180SX'                          brand = 'Nissan',          price = 38675,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
-    { model = 'maj350z',         name = '350Z'                           brand = 'Nissan',          price = 64562,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
+    { model = 'nis180',          name = '180SX',                         brand = 'Nissan',          price = 38675,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
+    { model = 'maj350z',         name = '350Z',                          brand = 'Nissan',          price = 64562,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
     --- Muscle (4)
     { model = 'blade',           name = 'Blade',                         brand = 'Vapid',           price = 23500,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
     { model = 'buccaneer',       name = 'Buccaneer',                     brand = 'Albany',          price = 22500,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
@@ -203,6 +203,7 @@ local Vehicles = {
     { model = 'tampa2',          name = 'Drift Tampa',                   brand = 'Declasse',        price = 80000,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
     { model = 'ruiner4',         name = 'Ruiner ZZ-8',                   brand = 'Imponte',         price = 85000,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
     { model = 'vigero2',         name = 'Vigero ZX',                     brand = 'Declasse',        price = 105000,  category = 'muscle',         type = 'automobile', shop = 'pdm' },
+    { model = 'z2879',           name = 'Z28',                           brand = 'Camaro',          price = 120000,  category = 'muscle',         type = 'automobile', shop = 'pdm' },
     { model = 'weevil2',         name = 'Weevil Custom',                 brand = 'BF',              price = 95000,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
     { model = 'buffalo5',        name = 'Buffalo EVX',                   brand = 'Bravado',         price = 214000,  category = 'muscle',         type = 'automobile', shop = 'pdm' },
     { model = 'tulip2',          name = 'Tulip M-100',                   brand = 'Declasse',        price = 80000,   category = 'muscle',         type = 'automobile', shop = 'pdm' },
@@ -290,6 +291,12 @@ local Vehicles = {
     { model = 'lynx',            name = 'Lynx',                          brand = 'Ocelot',          price = 150000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
     { model = 'massacro',        name = 'Massacro',                      brand = 'Dewbauchee',      price = 110000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
     { model = 'massacro2',       name = 'Massacro Racecar',              brand = 'Dewbauchee',      price = 80000,   category = 'sports',         type = 'automobile', shop = 'luxury' },
+    { model = '675ltsp',         name = '675LT',                         brand = 'Mclaren',         price = 275000,  category = 'sports',         type = 'automobile', shop = 'pdm' },
+    { model = 'm720',            name = '720S',                          brand = 'Mclaren',         price = 300000,  category = 'sports',         type = 'automobile', shop = 'pdm' },
+    { model = 'pgt322',          name = 'GT3',                           brand = 'Porsche',         price = 280000,  category = 'sports',         type = 'automobile', shop = 'pdm' },
+    { model = 'turbo33',         name = '911',                           brand = 'Porsche',         price = 300000,  category = 'sports',         type = 'automobile', shop = 'pdm' },
+   
+    
     { model = 'neo',             name = 'Neo',                           brand = 'Vysser',          price = 230000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
     { model = 'neon',            name = 'Neon',                          brand = 'Pfister',         price = 220000,  category = 'sports',         type = 'automobile', shop = 'luxury' },
     { model = 'ninef',           name = '9F',                            brand = 'Obey',            price = 95000,   category = 'sports',         type = 'automobile', shop = 'luxury' },
@@ -347,7 +354,6 @@ local Vehicles = {
     { model = 'coureur',         name = 'La Coureuse',                   brand = 'Penaud',          price = 199000,  category = 'sports',         type = 'automobile', shop = 'pdm' },
     { model = 'r300',            name = '300R',                          brand = 'Annis',           price = 56000,   category = 'sports',         type = 'automobile', shop = 'pdm' },
     { model = 'panthere',        name = 'Panthere',                      brand = 'Toundra',         price = 55000,   category = 'sports',         type = 'automobile', shop = 'pdm' },
-    { model = 'pgt322',          name = 'GT3',                           brand = 'Porsche',         price = 145262,  category = 'sports',         type = 'automobile', shop = 'pdm' },
 
     --- Super (7)
     { model = 'adder',           name = 'Adder',                         brand = 'Truffade',        price = 280000,  category = 'super',          type = 'automobile', shop = 'luxury' },
@@ -401,9 +407,7 @@ local Vehicles = {
     { model = 'entity3',         name = 'Entity MT',                     brand = 'Overflod',        price = 200000,  category = 'super',          type = 'automobile', shop = 'luxury' },
     { model = 'virtue',          name = 'Virtue',                        brand = 'Ocelot',          price = 72000,   category = 'super',          type = 'automobile', shop = 'luxury' },
     { model = 'turismo3',        name = 'Turismo Omaggio',               brand = 'Grotti',          price = 284500,  category = 'super',          type = 'automobile', shop = 'luxury' },
-    { model = '675ltsp',         name = '675LT',                         brand = 'Mclaren',         price = 164872,  category = 'super',          type = 'automobile', shop = 'pdm' },
-    { model = 'm720',            name = 'm720',                          brand = 'Mclaren',         price = 187209,  category = 'super',          type = 'automobile', shop = 'pdm' },
-    
+
     --- Motorcycles (8)
     { model = 'akuma',           name = 'Akuma',                         brand = 'Dinka',           price = 55000,   category = 'motorcycles',    type = 'bike',       shop = 'pdm' },
     { model = 'avarus',          name = 'Avarus',                        brand = 'LCC',             price = 20000,   category = 'motorcycles',    type = 'bike',       shop = 'pdm' },
