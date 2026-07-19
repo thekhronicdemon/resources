@@ -5,6 +5,12 @@ local function notify(src, message, kind)
     TriggerClientEvent('prp-drugs:client:notify', src, message, kind)
 end
 
+local function isPedInVehicle(ped)
+    if type(GetVehiclePedIsIn) == 'function' then return GetVehiclePedIsIn(ped, false) ~= 0 end
+    if type(IsPedInAnyVehicle) == 'function' then return IsPedInAnyVehicle(ped, false) end
+    return false
+end
+
 local function getInventoryResource()
     local primary = Config.Inventory or 'prp-inventory'
     local primaryState = GetResourceState(primary)
@@ -136,7 +142,7 @@ RegisterNetEvent('prp-drugs:server:digDirt', function(coords)
     local actual = GetEntityCoords(ped)
     local claimed = vector3(tonumber(coords.x) or 0.0, tonumber(coords.y) or 0.0, tonumber(coords.z) or 0.0)
     if #(actual - claimed) > 5.0 then return end
-    if GetVehiclePedIsIn(ped, false) ~= 0 then return end
+    if isPedInVehicle(ped) then return end
 
     local shovel = getItemByName(Player, Config.Items.Shovel)
     if not shovel then return notify(src, 'You need a shovel.', 'error') end

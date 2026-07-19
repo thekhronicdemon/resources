@@ -23,6 +23,125 @@ local vehicleTypes = {
     train = 'train'
 }
 
+local function RefreshCoreObject()
+    QBCore = exports['qb-core']:GetCoreObject()
+    return QBCore
+end
+
+local function HasEntries(tbl)
+    return type(tbl) == 'table' and next(tbl) ~= nil
+end
+
+local function CountEntries(tbl)
+    local count = 0
+    for _ in pairs(tbl or {}) do count = count + 1 end
+    return count
+end
+
+local parsedSharedVehicles = nil
+
+local function GetQuotedField(entry, field)
+    return entry:match(field .. "%s*=%s*'([^']*)'") or entry:match(field .. '%s*=%s*"([^"]*)"')
+end
+
+local function GetShopField(entry)
+    local shopList = entry:match('shop%s*=%s*{(.-)}')
+    if shopList then
+        local shops = {}
+        for shop in shopList:gmatch("'([^']+)'") do
+            shops[#shops + 1] = shop
+        end
+        for shop in shopList:gmatch('"([^"]+)"') do
+            shops[#shops + 1] = shop
+        end
+        if #shops > 0 then return shops end
+    end
+
+    return GetQuotedField(entry, 'shop')
+end
+
+local function LoadSharedVehiclesFromFile()
+    if parsedSharedVehicles then return parsedSharedVehicles end
+
+    parsedSharedVehicles = {}
+    local content = LoadResourceFile('qb-core', 'shared/vehicles.lua')
+    if type(content) ~= 'string' then
+        print('[qb-vehicleshop] Could not read qb-core/shared/vehicles.lua fallback.')
+        return parsedSharedVehicles
+    end
+
+    local entry = nil
+    for line in content:gmatch('[^\r\n]+') do
+        if line:find('model%s*=') then
+            entry = line
+        elseif entry then
+            entry = entry .. ' ' .. line
+        end
+
+        if entry and line:find('}%s*,?') then
+            local model = GetQuotedField(entry, 'model')
+            if model then
+                parsedSharedVehicles[model] = {
+                    spawncode = model,
+                    name = GetQuotedField(entry, 'name') or model,
+                    brand = GetQuotedField(entry, 'brand') or 'Unknown',
+                    model = model,
+                    price = tonumber(entry:match('price%s*=%s*(%d+)')) or 0,
+                    category = GetQuotedField(entry, 'category') or 'other',
+                    type = GetQuotedField(entry, 'type') or 'automobile',
+                    shop = GetShopField(entry) or 'none'
+                }
+            end
+            entry = nil
+        end
+    end
+
+    if HasEntries(parsedSharedVehicles) then
+        print(('[qb-vehicleshop] Loaded %s vehicles from qb-core shared file fallback.'):format(CountEntries(parsedSharedVehicles)))
+    else
+        print('[qb-vehicleshop] Shared vehicle fallback did not find any vehicle entries.')
+    end
+
+    return parsedSharedVehicles
+end
+
+local function GetSharedVehicles()
+    local ok, vehicles = pcall(function()
+        return exports['qb-core']:GetSharedVehicles()
+    end)
+
+    if ok and HasEntries(vehicles) then
+        QBCore.Shared = QBCore.Shared or {}
+        QBCore.Shared.Vehicles = vehicles
+        return vehicles
+    end
+
+    if type(QBCore.Shared) == 'table' and HasEntries(QBCore.Shared.Vehicles) then
+        return QBCore.Shared.Vehicles
+    end
+
+    RefreshCoreObject()
+    if type(QBCore.Shared) == 'table' and HasEntries(QBCore.Shared.Vehicles) then
+        return QBCore.Shared.Vehicles
+    end
+
+    if type(QBShared) == 'table' and HasEntries(QBShared.Vehicles) then
+        QBCore.Shared = QBCore.Shared or {}
+        QBCore.Shared.Vehicles = QBShared.Vehicles
+        return QBShared.Vehicles
+    end
+
+    vehicles = LoadSharedVehiclesFromFile()
+    if HasEntries(vehicles) then return vehicles end
+
+    print('[qb-vehicleshop] QBCore shared vehicles are not loaded.')
+    return {}
+end
+
+local function GetSharedVehicle(model)
+    return GetSharedVehicles()[model]
+end
+
 local function Round(value)
     value = tonumber(value) or 0
     return value >= 0 and math.floor(value + 0.5) or math.ceil(value - 0.5)
@@ -39,7 +158,7 @@ local function CommaValue(amount)
 end
 
 local function GetVehicleTypeByModel(model)
-    local vehicleData = QBCore.Shared.Vehicles[model]
+    local vehicleData = GetSharedVehicle(model)
     if not vehicleData then return 'automobile' end
     return vehicleTypes[vehicleData.category] or vehicleData.type or 'automobile'
 end
@@ -93,7 +212,7 @@ local function EnsureStockTable()
 end
 
 local function GetStockRow(shopName, model)
-    local vehicle = QBCore.Shared.Vehicles[model]
+    local vehicle = GetSharedVehicle(model)
     if not vehicle then return nil end
 
     local defaultStock = Config.AdvancedPDM.DefaultStock or 0
@@ -149,7 +268,7 @@ end
 local function DecrementStock(shopName, model)
     local row = GetStockRow(shopName, model)
     if not row then return end
-    local vehicle = QBCore.Shared.Vehicles[model]
+    local vehicle = GetSharedVehicle(model)
     local nextStock = math.max((tonumber(row.stock) or 0) - 1, 0)
     UpsertStock(shopName, model, nextStock, row.price or vehicle.price, row.enabled)
 end
@@ -172,8 +291,13 @@ local function BuildCatalog(shopName, includeDisabled)
     local shop = Config.Shops[shopName]
     if not shop then return nil end
     local vehicles, categories = {}, {}
-    for model, vehicle in pairs(QBCore.Shared.Vehicles) do
+    local sharedVehicles = GetSharedVehicles()
+    local sharedCount, shopCount = 0, 0
+
+    for model, vehicle in pairs(sharedVehicles) do
+        sharedCount = sharedCount + 1
         if VehicleInShop(vehicle, shopName) then
+            shopCount = shopCount + 1
             local stock = GetStockRow(shopName, model)
             if stock and (includeDisabled or stock.enabled) then
                 vehicles[#vehicles + 1] = {
@@ -199,6 +323,9 @@ local function BuildCatalog(shopName, includeDisabled)
     local categoryList = {}
     for category in pairs(categories) do categoryList[#categoryList + 1] = category end
     table.sort(categoryList)
+    if #vehicles == 0 then
+        print(('[qb-vehicleshop] Catalog for %s is empty. shared=%s matchingShop=%s visible=%s'):format(tostring(shopName), sharedCount, shopCount, #vehicles))
+    end
     return {
         shop = {
             id = shopName,
@@ -246,7 +373,7 @@ local function CompletePurchase(targetSrc, data, sellerSrc)
 
     local shopName = data.shop or 'pdm'
     local shop = Config.Shops[shopName]
-    local vehicle = QBCore.Shared.Vehicles[data.model]
+    local vehicle = GetSharedVehicle(data.model)
     if not shop or not vehicle or not VehicleInShop(vehicle, shopName) then
         return false, 'Vehicle is not sold at this shop.'
     end
@@ -327,7 +454,8 @@ CreateThread(function()
 end)
 
 QBCore.Functions.CreateCallback('qb-vehicleshop:server:spawnvehicle', function(_, cb, plate, vehicle, coords)
-    local vehType = QBCore.Shared.Vehicles[vehicle] and QBCore.Shared.Vehicles[vehicle].type or GetVehicleTypeByModel(vehicle)
+    local vehicleData = GetSharedVehicle(vehicle)
+    local vehType = vehicleData and vehicleData.type or GetVehicleTypeByModel(vehicle)
     local veh = CreateVehicleServerSetter(GetHashKey(vehicle), vehType, coords.x, coords.y, coords.z, coords.w)
     local netId = NetworkGetNetworkIdFromEntity(veh)
     SetVehicleNumberPlateText(veh, plate)
@@ -420,9 +548,10 @@ RegisterNetEvent('qb-vehicleshop:server:updateStock', function(shopName, data)
         TriggerClientEvent('QBCore:Notify', src, 'You cannot manage this shop.', 'error')
         return
     end
-    if not data or not data.model or not QBCore.Shared.Vehicles[data.model] then return end
+    local vehicle = data and data.model and GetSharedVehicle(data.model)
+    if not data or not data.model or not vehicle then return end
     local stock = math.max(tonumber(data.stock) or 0, 0)
-    local price = math.max(tonumber(data.price) or QBCore.Shared.Vehicles[data.model].price or 0, 0)
+    local price = math.max(tonumber(data.price) or vehicle.price or 0, 0)
     if UpsertStock(shopName, data.model, stock, price, data.enabled ~= false) then
         TriggerClientEvent('QBCore:Notify', src, 'Stock updated.', 'success')
     else

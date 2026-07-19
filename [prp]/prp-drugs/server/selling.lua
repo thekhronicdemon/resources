@@ -16,6 +16,31 @@ local function policeCount()
     return count
 end
 
+local function isPedEntity(entity)
+    if entity == 0 or not DoesEntityExist(entity) then return false end
+    if type(GetEntityType) == 'function' then return GetEntityType(entity) == 1 end
+    return type(IsEntityAPed) == 'function' and IsEntityAPed(entity)
+end
+
+local function isPlayerPedEntity(entity)
+    if type(IsPedAPlayer) == 'function' and IsPedAPlayer(entity) then return true end
+    if type(GetPlayers) ~= 'function' or type(GetPlayerPed) ~= 'function' then return false end
+
+    for _, playerId in ipairs(GetPlayers()) do
+        if GetPlayerPed(tonumber(playerId) or playerId) == entity then return true end
+    end
+
+    return false
+end
+
+local function isPedUnavailable(entity)
+    if type(IsPedDeadOrDying) == 'function' and IsPedDeadOrDying(entity, true) then return true end
+    if type(GetEntityHealth) == 'function' and (GetEntityHealth(entity) or 0) <= 0 then return true end
+    if type(IsPedInAnyVehicle) == 'function' and IsPedInAnyVehicle(entity, false) then return true end
+    if type(GetVehiclePedIsIn) == 'function' and GetVehiclePedIsIn(entity, false) ~= 0 then return true end
+    return false
+end
+
 local function chooseSaleItem(Player)
     for _, name in ipairs({Config.Items.Brick, Config.Items.Bagged, Config.Items.Joint}) do
         local item = exports['prp-drugs']:GetItemByName(Player, name)
@@ -37,10 +62,11 @@ RegisterNetEvent('prp-drugs:server:sellToNpc', function(netId)
     end
 
     netId = tonumber(netId)
+    if not netId or netId <= 0 then return end
+
     local npc = NetworkGetEntityFromNetworkId(netId)
-    if npc == 0 or not DoesEntityExist(npc) or not IsEntityAPed(npc) or IsPedAPlayer(npc) then return end
-    if IsPedDeadOrDying(npc, true) or IsPedInAnyVehicle(npc, false) then return end
-    if Config.Selling.blacklistedPedModels[GetEntityModel(npc)] then return end
+    if not isPedEntity(npc) or isPlayerPedEntity(npc) or isPedUnavailable(npc) then return end
+    if (Config.Selling.blacklistedPedModels or {})[GetEntityModel(npc)] then return end
 
     local playerCoords = GetEntityCoords(GetPlayerPed(src))
     local npcCoords = GetEntityCoords(npc)

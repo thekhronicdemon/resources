@@ -25,6 +25,48 @@ local function Notify(message, notifyType)
     QBCore.Functions.Notify(message, notifyType or 'primary')
 end
 
+local function RefreshCoreObject()
+    QBCore = exports['qb-core']:GetCoreObject()
+    return QBCore
+end
+
+local function HasEntries(tbl)
+    return type(tbl) == 'table' and next(tbl) ~= nil
+end
+
+local function GetSharedVehicles()
+    local ok, vehicles = pcall(function()
+        return exports['qb-core']:GetSharedVehicles()
+    end)
+
+    if ok and HasEntries(vehicles) then
+        QBCore.Shared = QBCore.Shared or {}
+        QBCore.Shared.Vehicles = vehicles
+        return vehicles
+    end
+
+    if type(QBCore.Shared) == 'table' and HasEntries(QBCore.Shared.Vehicles) then
+        return QBCore.Shared.Vehicles
+    end
+
+    RefreshCoreObject()
+    if type(QBCore.Shared) == 'table' and HasEntries(QBCore.Shared.Vehicles) then
+        return QBCore.Shared.Vehicles
+    end
+
+    if type(QBShared) == 'table' and HasEntries(QBShared.Vehicles) then
+        QBCore.Shared = QBCore.Shared or {}
+        QBCore.Shared.Vehicles = QBShared.Vehicles
+        return QBShared.Vehicles
+    end
+
+    return {}
+end
+
+local function GetSharedVehicle(model)
+    return GetSharedVehicles()[model]
+end
+
 local function DispatchPDMUI(message)
     if GetResourceState('prp-pdm-ui') == 'started' then
         TriggerEvent('prp-pdm-ui:client:sendMessage', message)
@@ -334,7 +376,7 @@ local function OpenFinance(shopName)
             local balance = tonumber(vehicle.balance) or 0
             if balance > 0 then
                 local model = vehicle.vehicle or vehicle.model
-                local shared = model and QBCore.Shared.Vehicles[model] or {}
+                local shared = model and GetSharedVehicle(model) or {}
                 financed[#financed + 1] = {
                     plate = vehicle.plate,
                     model = model,
