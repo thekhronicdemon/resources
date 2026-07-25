@@ -5,39 +5,40 @@ Config.customNationality = false                                      -- Defines
 Config.SkipSelection = false                                          -- Skip the spawn selection and spawns the player at the last location
 
 Config.SelectionScene = {
-    Interior = vector3(-558.10, 284.60, 83.05),
-    HiddenCoords = vector4(-565.92, 278.98, 83.05, 88.0),
-    OverviewCam = vector4(-558.35, 279.65, 84.15, 0.0),
-    OverviewPoint = vector3(-556.55, 284.55, 83.85),
-    OverviewFov = 46.0,
+    Debug = false, -- Set true while tuning seats/cameras. It draws markers at every configured seat.
+    Interior = vector3(-556.47, 285.15, 82.18),
+    HiddenCoords = vector4(-556.47, 285.15, 82.18, 260.8),
+    OverviewCam = vector4(-548.80, 285.40, 84.20, 92.0),
+    OverviewPoint = vector3(-555.45, 286.25, 83.65),
+    OverviewFov = 31.0,
     FocusFov = 31.0,
-    EmptyScenario = 'PROP_HUMAN_SEAT_CHAIR',
-    FallbackScenario = 'PROP_HUMAN_SEAT_CHAIR',
+    EmptyScenario = 'WORLD_HUMAN_STAND_IMPATIENT',
+    FallbackScenario = 'WORLD_HUMAN_STAND_IMPATIENT',
     Seats = {
         {
-            coords = vector4(-558.75, 284.65, 83.05, 180.0),
-            cam = vector4(-558.75, 281.15, 84.00, 0.0),
-            scenario = 'PROP_HUMAN_SEAT_CHAIR_SMOKING',
+            coords = vector4(-557.51, 291.96, 82.18, 172.4),
+            cam = vector4(-557.55, 289.19, 82.97, -9.0),
+            scenario = 'WORLD_HUMAN_SMOKING',
         },
         {
-            coords = vector4(-557.55, 284.65, 83.05, 180.0),
-            cam = vector4(-557.55, 281.15, 84.00, 0.0),
-            scenario = 'PROP_HUMAN_SEAT_CHAIR_SMOKING',
+            coords = vector4(-551.13, 287.03, 82.98, 87.1),
+            cam = vector4(-554.49, 287.04, 83.49, -97.1),
+            scenario = 'WORLD_HUMAN_SMOKING',
         },
         {
-            coords = vector4(-556.35, 284.65, 83.05, 180.0),
-            cam = vector4(-556.35, 281.15, 84.00, 0.0),
-            scenario = 'PROP_HUMAN_SEAT_CHAIR_SMOKING',
+            coords = vector4(-551.79, 284.24, 82.98, 83.0),
+            cam = vector4(-555.15, 284.25, 83.44, -97.1),
+            scenario = 'WORLD_HUMAN_SMOKING',
         },
         {
-            coords = vector4(-555.15, 284.65, 83.05, 180.0),
-            cam = vector4(-555.15, 281.15, 84.00, 0.0),
-            scenario = 'PROP_HUMAN_SEAT_CHAIR_SMOKING',
+            coords = vector4(-551.30, 281.94, 82.98, 79.0),
+             cam = vector4(-554.13, 281.96, 83.66, -100.9),
+            scenario = 'WORLD_HUMAN_SMOKING',
         },
         {
-            coords = vector4(-553.95, 284.65, 83.05, 180.0),
-            cam = vector4(-553.95, 281.15, 84.00, 0.0),
-            scenario = 'PROP_HUMAN_SEAT_CHAIR_SMOKING',
+            coords = vector4(-561.82, 285.94, 82.18, 266.6),
+            cam = vector4(-551.17, 281.76, 83.73, 75.3),
+            scenario = 'WORLD_HUMAN_SMOKING',
         },
     },
 }
