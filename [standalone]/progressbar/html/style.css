@@ -16,11 +16,11 @@ body {
 
 .progress-container {
     display: none;
-    z-index: 5;
+    z-index: 1000;
     color: #fff;
-    width: 15%;
+    width: min(340px, calc(100vw - 36px));
     position: fixed;
-    bottom: 15%;
+    bottom: 10%;
     left: 0;
     right: 0;
     margin-left: auto;
@@ -28,44 +28,102 @@ body {
     font-family: "Poppins", sans-serif;
 }
 
+.progress-shell {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 13px;
+    align-items: center;
+    min-height: 68px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(34, 37, 46, 0.94);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.34);
+}
+
+.progress-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+#progress-icon-image {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+}
+
+#progress-icon-image[hidden] {
+    display: none;
+}
+
+#progress-icon-fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #ff5a6f;
+    font-size: 2vh;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.progress-content {
+    min-width: 0;
+}
+
 .progress-labels {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
 }
 
 #progress-label {
-    font-size: 1.3vh;
-    line-height: 4vh;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.25vh;
+    line-height: 1.2;
     position: relative;
     color: #ffffff;
     z-index: 10;
-    font-weight: bold;
+    font-weight: 800;
 }
 
 #progress-percentage {
-    font-size: 1.3vh;
-    line-height: 4vh;
+    flex: 0 0 auto;
+    font-size: 1.15vh;
+    line-height: 1.2;
     position: relative;
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.72);
     z-index: 10;
-    font-weight: bold;
+    font-weight: 800;
 }
 
 .progress-bar-container {
-    background: rgba(0, 0, 0, 0.246);
-    height: 0.5vh;
+    background: rgba(255, 255, 255, 0.12);
+    height: 6px;
     position: relative;
     display: block;
-    border-radius: 2px;
+    border-radius: 999px;
+    overflow: hidden;
 }
 
 #progress-bar {
-    background-color: #dc143c;
+    background: linear-gradient(90deg, #ff4d66, #ff7a45);
     width: 0%;
-    height: 0.5vh;
-    border-radius: 2px;
+    height: 6px;
+    border-radius: 999px;
     transition: width 0.3s;
     transition-timing-function: ease-out;
-    box-shadow: 0 0 10px rgba(220, 20, 60, 0.6);
+    box-shadow: 0 0 12px rgba(255, 77, 102, 0.55);
 }

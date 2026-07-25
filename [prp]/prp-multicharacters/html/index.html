@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <link href="reset.css" rel="stylesheet" />
+        <link href="style.css" rel="stylesheet" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        <title>PRP Multicharacters</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.1.3/axios.min.js"></script>
+        <script src="vue.js"></script>
+        <script src="swal2.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet" />
+    </head>
+    <body>
+        <v-app data-app>
+            <div id="app">
+                <div class="container">
+                    <div class="main-screen">
+                        <transition name="fade">
+                            <div class="welcomescreen" v-if="show.loading">
+                                <div class="loading-container">
+                                    <div class="prp-loader">
+                                        <span>PRP</span>
+                                    </div>
+                                    <p>{{loadingText}}</p>
+                                    <div class="loading-track">
+                                        <div class="loading-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </transition>
+
+                        <section class="prp-interface" v-if="show.characters">
+                            <header class="prp-header">
+                                <div class="brand-block">
+                                    <div class="brand-mark">PRP</div>
+                                    <div>
+                                        <p class="eyebrow">Progression RP</p>
+                                        <h1>City Access</h1>
+                                    </div>
+                                </div>
+                                <div class="roster-count">
+                                    <span class="material-symbols-outlined">badge</span>
+                                    <strong>{{filledSlots}}</strong>
+                                    <span>/ {{characterAmount}}</span>
+                                </div>
+                            </header>
+
+                            <main class="prp-grid">
+                                <section class="slot-rail">
+                                    <button
+                                        type="button"
+                                        v-for="index in characterAmount"
+                                        :key="index"
+                                        class="slot-card"
+                                        :class="{'slot-selected': selectedCharacter == index, 'slot-empty': !characters[index]}"
+                                        @click="click_character(index, characters[index] ? 'existing' : 'empty')"
+                                    >
+                                        <span class="slot-index">0{{index}}</span>
+                                        <span class="slot-avatar">{{characters[index] ? characterInitials(characters[index]) : '+'}}</span>
+                                        <span class="slot-copy">
+                                            <strong>{{characters[index] ? characterName(characters[index]) : translate('emptyslot')}}</strong>
+                                            <small>{{characters[index] ? characterJob(characters[index]) : 'New profile'}}</small>
+                                        </span>
+                                        <span class="slot-state">{{characters[index] ? 'Active' : 'Open'}}</span>
+                                    </button>
+                                </section>
+
+                                <aside class="dossier-panel">
+                                    <div class="dossier-topline">
+                                        <span>Identity</span>
+                                        <span>{{selectedData ? characterCitizenId(selectedData) : 'PRP'}}</span>
+                                    </div>
+
+                                    <div class="identity-lockup">
+                                        <div class="identity-ring">{{selectedInitials}}</div>
+                                        <div>
+                                            <p class="eyebrow">{{selectedData ? 'Resident file' : 'Progression RP'}}</p>
+                                            <h2>{{selectedName}}</h2>
+                                        </div>
+                                    </div>
+
+                                    <template v-if="selectedData">
+                                        <div class="dossier-stats">
+                                            <div class="stat-tile">
+                                                <span class="material-symbols-outlined">work</span>
+                                                <small>{{translate('job')}}</small>
+                                                <strong>{{characterJob(selectedData)}}</strong>
+                                            </div>
+                                            <div class="stat-tile">
+                                                <span class="material-symbols-outlined">payments</span>
+                                                <small>{{translate('cash')}}</small>
+                                                <strong>${{characterCash(selectedData)}}</strong>
+                                            </div>
+                                            <div class="stat-tile">
+                                                <span class="material-symbols-outlined">account_balance</span>
+                                                <small>{{translate('bank')}}</small>
+                                                <strong>${{characterBank(selectedData)}}</strong>
+                                            </div>
+                                            <div class="stat-tile">
+                                                <span class="material-symbols-outlined">public</span>
+                                                <small>{{translate('nationality')}}</small>
+                                                <strong>{{characterNationality(selectedData)}}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="identity-meta">
+                                            <div>
+                                                <small>{{translate('birthdate')}}</small>
+                                                <strong>{{selectedData.charinfo.birthdate}}</strong>
+                                            </div>
+                                            <div>
+                                                <small>{{translate('gender')}}</small>
+                                                <strong>{{genderLabel(selectedData)}}</strong>
+                                            </div>
+                                            <div>
+                                                <small>{{translate('phonenumber')}}</small>
+                                                <strong>{{characterPhone(selectedData)}}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="dossier-actions">
+                                            <button type="button" class="primary-action" @click="play_character">
+                                                <span class="material-symbols-outlined">play_arrow</span>
+                                                {{translate('play_button')}}
+                                            </button>
+                                            <button v-if="allowDelete" type="button" class="danger-action" @click="prepareDelete">
+                                                <span class="material-symbols-outlined">delete</span>
+                                                {{translate('delete_button')}}
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <template v-else>
+                                        <div class="empty-dossier">
+                                            <span class="material-symbols-outlined">fingerprint</span>
+                                            <p>Progression RP</p>
+                                            <strong>{{filledSlots}} / {{characterAmount}} Profiles</strong>
+                                        </div>
+                                    </template>
+                                </aside>
+                            </main>
+                        </section>
+
+                        <transition name="fade">
+                            <div class="modal-screen" v-if="show.delete">
+                                <div class="character-delete">
+                                    <div class="modal-icon danger">
+                                        <span class="material-symbols-outlined">warning</span>
+                                    </div>
+                                    <h2>{{translate('deletechar_header')}}</h2>
+                                    <p>{{translate('deletechar_description')}}</p>
+                                    <div class="character-delete-btns">
+                                        <button type="button" class="danger-action" @click="delete_character">{{translate('confirm')}}</button>
+                                        <button type="button" class="quiet-action" @click="cancelDelete">{{translate('cancel')}}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </transition>
+
+                        <transition name="fade">
+                            <div class="modal-screen" v-if="show.register">
+                                <div class="character-register">
+                                    <div class="register-header">
+                                        <div>
+                                            <p class="eyebrow">Progression RP</p>
+                                            <h2>{{translate('chardel_header')}}</h2>
+                                        </div>
+                                        <button type="button" class="icon-action" id="close-reg" @click="cancelCreate">
+                                            <span class="material-symbols-outlined">close</span>
+                                        </button>
+                                    </div>
+                                    <div class="char-register-inputs">
+                                        <v-text-field :placeholder="translate('firstname')" solo hide-details="auto" v-model="registerData.firstname"></v-text-field>
+                                        <v-text-field :placeholder="translate('lastname')" solo hide-details="auto" v-model="registerData.lastname"></v-text-field>
+                                        <v-text-field v-if="customNationality" :placeholder="translate('nationality')" solo hide-details="auto" v-model="registerData.nationality"></v-text-field>
+                                        <v-select v-else solo :placeholder="translate('nationality')" :items="nationalities" hide-details="auto" v-ripple v-model="registerData.nationality"></v-select>
+                                        <v-select solo :placeholder="translate('gender')" :items="[translate('male'), translate('female')]" hide-details="auto" v-ripple v-model="registerData.gender"></v-select>
+                                        <v-dialog ref="dialog" v-model="dataPickerMenu" :return-value.sync="registerData.date" persistent width="290px">
+                                            <template v-slot:activator="{ on, attrs }">
+                                                <v-text-field v-model="registerData.date" :label="translate('birthdate')" readonly v-bind="attrs" v-on="on" solo></v-text-field>
+                                            </template>
+                                            <v-date-picker v-model="registerData.date" min="1900-01-01" max="2100-12-31">
+                                                <v-spacer></v-spacer>
+                                                <v-btn text class="date-cancel-btn" @click="dataPickerMenu = false">{{translate('cancel')}}</v-btn>
+                                                <v-btn text class="date-confirm-btn" @click="$refs.dialog.save(registerData.date)">{{translate('confirm')}}</v-btn>
+                                            </v-date-picker>
+                                        </v-dialog>
+                                    </div>
+                                    <button type="button" class="primary-action wide" @click="create_character">
+                                        <span class="material-symbols-outlined">person_add</span>
+                                        {{translate('create_button')}}
+                                    </button>
+                                </div>
+                            </div>
+                        </transition>
+                    </div>
+                </div>
+            </div>
+        </v-app>
+
+        <script type="text/javascript" src="profanity.js"></script>
+        <script type="text/javascript" src="validation.js"></script>
+        <script type="text/javascript" src="translations.js"></script>
+        <script type="text/javascript" src="app.js"></script>
+    </body>
+</html>

@@ -8,7 +8,7 @@ Dependency for creating progressbars in QB-Core.
 
 ### Client
 
-- QBCore.Functions.Progressbar(**name**: string, **label**: string, **duration**: number, **useWhileDead**: boolean, **canCancel**: boolean, **disableControls**: table, **animation**: table, **prop**: table, **propTwo**: table, **onFinish**: function, **onCancel**: function)
+- QBCore.Functions.Progressbar(**name**: string, **label**: string, **duration**: number, **useWhileDead**: boolean, **canCancel**: boolean, **disableControls**: table, **animation**: table, **prop**: table, **propTwo**: table, **onFinish**: function, **onCancel**: function, **icon**: string)
   > Create a new progressbar from the built in qb-core functions.<br>
   > **Example:**
   > ```lua
@@ -25,7 +25,7 @@ Dependency for creating progressbars in QB-Core.
   >    -- Done
   >end, function()
   >    -- Cancel
-  >end)
+>end, nil, "sandwich.png")
   > ```
 
 ## Exports
@@ -38,8 +38,9 @@ Dependency for creating progressbars in QB-Core.
   > ```lua
   >exports['progressbar']:Progress({
   >    name = "random_task",
-  >    duration = 5000,
-  >    label = "Doing something",
+>    duration = 5000,
+>    label = "Doing something",
+>    icon = "sandwich.png",
   >    useWhileDead = false,
   >    canCancel = true,
   >    controlDisables = {

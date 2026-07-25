@@ -24,7 +24,6 @@ local Vehicles = {
     { model = 'issi5',           name = 'Issi Future Shock',             brand = 'Weeny',           price = 80000,   category = 'compacts',       type = 'automobile', shop = 'pdm' },
     { model = 'issi6',           name = 'Issi Nightmare',                brand = 'Weeny',           price = 80000,   category = 'compacts',       type = 'automobile', shop = 'pdm' },
     { model = 'panto',           name = 'Panto',                         brand = 'Benefactor',      price = 3200,    category = 'compacts',       type = 'automobile', shop = 'pdm' },
-    { model = 'prairie',         name = 'Prairie',                       brand = 'Bollokan',        price = 30000,   category = 'compacts',       type = 'automobile', shop = 'pdm' },
     { model = 'rhapsody',        name = 'Rhapsody',                      brand = 'Declasse',        price = 10000,   category = 'compacts',       type = 'automobile', shop = 'pdm' },
     { model = 'brioso2',         name = 'Brioso 300',                    brand = 'Grotti',          price = 12000,   category = 'compacts',       type = 'automobile', shop = 'pdm' },
     { model = 'weevil',          name = 'Weevil',                        brand = 'BF',              price = 9000,    category = 'compacts',       type = 'automobile', shop = 'pdm' },
@@ -110,7 +109,6 @@ local Vehicles = {
     { model = 'cavalcade3',      name = 'Cavalcade XL',                  brand = 'Albany',          price = 166500,  category = 'suvs',           type = 'automobile', shop = 'pdm' },
     { model = 'dorado',          name = 'Dorado',                        brand = 'Bravado',         price = 137500,  category = 'suvs',           type = 'automobile', shop = 'pdm' },
     { model = 'vivanite',        name = 'Vivanite',                      brand = 'Karin',           price = 160500,  category = 'suvs',           type = 'automobile', shop = 'pdm' },
-    { model = 'castigator',      name = 'Castigator',                    brand = 'Canis',           price = 160500,  category = 'suvs',           type = 'automobile', shop = 'pdm' },
     --- Coupes (3)
     { model = 'cogcabrio',       name = 'Cognoscenti Cabrio',            brand = 'Enus',            price = 30000,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
     { model = 'exemplar',        name = 'Exemplar',                      brand = 'Dewbauchee',      price = 40000,   category = 'coupes',         type = 'automobile', shop = 'pdm' },
@@ -255,8 +253,6 @@ local Vehicles = {
     { model = 'toreador',        name = 'Toreador',                      brand = 'Pegassi',         price = 50000,   category = 'sportsclassics', type = 'automobile', shop = 'pdm' },
     { model = 'peyote2',         name = 'Peyote Gasser',                 brand = 'Vapid',           price = 40000,   category = 'sportsclassics', type = 'automobile', shop = 'pdm' },
     { model = 'coquette2',       name = 'Coquette Classic',              brand = 'Invetero',        price = 165000,  category = 'sportsclassics', type = 'automobile', shop = 'pdm' },
-    { model = 'envisage',        name = 'Envisage',                      brand = 'Bollokan',        price = 190000,  category = 'sportsclassics', type = 'automobile', shop = 'pdm' },
-    { model = 'driftnebula',     name = 'Nebula Turbo',                  brand = 'Vulcar',          price = 100000,  category = 'sportsclassics', type = 'automobile', shop = 'pdm' },
     --- Sports (6)
     { model = 'alpha',           name = 'Alpha',                         brand = 'Albany',          price = 53000,   category = 'sports',         type = 'automobile', shop = 'luxury' },
     { model = 'banshee',         name = 'Banshee',                       brand = 'Bravado',         price = 56000,   category = 'sports',         type = 'automobile', shop = 'luxury' },

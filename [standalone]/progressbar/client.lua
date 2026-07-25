@@ -2,6 +2,7 @@ local Action = {
     name = '',
     duration = 0,
     label = '',
+    icon = nil,
     useWhileDead = false,
     canCancel = true,
     disarm = true,
@@ -135,7 +136,8 @@ local function StartProgress(action, onStart, onTick, onFinish)
         SendNUIMessage({
             action = 'progress',
             duration = action.duration,
-            label = action.label
+            label = action.label,
+            icon = action.icon
         })
         StartActions()
         CreateThread(function()

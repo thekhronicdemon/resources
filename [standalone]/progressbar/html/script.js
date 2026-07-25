@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
             this.progressPercentage = document.getElementById("progress-percentage");
             this.progressBar = document.getElementById("progress-bar");
             this.progressContainer = document.querySelector(".progress-container");
+            this.progressIconImage = document.getElementById("progress-icon-image");
+            this.progressIconFallback = document.getElementById("progress-icon-fallback");
             this.animationFrameRequest = null;
             this.setupListeners();
         },
@@ -19,6 +21,41 @@ document.addEventListener("DOMContentLoaded", (event) => {
             });
         },
 
+        resolveIconSource: function (icon) {
+            if (!icon) return "";
+
+            const rawIcon = String(icon).trim();
+            if (!rawIcon) return "";
+            if (/^(https?:|nui:|\.\/|\/)/i.test(rawIcon)) return rawIcon;
+            if (/\.(png|jpe?g|webp|gif|svg)$/i.test(rawIcon)) {
+                return `nui://prp-inventory/html/images/${rawIcon}`;
+            }
+
+            return "";
+        },
+
+        getFallbackText: function (label) {
+            const cleanedLabel = String(label || "Progress").trim();
+            return cleanedLabel ? cleanedLabel.charAt(0).toUpperCase() : "P";
+        },
+
+        setIcon: function (icon, label) {
+            const iconSource = this.resolveIconSource(icon);
+            this.progressIconFallback.textContent = this.getFallbackText(label);
+
+            if (iconSource) {
+                this.progressIconImage.hidden = false;
+                this.progressIconImage.src = iconSource;
+                this.progressIconImage.onerror = () => {
+                    this.progressIconImage.hidden = true;
+                };
+                return;
+            }
+
+            this.progressIconImage.removeAttribute("src");
+            this.progressIconImage.hidden = true;
+        },
+
         update: function (data) {
             if (this.animationFrameRequest) {
                 cancelAnimationFrame(this.animationFrameRequest);
@@ -27,6 +64,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
 
             this.progressLabel.textContent = data.label;
             this.progressPercentage.textContent = "0%";
+            this.setIcon(data.icon, data.label);
             this.progressContainer.style.display = "block";
             let startTime = Date.now();
             let duration = parseInt(data.duration, 10);
