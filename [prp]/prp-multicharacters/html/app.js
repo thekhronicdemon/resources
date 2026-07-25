@@ -267,6 +267,20 @@ document.addEventListener("DOMContentLoaded", () => {
                             newChars[event.data.characters[i].cid] = event.data.characters[i];
                         }
                         this.characters = newChars;
+
+                        var firstSlot = 1;
+                        for (var slot = 1; slot <= this.characterAmount; slot++) {
+                            if (this.characters[slot] !== undefined) {
+                                firstSlot = slot;
+                                break;
+                            }
+                        }
+
+                        this.selectedCharacter = firstSlot;
+                        postNui("cDataPed", {
+                            slot: firstSlot,
+                            cData: this.characters[firstSlot],
+                        });
                         break;
                     case "setupCharInfo":
                         this.chardata = event.data.chardata;

@@ -139,19 +139,31 @@ local function loadSelectionInterior()
 end
 
 local function setSelectionCamera(camCoords, lookAtCoords, fov)
-    if not cam or not DoesCamExist(cam) then
-        cam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
-    end
+    local nextCam = CreateCam('DEFAULT_SCRIPTED_CAMERA', true)
 
-    SetCamCoord(cam, camCoords.x, camCoords.y, camCoords.z)
-    SetCamRot(cam, -8.0, 0.0, camCoords.w or 0.0, 2)
-    SetCamFov(cam, fov or 45.0)
+    SetCamCoord(nextCam, camCoords.x, camCoords.y, camCoords.z)
+    SetCamRot(nextCam, -8.0, 0.0, camCoords.w or 0.0, 2)
+    SetCamFov(nextCam, fov or 45.0)
 
     if lookAtCoords then
-        PointCamAtCoord(cam, lookAtCoords.x, lookAtCoords.y, lookAtCoords.z)
+        PointCamAtCoord(nextCam, lookAtCoords.x, lookAtCoords.y, lookAtCoords.z)
     end
 
-    SetCamActive(cam, true)
+    if cam and DoesCamExist(cam) then
+        local oldCam = cam
+        SetCamActiveWithInterp(nextCam, oldCam, 850, true, true)
+        cam = nextCam
+        CreateThread(function()
+            Wait(900)
+            if oldCam and DoesCamExist(oldCam) then
+                DestroyCam(oldCam, false)
+            end
+        end)
+    else
+        cam = nextCam
+        SetCamActive(cam, true)
+    end
+
     RenderScriptCams(true, true, 650, true, true)
 end
 
@@ -184,6 +196,15 @@ local function playSeatScenario(ped, seat, hasCharacter)
     if scenario then
         ClearPedTasksImmediately(ped)
         TaskStartScenarioAtPosition(ped, scenario, seat.coords.x, seat.coords.y, seat.coords.z, seat.coords.w, -1, true, true)
+        CreateThread(function()
+            Wait(1200)
+            if not DoesEntityExist(ped) or IsPedUsingScenario(ped, scenario) then
+                return
+            end
+
+            local fallbackScenario = scene.FallbackScenario or 'PROP_HUMAN_SEAT_CHAIR'
+            TaskStartScenarioAtPosition(ped, fallbackScenario, seat.coords.x, seat.coords.y, seat.coords.z, seat.coords.w, -1, true, true)
+        end)
     end
 end
 
@@ -227,14 +248,19 @@ local function initializePedModel(slot, model, data, hasCharacter)
         SetEntityAsMissionEntity(ped, true, true)
         SetEntityHeading(ped, coords.w)
         SetPedDefaultComponentVariation(ped)
+        SetEntityVisible(ped, true, false)
+        SetEntityAlpha(ped, 255, false)
         SetEntityInvincible(ped, true)
         SetBlockingOfNonTemporaryEvents(ped, true)
         SetPedCanRagdoll(ped, false)
-        SetEntityCollision(ped, false, false)
+        SetEntityCollision(ped, true, true)
+        PlaceObjectOnGroundProperly(ped)
 
         if data then
             TriggerEvent('qb-clothing:client:loadPlayerClothing', data, ped)
             Wait(150)
+            SetEntityVisible(ped, true, false)
+            SetEntityAlpha(ped, 255, false)
         end
 
         playSeatScenario(ped, seat, hasCharacter)
