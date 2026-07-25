@@ -1,8 +1,9 @@
 Config = {}
 Config.DefaultSpawn = vector3(-1035.71, -2731.87, 12.86)              -- Default spawn coords if you have start apartments disabled
 Config.EnableDeleteButton = true                                      -- Define if the player can delete the character or not
-Config.customNationality = false                                      -- Defines if Nationality input is custom of blocked to the list of Countries
+Config.customNationality = true                                      -- Defines if Nationality input is custom of blocked to the list of Countries
 Config.SkipSelection = false                                          -- Skip the spawn selection and spawns the player at the last location
+Config.SelectionScenePreset = 'custom'                                -- Use 'custom' for your tuned scene, or 'portable' when sharing without your exact Tequi-la-la MLO.
 
 Config.SelectionScene = {
     Debug = false, -- Set true while tuning seats/cameras. It draws markers at every configured seat.
@@ -43,13 +44,59 @@ Config.SelectionScene = {
     },
 }
 
--- Backward-compatible aliases for any local edits that still read the old config keys.
-Config.Interior = Config.SelectionScene.Interior
-Config.HiddenCoords = Config.SelectionScene.HiddenCoords
-Config.CamCoords = Config.SelectionScene.OverviewCam
-Config.PedCoords = Config.SelectionScene.Seats[1].coords
+Config.SelectionScenePresets = {
+    portable = {
+        Debug = false,
+        Interior = vector3(-1037.35, -2737.55, 20.17),
+        HiddenCoords = vector4(-1034.60, -2731.70, 20.17, 240.0),
+        OverviewCam = vector4(-1041.20, -2732.95, 22.10, -142.0),
+        OverviewPoint = vector3(-1037.15, -2738.25, 21.05),
+        OverviewFov = 45.0,
+        FocusFov = 32.0,
+        EmptyScenario = 'WORLD_HUMAN_STAND_IMPATIENT',
+        FallbackScenario = 'WORLD_HUMAN_STAND_IMPATIENT',
+        Seats = {
+            {
+                coords = vector4(-1039.20, -2739.45, 20.17, 320.0),
+                cam = vector4(-1041.50, -2736.35, 21.65, -142.0),
+                scenario = 'WORLD_HUMAN_SMOKING',
+            },
+            {
+                coords = vector4(-1038.20, -2738.60, 20.17, 320.0),
+                cam = vector4(-1040.55, -2735.50, 21.65, -142.0),
+                scenario = 'WORLD_HUMAN_SMOKING',
+            },
+            {
+                coords = vector4(-1037.20, -2737.75, 20.17, 320.0),
+                cam = vector4(-1039.55, -2734.70, 21.65, -142.0),
+                scenario = 'WORLD_HUMAN_SMOKING',
+            },
+            {
+                coords = vector4(-1036.20, -2736.90, 20.17, 320.0),
+                cam = vector4(-1038.55, -2733.85, 21.65, -142.0),
+                scenario = 'WORLD_HUMAN_SMOKING',
+            },
+            {
+                coords = vector4(-1035.20, -2736.05, 20.17, 320.0),
+                cam = vector4(-1037.55, -2733.00, 21.65, -142.0),
+                scenario = 'WORLD_HUMAN_SMOKING',
+            },
+        },
+    },
+}
 
-Config.DefaultNumberOfCharacters = 5                                  -- Define maximum amount of default characters (maximum 5 characters defined by default)
+Config.ActiveSelectionScene = Config.SelectionScene
+if Config.SelectionScenePreset ~= 'custom' and Config.SelectionScenePresets[Config.SelectionScenePreset] then
+    Config.ActiveSelectionScene = Config.SelectionScenePresets[Config.SelectionScenePreset]
+end
+
+-- Backward-compatible aliases for any local edits that still read the old config keys.
+Config.Interior = Config.ActiveSelectionScene.Interior
+Config.HiddenCoords = Config.ActiveSelectionScene.HiddenCoords
+Config.CamCoords = Config.ActiveSelectionScene.OverviewCam
+Config.PedCoords = Config.ActiveSelectionScene.Seats[1].coords
+
+Config.DefaultNumberOfCharacters = 4                                  -- Define maximum amount of default characters (maximum 5 characters defined by default)
 Config.PlayersNumberOfCharacters = {                                  -- Define maximum amount of player characters by rockstar license (you can find this license in your server's database in the player table)
     { license = 'license:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', numberOfChars = 2 },
 }

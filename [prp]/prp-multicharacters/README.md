@@ -49,3 +49,34 @@ ensure qb-apartments
 ensure qb-clothing
 ensure qb-weathersync
 ```
+
+## Scene Setup / Sharing
+The default `custom` selection scene is tuned for this server's Tequi-la-la map/interior. If another server has a different Tequi-la-la MLO, a different map load order, or cached old files, the camera can end up inside walls or lights.
+
+In `config.lua`:
+```lua
+Config.SelectionScenePreset = 'custom'
+```
+
+Use `custom` for the tuned PRP Tequi-la-la scene. Use `portable` when giving the resource to someone who does not have the exact same interior setup:
+```lua
+Config.SelectionScenePreset = 'portable'
+```
+
+Useful client commands:
+```text
+/prpmc_sceneinfo
+/prpmc_debug
+/prpmc_seat 1
+/prpmc_cam 1
+/prpmc_playercam 1
+/prpmc_overview
+```
+
+If the UI shows the wrong character slot count or old camera positions, clear FiveM/server cache and run:
+```text
+refresh
+restart prp-multicharacters
+```
+
+Make sure any Tequi-la-la/MLO/map resource starts before `prp-multicharacters` in `server.cfg`.

@@ -45,7 +45,7 @@ local function loadModel(model)
 end
 
 local function sceneConfig()
-    return Config.SelectionScene or {
+    return Config.ActiveSelectionScene or Config.SelectionScene or {
         Interior = Config.Interior,
         HiddenCoords = Config.HiddenCoords,
         OverviewCam = Config.CamCoords,
@@ -87,6 +87,21 @@ end
 
 local function vector4Line(name, coords, heading)
     return ('%s = vector4(%s, %s, %s, %s),'):format(name, roundCoord(coords.x), roundCoord(coords.y), roundCoord(coords.z), roundHeading(heading))
+end
+
+local function sceneInfo()
+    local scene = sceneConfig()
+    local seats = scene.Seats and #scene.Seats or 0
+    local interior = scene.Interior or Config.Interior
+    local overview = scene.OverviewCam or Config.CamCoords
+
+    return ('preset=%s defaultChars=%s seats=%s interior=%s overview=%s'):format(
+        Config.SelectionScenePreset or 'custom',
+        tostring(Config.DefaultNumberOfCharacters),
+        tostring(seats),
+        interior and vector3Line('vector3', interior):gsub('vector3 = ', '') or 'nil',
+        overview and vector4Line('vector4', overview, overview.w):gsub('vector4 = ', '') or 'nil'
+    )
 end
 
 local function drawText3D(coords, text)
@@ -170,6 +185,28 @@ local function loadSelectionInterior()
 
     RequestCollisionAtCoord(interiorCoords.x, interiorCoords.y, interiorCoords.z)
     SetFocusPosAndVel(interiorCoords.x, interiorCoords.y, interiorCoords.z, 0.0, 0.0, 0.0)
+    NewLoadSceneStartSphere(interiorCoords.x, interiorCoords.y, interiorCoords.z, 85.0, 0)
+
+    if scene.OverviewCam then
+        RequestCollisionAtCoord(scene.OverviewCam.x, scene.OverviewCam.y, scene.OverviewCam.z)
+    end
+
+    if scene.Seats then
+        for _, seat in ipairs(scene.Seats) do
+            RequestCollisionAtCoord(seat.coords.x, seat.coords.y, seat.coords.z)
+            if seat.cam then
+                RequestCollisionAtCoord(seat.cam.x, seat.cam.y, seat.cam.z)
+            end
+        end
+    end
+
+    local sceneTimeout = 0
+    while IsNetworkLoadingScene() and sceneTimeout < 100 do
+        Wait(50)
+        sceneTimeout = sceneTimeout + 1
+    end
+
+    NewLoadSceneStop()
 
     local interior = GetInteriorAtCoords(interiorCoords.x, interiorCoords.y, interiorCoords.z)
     if interior ~= 0 then
@@ -482,6 +519,10 @@ RegisterCommand('prpmc_debug', function()
     debugLine(('Selection debug markers: %s'):format(debugScene and 'on' or 'off'))
 end, false)
 
+RegisterCommand('prpmc_sceneinfo', function()
+    debugLine(sceneInfo())
+end, false)
+
 RegisterCommand('prpmc_here', function()
     local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
@@ -588,6 +629,7 @@ RegisterNetEvent('prp-multicharacters:client:closeNUI', function()
 end)
 
 RegisterNetEvent('prp-multicharacters:client:chooseChar', function()
+    print(('[prp-multicharacters] chooseChar %s'):format(sceneInfo()))
     SetNuiFocus(false, false)
     DoScreenFadeOut(10)
     Wait(1000)
